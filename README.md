@@ -2,7 +2,7 @@
 
 ## Project info
 
-**URL**: https://lovable.dev/projects/101c021b-7a34-44fe-83ac-866f89d6b98b
+**URL**: https://clubeyellow.maisaqui.com.br
 
 ## How can I edit this code?
 
@@ -10,7 +10,7 @@ There are several ways of editing your application.
 
 **Use Lovable**
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/101c021b-7a34-44fe-83ac-866f89d6b98b) and start prompting.
+Simply visit the [Lovable Project](https://clubeyellow.maisaqui.com.br) and start prompting.
 
 Changes made via Lovable will be committed automatically to this repo.
 
