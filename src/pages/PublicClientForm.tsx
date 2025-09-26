@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -23,129 +23,116 @@ import {
   ActiveClientStep1Data, 
   ActiveClientCompleteData 
 } from '@/services/activeClientsService';
+import { useFormToken } from '@/hooks/useFormToken';
 
 /**
- * Schema de validação para a primeira etapa (dados pessoais)
+ * Schema de validação para o formulário completo
  */
-const step1Schema = z.object({
+const formSchema = z.object({
   name: z.string().min(2, 'Nome é obrigatório'),
   cpf: z.string().min(11, 'CPF deve ter 11 dígitos'),
   email: z.string().email('E-mail inválido'),
   phone: z.string().min(10, 'Número de telefone é obrigatório'),
+  password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
+  confirmPassword: z.string().min(6, 'Confirmação de senha é obrigatória'),
   termsAccepted: z.boolean().refine(val => val === true, {
     message: 'Você deve concordar com os Termos de Uso'
   }),
   privacyAccepted: z.boolean().refine(val => val === true, {
     message: 'Você deve concordar com a Política de Privacidade'
   })
-});
-
-/**
- * Schema de validação para a segunda etapa (definir senha)
- */
-const step2Schema = z.object({
-  password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
-  confirmPassword: z.string().min(6, 'Confirmação de senha é obrigatória')
 }).refine(data => data.password === data.confirmPassword, {
   message: 'As senhas não coincidem',
   path: ['confirmPassword']
 });
 
-type Step1FormData = z.infer<typeof step1Schema>;
-type Step2FormData = z.infer<typeof step2Schema>;
+type FormData = z.infer<typeof formSchema>;
 
 /**
  * Componente da landing page pública para cadastro de clientes
  */
 export default function PublicClientForm() {
   const { cpf } = useParams<{ cpf: string }>();
-  const [currentStep, setCurrentStep] = useState(1);
-  const [step1Data, setStep1Data] = useState<ActiveClientStep1Data | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  console.log('ActiveClientsService',activeClientsService);
+  // console.log('ActiveClientsService',activeClientsService);
   
-  // Usar o hook genérico
-  const clientsApi = useGenericApi({
-    service: activeClientsService,
-    queryKey: 'activeClients',
-    entityName: 'Cliente'
-  });
+  // Hook para gerenciar token de segurança
+  const { token, isLoading: tokenLoading, generateToken, isTokenValid } = useFormToken();
 
-  const createMutation = clientsApi.useCreate({
-    onSuccess: (data) => {
-      setStep1Data(step1Form.getValues());
-      setCurrentStep(2);
-      toast.success('Dados verificados! Agora defina sua senha.');
-    },
-    onError: (error) => {
-      console.error('Erro na primeira etapa:', error);
-      toast.error('Erro ao verificar dados. Tente novamente.');
-    }
-  });
+  /**
+   * Gera token de segurança ao carregar o componente
+   */
+  useEffect(() => {
+    generateToken();
+  }, [generateToken]);
 
-  const updateMutation = clientsApi.useUpdate({
-    onSuccess: (data) => {
-      toast.success('Conta criada com sucesso!');
-      step1Form.reset();
-      step2Form.reset();
-      setCurrentStep(1);
-      setStep1Data(null);
-    },
-    onError: (error) => {
-      console.error('Erro na segunda etapa:', error);
-      toast.error('Erro ao criar senha. Tente novamente.');
-    }
-  });
+  // Estado de loading das operações
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Estado de loading das mutations
-  const isSubmitting = createMutation.isPending || updateMutation.isPending;
-
-  const step1Form = useForm<Step1FormData>({
-    resolver: zodResolver(step1Schema),
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
       cpf: mascaraCpf(cpf || ''),
       email: '',
       phone: '',
+      password: '',
+      confirmPassword: '',
       termsAccepted: false,
       privacyAccepted: false
     },
   });
 
-  const step2Form = useForm<Step2FormData>({
-    resolver: zodResolver(step2Schema),
-    defaultValues: {
-      password: '',
-      confirmPassword: ''
-    },
-  });
-
   /**
-   * Função para submeter a primeira etapa (verificação e cadastro)
+   * Função para submeter o formulário completo
    */
-  const onSubmitStep1 = async (data: Step1FormData) => {
-    createMutation.mutate(data);
-  };
-
-  /**
-   * Função para submeter a segunda etapa (definir senha)
-   */
-  const onSubmitStep2 = async (data: Step2FormData) => {
-    if (!step1Data) {
-      toast.error('Dados da primeira etapa não encontrados');
+  const onSubmit = async (data: FormData) => {
+    if (!isTokenValid()) {
+      toast.error('Token de segurança inválido. Recarregue a página.');
       return;
     }
 
-    const completeData: ActiveClientCompleteData = {
-      ...step1Data,
-      password: data.password
-    };
+    setIsSubmitting(true);
+    try {
+      // Preparar dados completos incluindo password
+      const completeData: ActiveClientCompleteData = {
+        name: data.name,
+        cpf: data.cpf,
+        email: data.email,
+        phone: data.phone,
+        termsAccepted: data.termsAccepted,
+        privacyAccepted: data.privacyAccepted,
+        password: data.password
+      };
 
-    // Como não temos um ID específico, usamos um placeholder
-    // O serviço vai ignorar o ID e usar os dados completos
-    updateMutation.mutate({ id: 'active-client', data: completeData });
+      // Enviar dados completos diretamente para finalização
+      const response = await activeClientsService.finalizeRegistration(completeData, token!);
+      
+      if (response) {
+        const resAny = response as any;
+        // console.log('Resposta final:', response);
+
+        const redirect : string = resAny?.success?.redirect || '/login';
+        toast.success('Conta criada com sucesso!');
+        form.reset();
+        
+        // Aguardar 2 segundos para que o usuário veja a mensagem de sucesso antes do redirect
+        if(redirect){
+          setTimeout(() => {
+            window.location.href = redirect;
+          }, 3000);
+        }
+        // Gerar novo token para próxima utilização
+        // generateToken();
+      }
+    } catch (error) {
+      console.error('Erro ao criar conta:', error);
+      toast.error('Erro ao criar conta. Tente novamente.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -185,45 +172,15 @@ export default function PublicClientForm() {
               <h1 className="text-2xl font-bold text-gray-900 mb-2">Criar conta</h1>
             </div>
 
-            {/* Abas */}
-            <div className="flex mb-6">
-              <div className="flex-1 text-center">
-                <button 
-                  className={`w-full pb-2 font-medium border-b-2 ${
-                    currentStep === 1 
-                      ? 'text-purple-600 border-purple-600' 
-                      : 'text-gray-400 border-gray-200'
-                  }`}
-                >
-                  Dados pessoais
-                </button>
-              </div>
-              <div className="flex-1 text-center">
-                <button 
-                  className={`w-full pb-2 font-medium border-b-2 ${
-                    currentStep === 2 
-                      ? 'text-purple-600 border-purple-600' 
-                      : 'text-gray-400 border-gray-200'
-                  }`}
-                >
-                  Definir senha
-                </button>
-              </div>
-            </div>
-
             <p className="text-gray-600 text-sm mb-6">
-              {currentStep === 1 
-                ? 'Precisamos de algumas informações para criar sua conta'
-                : 'Agora defina uma senha segura para sua conta'
-              }
+              Preencha os dados abaixo para criar sua conta
             </p>
 
-            {currentStep === 1 ? (
-              <Form {...step1Form}>
-                <form onSubmit={step1Form.handleSubmit(onSubmitStep1)} className="space-y-4">
-                  <FormField
-                    control={step1Form.control}
-                    name="name"
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="name"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-gray-700">Nome completo*</FormLabel>
@@ -239,9 +196,9 @@ export default function PublicClientForm() {
                     )}
                   />
 
-                  <FormField
-                    control={step1Form.control}
-                    name="cpf"
+                <FormField
+                  control={form.control}
+                  name="cpf"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-gray-700">CPF*</FormLabel>
@@ -257,9 +214,9 @@ export default function PublicClientForm() {
                     )}
                   />
 
-                  <FormField
-                    control={step1Form.control}
-                    name="email"
+                <FormField
+                  control={form.control}
+                  name="email"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-gray-700">E-mail*</FormLabel>
@@ -276,9 +233,9 @@ export default function PublicClientForm() {
                     )}
                   />
 
-                  <FormField
-                    control={step1Form.control}
-                    name="phone"
+                <FormField
+                  control={form.control}
+                  name="phone"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-gray-700">Número de telefone*</FormLabel>
@@ -294,11 +251,75 @@ export default function PublicClientForm() {
                     )}
                   />
 
-                  {/* Checkboxes de termos */}
-                  <div className="space-y-3 pt-2">
-                    <FormField
-                      control={step1Form.control}
-                      name="termsAccepted"
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-gray-700">Senha*</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Input
+                            type={showPassword ? 'text' : 'password'}
+                            placeholder="Digite sua senha"
+                            className="border-gray-300 focus:border-purple-500 focus:ring-purple-500 pr-10"
+                            {...field}
+                          />
+                          <button
+                            type="button"
+                            className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                            onClick={() => setShowPassword(!showPassword)}
+                          >
+                            {showPassword ? (
+                              <EyeOff className="h-4 w-4 text-gray-400" />
+                            ) : (
+                              <Eye className="h-4 w-4 text-gray-400" />
+                            )}
+                          </button>
+                        </div>
+                      </FormControl>
+                      <FormMessage className="text-red-500 text-xs" />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="confirmPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-gray-700">Confirmar senha*</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Input
+                            type={showConfirmPassword ? 'text' : 'password'}
+                            placeholder="Confirme sua senha"
+                            className="border-gray-300 focus:border-purple-500 focus:ring-purple-500 pr-10"
+                            {...field}
+                          />
+                          <button
+                            type="button"
+                            className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          >
+                            {showConfirmPassword ? (
+                              <EyeOff className="h-4 w-4 text-gray-400" />
+                            ) : (
+                              <Eye className="h-4 w-4 text-gray-400" />
+                            )}
+                          </button>
+                        </div>
+                      </FormControl>
+                      <FormMessage className="text-red-500 text-xs" />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Checkboxes de termos */}
+                <div className="space-y-3 pt-2">
+                  <FormField
+                    control={form.control}
+                    name="termsAccepted"
                       render={({ field }) => (
                         <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                           <FormControl>
@@ -321,9 +342,9 @@ export default function PublicClientForm() {
                       )}
                     />
 
-                    <FormField
-                      control={step1Form.control}
-                      name="privacyAccepted"
+                  <FormField
+                    control={form.control}
+                    name="privacyAccepted"
                       render={({ field }) => (
                         <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                           <FormControl>
@@ -345,113 +366,27 @@ export default function PublicClientForm() {
                         </FormItem>
                       )}
                     />
-                  </div>
+                </div>
 
-                  <Button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 rounded-lg mt-6"
+                <Button
+                  type="submit"
+                  disabled={isSubmitting || tokenLoading || !isTokenValid()}
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 rounded-lg mt-6"
+                >
+                  {tokenLoading ? 'Carregando...' : isSubmitting ? 'Criando conta...' : 'Criar Conta'}
+                </Button>
+
+                <div className="text-center mt-4">
+                  <button
+                    type="button"
+                    className="text-purple-600 text-sm underline"
                   >
-                    {isSubmitting ? 'Verificando...' : 'Continuar'}
-                  </Button>
+                    Fazer Login
+                  </button>
+                </div>
+              </form>
+            </Form>
 
-                  <div className="text-center mt-4">
-                    <button
-                      type="button"
-                      className="text-purple-600 text-sm underline"
-                    >
-                      Fazer Login
-                    </button>
-                  </div>
-                </form>
-              </Form>
-            ) : (
-              <Form {...step2Form}>
-                <form onSubmit={step2Form.handleSubmit(onSubmitStep2)} className="space-y-4">
-                  <FormField
-                    control={step2Form.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-gray-700">Senha*</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <Input
-                              type={showPassword ? 'text' : 'password'}
-                              placeholder="Digite sua senha"
-                              className="border-gray-300 focus:border-purple-500 focus:ring-purple-500 pr-10"
-                              {...field}
-                            />
-                            <button
-                              type="button"
-                              className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                              onClick={() => setShowPassword(!showPassword)}
-                            >
-                              {showPassword ? (
-                                <EyeOff className="h-4 w-4 text-gray-400" />
-                              ) : (
-                                <Eye className="h-4 w-4 text-gray-400" />
-                              )}
-                            </button>
-                          </div>
-                        </FormControl>
-                        <FormMessage className="text-red-500 text-xs" />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={step2Form.control}
-                    name="confirmPassword"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-gray-700">Confirmar senha*</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <Input
-                              type={showConfirmPassword ? 'text' : 'password'}
-                              placeholder="Confirme sua senha"
-                              className="border-gray-300 focus:border-purple-500 focus:ring-purple-500 pr-10"
-                              {...field}
-                            />
-                            <button
-                              type="button"
-                              className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                            >
-                              {showConfirmPassword ? (
-                                <EyeOff className="h-4 w-4 text-gray-400" />
-                              ) : (
-                                <Eye className="h-4 w-4 text-gray-400" />
-                              )}
-                            </button>
-                          </div>
-                        </FormControl>
-                        <FormMessage className="text-red-500 text-xs" />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="flex space-x-3 mt-6">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setCurrentStep(1)}
-                      className="flex-1 border-purple-600 text-purple-600 hover:bg-purple-50"
-                    >
-                      Voltar
-                    </Button>
-                    <Button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-medium"
-                    >
-                      {isSubmitting ? 'Criando...' : 'Criar Conta'}
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            )}
           </div>
         </div>
       </div>

@@ -44,18 +44,67 @@ class ActiveClientsService extends GenericApiService<
 
   /**
    * Primeira etapa: verificação e registro inicial
+   * @param data - Dados do cliente
+   * @param endpoint - Endpoint customizado (opcional)
+   * @param token - Token de segurança para formulário público (opcional)
    */
-  async verifyAndRegister(data: ActiveClientStep1Data): Promise<ActiveClientResponse> {
-    const response = await this.post<any>(this.endpoint, data);
+  async verifyAndRegister(
+    data: ActiveClientStep1Data, 
+    endpoint?: string, 
+    token?: string
+  ): Promise<ActiveClientResponse> {
+    const response = await this.postWithToken<any>(endpoint ?? this.endpoint, data, token);
     return response.data || response;
   }
 
   /**
    * Segunda etapa: finalização com senha
+   * @param data - Dados completos do cliente
+   * @param token - Token de segurança para formulário público (opcional)
    */
-  async finalizeRegistration(data: ActiveClientCompleteData): Promise<ActiveClientResponse> {
-    const response = await this.put<any>(this.endpoint, data);
+  async finalizeRegistration(data: ActiveClientCompleteData, token?: string): Promise<ActiveClientResponse> {
+    const response = await this.postWithToken<any>(this.endpoint, data, token);
     return response.data || response;
+  }
+
+  /**
+   * Executa requisição POST com token customizado
+   * @param endpoint - Endpoint da API
+   * @param data - Dados para envio
+   * @param token - Token de segurança
+   */
+  private async postWithToken<T>(endpoint: string, data?: any, token?: string): Promise<T> {
+    const headers = this.getHeaders();
+    if (token) {
+      headers['X-Form-Token'] = token;
+    }
+
+    const response = await fetch(`${this.API_BASE_URL}${endpoint}`, {
+      method: 'POST',
+      headers,
+      body: data ? JSON.stringify(data) : undefined,
+    });
+    return this.handleResponse<T>(response);
+  }
+
+  /**
+   * Executa requisição PUT com token customizado
+   * @param endpoint - Endpoint da API
+   * @param data - Dados para envio
+   * @param token - Token de segurança
+   */
+  private async putWithToken<T>(endpoint: string, data?: any, token?: string): Promise<T> {
+    const headers = this.getHeaders();
+    if (token) {
+      headers['X-Form-Token'] = token;
+    }
+
+    const response = await fetch(`${this.API_BASE_URL}${endpoint}`, {
+      method: 'PUT',
+      headers,
+      body: data ? JSON.stringify(data) : undefined,
+    });
+    return this.handleResponse<T>(response);
   }
 
   // Implementação da interface GenericApiService
