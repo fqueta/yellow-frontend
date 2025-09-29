@@ -12,85 +12,87 @@ import {
   CheckCircle,
   Clock,
   Plus,
+  UserCheck,
+  Package,
+  Handshake,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useClientsList } from "@/hooks/clients";
+import { usePartnersList } from "@/hooks/partners";
+import { useProductsList } from "@/hooks/products";
+import { useUsersList } from "@/hooks/users";
+import { useRecentActivities, useRegistrationData, usePendingPreRegistrations } from "@/hooks/useDashboard";
+import { ClientRegistrationChart } from "@/components/ClientRegistrationChart";
+import { VisitorTrendChart } from "@/components/VisitorTrendChart";
 
 export default function Dashboard() {
-  // Mock data - will be replaced with real API calls
+  // Hooks para buscar dados das entidades
+  const { data: clientsData, isLoading: clientsLoading } = useClientsList({ limit: 1 });
+  const { data: partnersData, isLoading: partnersLoading } = usePartnersList({ limit: 1 });
+  const { data: productsData, isLoading: productsLoading } = useProductsList({ limit: 1 });
+  const { data: usersData, isLoading: usersLoading } = useUsersList({ limit: 1 });
+
+  // Hooks para dados dinâmicos do dashboard
+  const { data: recentActivities, isLoading: activitiesLoading, error: activitiesError } = useRecentActivities(4);
+  const { data: registrationData, isLoading: registrationLoading, error: registrationError } = useRegistrationData();
+  const { data: pendingPreRegistrations, isLoading: pendingLoading, error: pendingError } = usePendingPreRegistrations(3);
+
+  // Verificar se há erro 403 (Acesso negado)
+  const hasAccessError = [activitiesError, registrationError, pendingError].some(
+    error => error && (error as any)?.status === 403
+  );
+  console.log('activitiesError:', activitiesError);
+  
+  // Verificar se ainda está carregando dados iniciais
+  const isInitialLoading = (
+    activitiesLoading || 
+    registrationLoading || 
+    pendingLoading
+  ) && !hasAccessError;
+
+  // Se há erro de acesso, exibir apenas a mensagem
+  if (hasAccessError) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-semibold text-gray-900 mb-2">Acesso não disponível</h2>
+          <p className="text-gray-600">Você não tem permissão para acessar o dashboard.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Se ainda está carregando, não mostrar nada para evitar flash de conteúdo
+  if (isInitialLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+          <p className="text-gray-500">Carregando dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Dados das entidades
   const stats = {
-    totalBudgets: 45,
-    pendingBudgets: 12,
-    activeServiceOrders: 23,
-    monthlyRevenue: 125000,
-    cashBalance: 85000,
-    clientsCount: 156,
+    clientsCount: clientsData?.total || 0,
+    partnersCount: partnersData?.total || 0,
+    productsCount: productsData?.total || 0,
+    usersCount: usersData?.total || 0,
   };
 
-  const recentActivities = [
-    {
-      id: 1,
-      type: "budget",
-      title: "Orçamento #2024-001 criado",
-      client: "João Silva",
-      amount: 2500,
-      status: "pending",
-      time: "2 horas atrás",
-    },
-    {
-      id: 2,
-      type: "service_order",
-      title: "OS #2024-045 concluída",
-      client: "Maria Santos",
-      amount: 1800,
-      status: "completed",
-      time: "4 horas atrás",
-    },
-    {
-      id: 3,
-      type: "payment",
-      title: "Pagamento recebido",
-      client: "Tech Corp",
-      amount: 5200,
-      status: "paid",
-      time: "1 dia atrás",
-    },
-  ];
-
-  const pendingApprovals = [
-    {
-      id: 1,
-      number: "ORC-2024-034",
-      client: "Empresa ABC",
-      amount: 8500,
-      date: "2024-01-15",
-    },
-    {
-      id: 2,
-      number: "ORC-2024-035",
-      client: "Loja XYZ",
-      amount: 3200,
-      date: "2024-01-14",
-    },
-  ];
-
-  const upcomingDeadlines = [
-    {
-      id: 1,
-      type: "budget",
-      number: "ORC-2024-028",
-      client: "Cliente ABC",
-      deadline: "2024-01-20",
-      daysLeft: 3,
-    },
-    {
-      id: 2,
-      type: "service_order",
-      number: "OS-2024-019",
-      client: "Empresa XYZ",
-      deadline: "2024-01-22",
-      daysLeft: 5,
-    },
-  ];
+  // Dados dinâmicos ou fallback para dados mock
+  const recentClientActivities = recentActivities || [];
+  const clientRegistrationData = registrationData || [];
+  const pendingPreRegistrationsData = pendingPreRegistrations || [];
+  console.log('recentActivities:', recentActivities);
+  // Verificação simples dos dados de registro
+  // if (clientRegistrationData.length > 0) {
+  //   console.log(`Dashboard: ${clientRegistrationData.length} dias de dados carregados (${clientRegistrationData[0]?.date} a ${clientRegistrationData[clientRegistrationData.length - 1]?.date})`);
+  // }
+  
 
   return (
     <div className="space-y-6">
@@ -99,227 +101,251 @@ export default function Dashboard() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground">
-            Visão geral do sistema de gestão de OS e orçamentos
+            Visão geral do sistema de clientes
           </p>
         </div>
         <div className="flex gap-2">
-          <Button asChild>
+          {/* <Button asChild>
             <Link to="/budgets/new">
               <Plus className="mr-2 h-4 w-4" />
-              Novo Orçamento
+              Novo Cliente
             </Link>
-          </Button>
-          <Button variant="outline" asChild>
+          </Button> */}
+          {/* <Button variant="outline" asChild>
             <Link to="/service-orders/new">
-              <Plus className="mr-2 h-4 w-4" />
-              Nova OS
+              <FileText className="mr-2 h-4 w-4" />
+              Todos clientes
             </Link>
-          </Button>
+          </Button> */}
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Orçamentos</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalBudgets}</div>
-            <p className="text-xs text-muted-foreground">
-              {stats.pendingBudgets} pendentes
-            </p>
-          </CardContent>
-        </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">OS Ativas</CardTitle>
-            <ClipboardList className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.activeServiceOrders}</div>
-            <p className="text-xs text-muted-foreground">
-              Em andamento
-            </p>
-          </CardContent>
-        </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Faturamento</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              R$ {(stats.monthlyRevenue / 1000).toFixed(0)}k
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Este mês
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Caixa</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              R$ {(stats.cashBalance / 1000).toFixed(0)}k
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Disponível
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Clientes</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.clientsCount}</div>
-            <p className="text-xs text-muted-foreground">
-              Cadastrados
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Alertas</CardTitle>
-            <AlertCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-destructive">6</div>
-            <p className="text-xs text-muted-foreground">
-              Pendências
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Recent Activities */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Atividades Recentes</CardTitle>
-            <CardDescription>
-              Últimas movimentações no sistema
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentActivities.map((activity) => (
-                <div key={activity.id} className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
-                      {activity.type === "budget" && <FileText className="h-4 w-4" />}
-                      {activity.type === "service_order" && <ClipboardList className="h-4 w-4" />}
-                      {activity.type === "payment" && <DollarSign className="h-4 w-4" />}
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">{activity.title}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {activity.client} • {activity.time}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium">
-                      R$ {activity.amount.toLocaleString()}
-                    </p>
-                    <Badge variant={
-                      activity.status === "completed" ? "default" :
-                      activity.status === "pending" ? "secondary" : "outline"
-                    }>
-                      {activity.status === "completed" && "Concluído"}
-                      {activity.status === "pending" && "Pendente"}
-                      {activity.status === "paid" && "Pago"}
-                    </Badge>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Pending Approvals */}
+      {/* Resumo das Entidades do Projeto */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              Aprovações Pendentes
+              <Handshake className="h-5 w-5" />
+              Parceiros
             </CardTitle>
-            <CardDescription>
-              Orçamentos aguardando aprovação
-            </CardDescription>
+            <CardDescription>Gestão de parceiros comerciais</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {pendingApprovals.map((item) => (
-                <div key={item.id} className="flex items-center justify-between p-3 rounded-lg border">
-                  <div>
-                    <p className="text-sm font-medium">{item.number}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {item.client} • {item.date}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium">
-                      R$ {item.amount.toLocaleString()}
-                    </p>
-                    <Button size="sm" variant="outline" className="mt-1">
-                      Revisar
-                    </Button>
-                  </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-2xl font-bold">
+                  {partnersLoading ? "..." : stats.partnersCount}
                 </div>
-              ))}
+                <p className="text-xs text-muted-foreground">Total cadastrados</p>
+              </div>
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/partners">
+                  Ver todos
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Clientes
+            </CardTitle>
+            <CardDescription>Total de clientes cadastrados</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-2xl font-bold">
+                  {clientsLoading ? "..." : stats.clientsCount}
+                </div>
+                <p className="text-xs text-muted-foreground">Total cadastrados</p>
+              </div>
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/clients">
+                  Ver todos
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <UserCheck className="h-5 w-5" />
+              Usuários
+            </CardTitle>
+            <CardDescription>Usuários do sistema</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-2xl font-bold">
+                  {usersLoading ? "..." : stats.usersCount}
+                </div>
+                <p className="text-xs text-muted-foreground">Usuários ativos</p>
+              </div>
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/settings/users">
+                  Gerenciar
+                </Link>
+              </Button>
             </div>
           </CardContent>
         </Card>
       </div>
-
-      {/* Upcoming Deadlines */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-4 w-4" />
-            Próximos Vencimentos
-          </CardTitle>
-          <CardDescription>
-            Orçamentos e OS com prazos próximos
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {upcomingDeadlines.map((item) => (
-              <div key={item.id} className="flex items-center justify-between p-3 rounded-lg border">
-                <div className="flex items-center gap-3">
-                  <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${
-                    item.daysLeft <= 3 ? "bg-destructive/10 text-destructive" : "bg-muted"
-                  }`}>
-                    {item.type === "budget" ? <FileText className="h-4 w-4" /> : <ClipboardList className="h-4 w-4" />}
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">{item.number}</p>
-                    <p className="text-xs text-muted-foreground">{item.client}</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <Badge variant={item.daysLeft <= 3 ? "destructive" : "secondary"}>
-                    {item.daysLeft} dias
-                  </Badge>
-                </div>
+      {/* Seção de Gráficos e Tendências */}
+      <div className="space-y-6">
+        {/* <div>
+          <h2 className="text-xl font-semibold mb-4">Gráficos e Tendências</h2>
+        </div> */}
+        
+        {/* Gráfico de Tendência de Visitantes */}
+        {/* <VisitorTrendChart /> */}
+        
+        {/* Gráfico de Cadastros de Clientes */}
+        {registrationLoading ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>Evolução dos Cadastros de Clientes</CardTitle>
+              <CardDescription>Acompanhamento diário dos cadastros por status nos últimos 14 dias</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8">
+                <p className="text-sm text-muted-foreground">Carregando dados do gráfico...</p>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        ) : (
+          <ClientRegistrationChart 
+            data={clientRegistrationData}
+            title="Evolução dos Cadastros de Clientes"
+            description="Acompanhamento diário dos cadastros por status nos últimos 14 dias"
+          />
+        )}
+      </div>
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Recent Client Activities */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Atividades Recentes - Clientes</CardTitle>
+            <CardDescription>
+              Últimos cadastros e alterações de clientes
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {activitiesLoading ? (
+                <div className="text-center py-4">
+                  <p className="text-sm text-muted-foreground">Carregando atividades...</p>
+                </div>
+              ) : recentClientActivities.length === 0 ? (
+                <div className="text-center py-4">
+                  <p className="text-sm text-muted-foreground">Nenhuma atividade recente</p>
+                </div>
+              ) : (
+                recentClientActivities.map((activity) => (
+                  <div key={activity.id} className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${
+                        activity.status === "actived" ? "bg-green-100" :
+                        activity.status === "inactived" ? "bg-red-100" : "bg-yellow-100"
+                      }`}>
+                        <Users className={`h-4 w-4 ${
+                          activity.status === "actived" ? "text-green-600" :
+                          activity.status === "inactived" ? "text-red-600" : "text-yellow-600"
+                        }`} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">{activity.title}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {activity.client} • {activity.time}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {activity.cpf || activity.cnpj}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <Badge variant={
+                        activity.status === "actived" ? "default" :
+                        activity.status === "inactived" ? "destructive" : "secondary"
+                      }>
+                        {activity.status === "actived" && "Ativo"}
+                        {activity.status === "inactived" && "Inativo"}
+                        {activity.status === "pre_registred" && "Pré-cadastro"}
+                      </Badge>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Pending Pre-Registrations */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <UserCheck className="h-4 w-4" />
+              Pré-cadastros Pendentes
+            </CardTitle>
+            <CardDescription>
+              Cadastros aguardando aprovação
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {pendingLoading ? (
+                <div className="text-center py-4">
+                  <p className="text-sm text-muted-foreground">Carregando pré-registros...</p>
+                </div>
+              ) : pendingPreRegistrationsData.length === 0 ? (
+                <div className="text-center py-4">
+                  <p className="text-sm text-muted-foreground">Nenhum pré-registro pendente</p>
+                </div>
+              ) : (
+                pendingPreRegistrationsData.map((item) => (
+                  <div key={item.id} className="flex items-center justify-between p-3 rounded-lg border">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-yellow-100">
+                        <Users className="h-4 w-4 text-yellow-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">{item.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {item.email} • {item.date}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {item.phone} • {item.type}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <Badge variant="secondary" className="mb-2">
+                        Pré-cadastro
+                      </Badge>
+                      <div className="flex gap-1">
+                        <Button size="sm" variant="outline" className="text-xs px-2">
+                          Aprovar
+                        </Button>
+                        <Button size="sm" variant="ghost" className="text-xs px-2">
+                          Rejeitar
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>      
     </div>
   );
 }

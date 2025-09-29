@@ -23,6 +23,7 @@ import ServiceView from "./pages/ServiceView";
 import Categories from "./pages/Categories";
 import Permissions from "./pages/settings/Permissions";
 import Users from "./pages/settings/Users";
+import UserProfiles from "./pages/settings/UserProfiles";
 import SystemSettings from "./pages/settings/SystemSettings";
 import Login from "./pages/auth/Login";
 import Metrics from "./pages/settings/Metrics";
@@ -32,6 +33,7 @@ import ResetPassword from "./pages/auth/ResetPassword";
 import NotFound from "./pages/NotFound";
 import { PermissionGuard } from "./components/auth/PermissionGuard";
 import Dashboard from "@/pages/Dashboard";
+import MetricsDashboard from "@/pages/MetricsDashboard";
 import ServiceOrders from "./pages/ServiceOrders";
 import CreateServiceOrder from "./pages/CreateServiceOrder";
 import UpdateServiceOrder from "./pages/UpdateServiceOrder";
@@ -236,6 +238,22 @@ const App = () => {
                 </AppLayout>
               </ProtectedRoute>
             } />
+              <Route path="/metrics-dashboard" element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <PermissionGuard required="settings.metrics.view">
+                      <MetricsDashboard />
+                    </PermissionGuard>
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/settings/user-profiles" element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <UserProfiles />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
               <Route path="/settings/system" element={
                 <ProtectedRoute>
                   <AppLayout>

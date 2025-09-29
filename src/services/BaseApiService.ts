@@ -43,19 +43,17 @@ export abstract class BaseApiService {
       let errorBody: any = null;
       try {
         errorBody = await response.json();
-        errorMessage = errorBody?.message || errorMessage;
+        errorMessage = errorBody?.message || errorBody?.error || errorMessage;
       } catch {
         // ignore json parse errors
       }
-      // console.log('errorMessage:', errorMessage);
-      // console.log('errorBody:', errorBody);
-      // const error = new Error(errorMessage) as Error & { status?: number; body?: any };
-      // error.status = response.status;
-      // // error.message = response.message;
-      // error.body = errorBody;
-      // console.log('error:', error);
       
-      throw errorBody;
+      // Criar erro com status code para verificação de acesso
+      const error = new Error(errorMessage) as Error & { status?: number; body?: any };
+      error.status = response.status;
+      error.body = errorBody;
+      
+      throw error;
     }
     return response.json();
   }

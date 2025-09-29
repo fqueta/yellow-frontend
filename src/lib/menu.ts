@@ -69,6 +69,12 @@ export const defaultMenu: MenuItemDTO[] = [
     permission: "dashboard.view"
   },
   {
+    title: "Dashboard de Métricas",
+    url: "/metrics-dashboard",
+    icon: "BarChart3",
+    permission: "settings.metrics.view"
+  },
+  {
     title: "Clientes",
     url: "/clients",
     icon: "Users",
