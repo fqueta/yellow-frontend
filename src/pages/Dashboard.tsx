@@ -41,7 +41,7 @@ export default function Dashboard() {
   const hasAccessError = [activitiesError, registrationError, pendingError].some(
     error => error && (error as any)?.status === 403
   );
-  console.log('activitiesError:', activitiesError);
+  // console.log('activitiesError:', activitiesError);
   
   // Verificar se ainda está carregando dados iniciais
   const isInitialLoading = (
@@ -87,7 +87,7 @@ export default function Dashboard() {
   const recentClientActivities = recentActivities || [];
   const clientRegistrationData = registrationData || [];
   const pendingPreRegistrationsData = pendingPreRegistrations || [];
-  console.log('recentActivities:', recentActivities);
+  // console.log('recentActivities:', recentActivities);
   // Verificação simples dos dados de registro
   // if (clientRegistrationData.length > 0) {
   //   console.log(`Dashboard: ${clientRegistrationData.length} dias de dados carregados (${clientRegistrationData[0]?.date} a ${clientRegistrationData[clientRegistrationData.length - 1]?.date})`);
