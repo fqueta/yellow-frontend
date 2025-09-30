@@ -1,7 +1,7 @@
 import { Controller, Control } from "react-hook-form";
 import { FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import InputMask from "react-input-mask-next";
+import { InputMask } from "@react-input/mask";
 
 type MaskedInputFieldProps = {
   name: string;
@@ -9,6 +9,8 @@ type MaskedInputFieldProps = {
   label: string;
   mask: string;
   placeholder?: string;
+  onBlur?: (event: React.FocusEvent<HTMLInputElement>) => void;
+  disabled?: boolean;
 };
 
 export function MaskedInputField({
@@ -17,6 +19,8 @@ export function MaskedInputField({
   label,
   mask,
   placeholder,
+  onBlur,
+  disabled,
 }: MaskedInputFieldProps) {
   return (
     <FormItem>
@@ -27,13 +31,15 @@ export function MaskedInputField({
             control={control}
             render={({ field }) => (
                 <InputMask
-                mask={mask}
-                value={field.value || ""}
-                onChange={field.onChange}
-                inputRef={field.ref} // v3 usa "inputRef"
-                >
-                <Input placeholder={placeholder} />
-                </InputMask>
+                  mask={mask}
+                  replacement={{ _: /\d/ }}
+                  value={field.value || ""}
+                  onChange={field.onChange}
+                  onBlur={onBlur}
+                  disabled={disabled}
+                  placeholder={placeholder}
+                  ref={field.ref}
+                />
             )}
             />
       </FormControl>

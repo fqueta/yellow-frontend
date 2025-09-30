@@ -11,7 +11,7 @@ import {
 import { MaskedInputField } from '@/components/lib/MaskedInputField';
 import { cepApplyMask, cepRemoveMask } from '@/lib/masks/cep-apply-mask';
 import { Controller } from 'react-hook-form';
-import InputMask from "react-input-mask-next";
+import { InputMask } from "@react-input/mask";
 
 interface AddressInputsProps {
   form: any;
@@ -93,19 +93,17 @@ export function AddressInputs({form}: AddressInputsProps){
                 control={form.control}
                 render={({ field }) => (
                   <InputMask
-                    mask="99999-999"
+                    mask="_____-___"
+                    replacement={{ _: /\d/ }}
                     value={field.value || ""}
                     onChange={(e) => {
                         field.onChange(e.target.value);
                         handleCepChange(e.target.value);
                     }}
                     disabled={isLoadingCep}
-                    inputRef={field.ref}
-                    >
-                    <Input 
-                        placeholder="00000-000"
-                    />
-                    </InputMask>
+                    placeholder="00000-000"
+                    ref={field.ref}
+                  />
                 )}
               />
             </FormControl>

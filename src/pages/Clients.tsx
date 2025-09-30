@@ -28,19 +28,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 import * as z from "zod";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -73,7 +65,6 @@ import {
   Pencil
 } from "lucide-react";
 import { cn } from '@/lib/utils';
-
 import { 
   useClientsList, 
   useCreateClient, 
@@ -84,35 +75,147 @@ import { ClientRecord, CreateClientInput } from '@/types/clients';
 import { ClientForm } from '@/components/clients/ClientForm';
 import { ClientsTable } from '@/components/clients/ClientsTable';
 
-// Form validation schema
+// Utility functions for validation
+const isValidCPF = (cpf: string): boolean => {
+  const cleanCPF = cpf.replace(/\D/g, '');
+  if (cleanCPF.length !== 11 || /^(\d)\1{10}$/.test(cleanCPF)) return false;
+  
+  let sum = 0;
+  for (let i = 0; i < 9; i++) {
+    sum += parseInt(cleanCPF.charAt(i)) * (10 - i);
+  }
+  let remainder = (sum * 10) % 11;
+  if (remainder === 10 || remainder === 11) remainder = 0;
+  if (remainder !== parseInt(cleanCPF.charAt(9))) return false;
+  
+  sum = 0;
+  for (let i = 0; i < 10; i++) {
+    sum += parseInt(cleanCPF.charAt(i)) * (11 - i);
+  }
+  remainder = (sum * 10) % 11;
+  if (remainder === 10 || remainder === 11) remainder = 0;
+  return remainder === parseInt(cleanCPF.charAt(10));
+};
+
+const isValidCNPJ = (cnpj: string): boolean => {
+  const cleanCNPJ = cnpj.replace(/\D/g, '');
+  if (cleanCNPJ.length !== 14 || /^(\d)\1{13}$/.test(cleanCNPJ)) return false;
+  
+  let sum = 0;
+  let weight = 2;
+  for (let i = 11; i >= 0; i--) {
+    sum += parseInt(cleanCNPJ.charAt(i)) * weight;
+    weight = weight === 9 ? 2 : weight + 1;
+  }
+  let remainder = sum % 11;
+  const digit1 = remainder < 2 ? 0 : 11 - remainder;
+  if (digit1 !== parseInt(cleanCNPJ.charAt(12))) return false;
+  
+  sum = 0;
+  weight = 2;
+  for (let i = 12; i >= 0; i--) {
+    sum += parseInt(cleanCNPJ.charAt(i)) * weight;
+    weight = weight === 9 ? 2 : weight + 1;
+  }
+  remainder = sum % 11;
+  const digit2 = remainder < 2 ? 0 : 11 - remainder;
+  return digit2 === parseInt(cleanCNPJ.charAt(13));
+};
+
+const isValidPhone = (phone: string): boolean => {
+  const cleanPhone = phone.replace(/\D/g, '');
+  return cleanPhone.length >= 10 && cleanPhone.length <= 11;
+};
+
+const isValidCEP = (cep: string): boolean => {
+  const cleanCEP = cep.replace(/\D/g, '');
+  return cleanCEP.length === 8;
+};
+
+// Enhanced form validation schema
 const clientSchema = z.object({
-  tipo_pessoa: z.enum(["pf", "pj"]),
-  email: z.string().email('Email inválido'),
-  name: z.string().min(1, 'Nome é obrigatório'),
-  cpf: z.string().optional(),
-  cnpj: z.string().optional(),
+  tipo_pessoa: z.enum(["pf", "pj"], {
+    errorMap: () => ({ message: "Selecione o tipo de pessoa" })
+  }),
+  email: z.string()
+    .min(1, "Email é obrigatório")
+    .email("Formato de email inválido")
+    .max(100, "Email deve ter no máximo 100 caracteres"),
+  name: z.string()
+    .min(2, "Nome deve ter pelo menos 2 caracteres")
+    .max(100, "Nome deve ter no máximo 100 caracteres")
+    .regex(/^[a-zA-ZÀ-ÿ\s]+$/, "Nome deve conter apenas letras e espaços"),
+  cpf: z.string().optional().refine((val) => {
+    if (!val || val.trim() === '') return true;
+    return isValidCPF(val);
+  }, "CPF inválido"),
+  cnpj: z.string().optional().refine((val) => {
+    if (!val || val.trim() === '') return true;
+    return isValidCNPJ(val);
+  }, "CNPJ inválido"),
   razao: z.string().optional(),
-  genero: z.enum(["m", "f", "ni"]),
-  ativo: z.enum(["s", "n"]),
+  genero: z.enum(["m", "f", "ni"], {
+    errorMap: () => ({ message: "Selecione o gênero" })
+  }),
+  ativo: z.enum(["actived", "inactived", "pre_registred"], {
+    errorMap: () => ({ message: "Selecione o status" })
+  }),
+  autor: z.string().optional(),
   config: z.object({
     nome_fantasia: z.string().nullable().optional(),
-    celular: z.string().min(14, 'Informe o celular').nullable().optional(),
-    telefone_residencial: z.string().nullable().optional(),
-    telefone_comercial: z.string().nullable().optional(),
-    rg: z.string().nullable().optional(),
-    nascimento: z.string().nullable().optional(),
+    celular: z.string().nullable().optional().refine((val) => {
+      if (!val || val.trim() === '') return true;
+      return isValidPhone(val);
+    }, "Número de celular inválido"),
+    telefone_residencial: z.string().nullable().optional().refine((val) => {
+      if (!val || val.trim() === '') return true;
+      return isValidPhone(val);
+    }, "Número de telefone residencial inválido"),
+    rg: z.string().nullable().optional().refine((val) => {
+      if (!val || val.trim() === '') return true;
+      const cleanRG = val.replace(/\D/g, '');
+      return cleanRG.length >= 7 && cleanRG.length <= 9;
+    }, "RG deve ter entre 7 e 9 dígitos"),
+    nascimento: z.string().nullable().optional().refine((val) => {
+      if (!val || val.trim() === '') return true;
+      const birthDate = new Date(val);
+      const today = new Date();
+      const age = today.getFullYear() - birthDate.getFullYear();
+      return age >= 0 && age <= 120;
+    }, "Data de nascimento inválida"),
     escolaridade: z.string().nullable().optional(),
     profissao: z.string().nullable().optional(),
     tipo_pj: z.string().nullable().optional(),
-    cep: z.string().nullable().optional(),
+    cep: z.string().nullable().optional().refine((val) => {
+      if (!val || val.trim() === '') return true;
+      return isValidCEP(val);
+    }, "CEP deve ter 8 dígitos"),
     endereco: z.string().nullable().optional(),
     numero: z.string().nullable().optional(),
     complemento: z.string().nullable().optional(),
     bairro: z.string().nullable().optional(),
-    cidade: z.string().nullable().optional(),
+    cidade: z.string().nullable().optional().refine((val) => {
+      if (!val || val.trim() === '') return true;
+      return /^[a-zA-ZÀ-ÿ\s]+$/.test(val);
+    }, "Cidade deve conter apenas letras e espaços"),
     uf: z.string().nullable().optional(),
-    observacoes: z.string().nullable().optional(),
+    observacoes: z.string().nullable().optional().refine((val) => {
+      if (!val || val.trim() === '') return true;
+      return val.length <= 500;
+    }, "Observações devem ter no máximo 500 caracteres"),
   }),
+}).refine((data) => {
+  // Conditional validation: CPF required for PF, CNPJ and razao required for PJ
+  if (data.tipo_pessoa === 'pf') {
+    return data.cpf && data.cpf.trim() !== '';
+  }
+  if (data.tipo_pessoa === 'pj') {
+    return data.cnpj && data.cnpj.trim() !== '' && data.razao && data.razao.trim() !== '';
+  }
+  return true;
+}, {
+  message: "CPF é obrigatório para Pessoa Física. CNPJ e Razão Social são obrigatórios para Pessoa Jurídica.",
+  path: ['tipo_pessoa']
 });
 
 type ClientFormData = z.infer<typeof clientSchema>;
@@ -180,12 +283,12 @@ export default function Clients() {
       cnpj: "",
       razao: "",
       genero: "ni",
-      ativo: "s",
+      ativo: "actived",
+      autor: "",
       config: {
         nome_fantasia: "",
         celular: "",
         telefone_residencial: "",
-        telefone_comercial: "",
         rg: "",
         nascimento: "",
         escolaridade: "",
@@ -214,11 +317,11 @@ export default function Clients() {
       razao: "",
       genero: "ni",
       ativo: "s",
+      autor: "",
       config: {
         nome_fantasia: "",
         celular: "",
         telefone_residencial: "",
-        telefone_comercial: "",
         rg: "",
         nascimento: "",
         escolaridade: "",
@@ -248,11 +351,11 @@ export default function Clients() {
       razao: client.razao || "",
       genero: client.genero,
       ativo: client.ativo,
+      autor: client.autor || "",
       config: {
         nome_fantasia: client.config?.nome_fantasia || "",
         celular: client.config?.celular || "",
         telefone_residencial: client.config?.telefone_residencial || "",
-        telefone_comercial: client.config?.telefone_comercial || "",
         rg: client.config?.rg || "",
         nascimento: client.config?.nascimento || "",
         escolaridade: client.config?.escolaridade || "",
@@ -308,14 +411,15 @@ export default function Clients() {
       razao: data.tipo_pessoa === 'pj' ? data.razao : undefined,
       genero: data.genero,
       ativo: data.ativo,
+      autor: data.autor,
       config: data.config,
     };
     
     if (editingClient) {
       updateClientMutation.mutate(
         {
-          id: editingClient.id, ...clientData,
-          data: undefined
+          id: editingClient.id,
+          data: clientData
         },
         {
           onSuccess: () => {
@@ -412,7 +516,7 @@ export default function Clients() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {clientsQuery.data?.data?.filter(client => client.ativo === 's').length || 0}
+              {clientsQuery.data?.data?.filter(client => client.ativo === 'actived').length || 0}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               Clientes com status ativo

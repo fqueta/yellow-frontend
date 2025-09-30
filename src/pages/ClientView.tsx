@@ -135,8 +135,14 @@ export default function ClientView() {
             </p>
           </div>
         </div>
-        <Badge variant={client.ativo === 's' ? 'default' : 'destructive'}>
-          {client.ativo === 's' ? 'Ativo' : 'Inativo'}
+        <Badge variant={
+          client.ativo === 'actived' ? 'default' : 
+          client.ativo === 'inactived' ? 'destructive' : 
+          'secondary'
+        }>
+          {client.ativo === 'actived' ? 'Ativo' : 
+           client.ativo === 'inactived' ? 'Inativo' : 
+           'Pré-cadastro'}
         </Badge>
       </div>
 

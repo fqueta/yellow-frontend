@@ -4,7 +4,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { MoreHorizontal, Pencil, Trash2, Eye } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ClientRecord } from '@/types/clients';
-import { Mail, Phone } from 'lucide-react';
+import { useUsersList } from '@/hooks/users';
 interface ClientsTableProps {
   clients: ClientRecord[];
   onEdit: (client: ClientRecord) => void;
@@ -16,6 +16,33 @@ interface ClientsTableProps {
 export function ClientsTable({ clients, onEdit, onDelete, onView, isLoading }: ClientsTableProps) {
   // Garantir que clients seja sempre um array válido
   const clientsList = Array.isArray(clients) ? clients : [];
+  
+  // Buscar lista de usuários para identificar o proprietário
+  const { data: usersData } = useUsersList();
+  const usersList = usersData?.data || [];
+  
+  // Função para obter o nome do proprietário pelo ID do autor
+  const getOwnerName = (autorId: string) => {
+    const user = usersList.find(user => user.id === autorId);
+    return user?.name || 'Não identificado';
+  };
+  
+  // Função para formatar o status
+  const getStatusBadge = (status: string) => {
+    const statusMap = {
+      'actived': { label: 'Ativo', variant: 'default' as const },
+      'inactived': { label: 'Inativo', variant: 'destructive' as const },
+      'pre_registred': { label: 'Pré-cadastro', variant: 'secondary' as const }
+    };
+    
+    const statusInfo = statusMap[status as keyof typeof statusMap] || { label: status || 'Não definido', variant: 'outline' as const };
+    
+    return (
+      <Badge variant={statusInfo.variant}>
+        {statusInfo.label}
+      </Badge>
+    );
+  };
   
   if (isLoading) {
     return <div className="text-center py-4">Carregando clientes...</div>;
@@ -30,9 +57,9 @@ export function ClientsTable({ clients, onEdit, onDelete, onView, isLoading }: C
       <TableHeader>
         <TableRow>
           <TableHead>Nome</TableHead>
-          <TableHead>Contato</TableHead>
-          <TableHead>Documento</TableHead>
-          <TableHead>Localização</TableHead>
+          <TableHead>CPF</TableHead>
+          <TableHead>Email</TableHead>
+          <TableHead>Proprietário</TableHead>
           <TableHead>Status</TableHead>
           <TableHead className="text-right">Ações</TableHead>
         </TableRow>
@@ -42,19 +69,16 @@ export function ClientsTable({ clients, onEdit, onDelete, onView, isLoading }: C
           <TableRow key={client.id}>
             <TableCell className="font-medium">{client.name}</TableCell>
             <TableCell>
-              {client.email && <div className="flex items-center gap-1"><Mail className="h-3 w-3" /> {client.email}</div>}
-              {client.config?.celular && <div className="flex items-center gap-1"><Phone className="h-3 w-3" /> {client.config.celular}</div>}
+              {client.tipo_pessoa === 'pf' ? (client.cpf || 'Não informado') : (client.cnpj || 'Não informado')}
             </TableCell>
+            <TableCell>{client.email || 'Não informado'}</TableCell>
+            <TableCell>{getOwnerName(client.autor)}</TableCell>
             <TableCell>
-              {client.tipo_pessoa === 'pf' ? client.cpf : client.cnpj}
-            </TableCell>
-            <TableCell>
-              {client.config?.cidade && `${client.config.cidade}/${client.config.uf}`}
-            </TableCell>
-            <TableCell>
-              <Badge className={client.ativo === 's' ? "success" : "destructive"}>
-                {client.ativo === 's' ? "Ativo" : "Inativo"}
-              </Badge>
+              {/* Debug temporário */}
+              <div style={{fontSize: '10px', color: 'gray', marginBottom: '4px'}}>
+                Debug: {JSON.stringify({ativo: client.ativo, type: typeof client.ativo})}
+              </div>
+              {getStatusBadge(client.ativo)}
             </TableCell>
             <TableCell className="text-right">
               <DropdownMenu>

@@ -2,7 +2,6 @@ export interface ClientConfig {
   nome_fantasia: string;
   celular: string;
   telefone_residencial: string;
-  telefone_comercial: string;
   rg: string;
   nascimento: string;
   escolaridade: string;
@@ -23,12 +22,13 @@ export interface ClientRecord {
   tipo_pessoa: "pf" | "pj";
   email: string;
   name: string;
-  cpf: string;
-  cnpj: string;
-  razao: string;
+  cpf: string | null;
+  cnpj: string | null;
+  razao: string | null;
   config: ClientConfig;
   genero: "m" | "f" | "ni";
-  ativo: "s" | "n";
+  ativo: "actived" | "inactived" | "pre_registred";
+  autor: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -42,7 +42,8 @@ export interface CreateClientInput {
   razao?: string;
   config: ClientConfig;
   genero: "m" | "f" | "ni";
-  ativo: "s" | "n";
+  ativo: "actived" | "inactived" | "pre_registred";
+  autor?: string;
 }
 
 export interface UpdateClientInput {
@@ -54,7 +55,8 @@ export interface UpdateClientInput {
   razao?: string;
   config?: ClientConfig;
   genero?: "m" | "f" | "ni";
-  ativo?: "s" | "n";
+  ativo?: "actived" | "inactived" | "pre_registred";
+  autor?: string;
 }
 
 export interface ClientsListParams {
