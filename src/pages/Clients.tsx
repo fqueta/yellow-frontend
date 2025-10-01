@@ -386,10 +386,78 @@ export default function Clients() {
             setEditingClient(null);
             form.reset();
           },
-          onError: (error) => {
+          onError: (error: any) => {
+            // Função para tratar erros de validação específicos
+            const handleValidationErrors = (errorData: any) => {
+              if (errorData?.errors) {
+                // Tratar erros de campo específicos
+                Object.keys(errorData.errors).forEach((field) => {
+                  const fieldErrors = errorData.errors[field];
+                  if (Array.isArray(fieldErrors) && fieldErrors.length > 0) {
+                    // Definir erro no campo específico do formulário
+                    form.setError(field as keyof ClientFormData, {
+                      type: "server",
+                      message: fieldErrors[0]
+                    });
+                  }
+                });
+                
+                // Mostrar toast com mensagem geral
+                toast({
+                  title: "Erro de validação",
+                  description: errorData.message || "Verifique os campos destacados",
+                  variant: "destructive",
+                });
+                return;
+              }
+            };
+            
+            // Tentar obter a resposta de erro do BaseApiService
+             let errorData;
+             try {
+               // O BaseApiService coloca o corpo do erro na propriedade 'body'
+               errorData = error.body || error.response?.data;
+               
+               // Se ainda for string, tentar parsear
+               if (typeof errorData === 'string') {
+                 errorData = JSON.parse(errorData);
+               }
+             } catch {
+               // Fallback para error.response?.data se houver
+               errorData = error.response?.data || error.body;
+             }
+            
+            // Se é erro de validação estruturado, tratar especificamente
+            if (errorData && !errorData.exec && errorData.errors) {
+              handleValidationErrors(errorData);
+              return;
+            }
+            
+            // Função para determinar mensagem de erro específica
+            const getErrorMessage = () => {
+              const errorWithStatus = error as Error & { status?: number };
+              
+              switch (errorWithStatus.status) {
+                case 400:
+                  return "Dados inválidos. Verifique as informações preenchidas.";
+                case 409:
+                  return "Já existe um cliente com este CPF/CNPJ ou email.";
+                case 422:
+                  return "Dados não processáveis. Verifique os campos obrigatórios.";
+                case 500:
+                  return "Erro interno do servidor. Tente novamente em alguns minutos.";
+                case 403:
+                  return "Você não tem permissão para atualizar clientes.";
+                case 401:
+                  return "Sua sessão expirou. Faça login novamente.";
+                default:
+                  return error.message || "Ocorreu um erro inesperado ao atualizar o cliente.";
+              }
+            };
+            
             toast({
               title: "Erro ao atualizar cliente",
-              description: `Ocorreu um erro: ${error.message}`,
+              description: getErrorMessage(),
               variant: "destructive",
             });
           },
