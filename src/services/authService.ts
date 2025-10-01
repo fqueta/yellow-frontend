@@ -111,6 +111,55 @@ class AuthService {
     return this.handleResponse<User>(response);
   }
 
+  async updateProfile(data: Partial<User> | FormData): Promise<User> {
+    const headers: HeadersInit = {
+      'Accept': 'application/json',
+    };
+
+    // Adiciona token de autorização
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    // Se for FormData, não adiciona Content-Type (deixa o browser definir)
+    // Se for objeto, adiciona Content-Type: application/json
+    let body: string | FormData;
+    if (data instanceof FormData) {
+      body = data;
+    } else {
+      headers['Content-Type'] = 'application/json';
+      body = JSON.stringify(data);
+    }
+
+    const response = await fetch(`${API_BASE_URL}/user/profile`, {
+      method: 'PUT',
+      headers,
+      body,
+    });
+
+    const updatedUser = await this.handleResponse<User>(response);
+    
+    // Atualiza o usuário no localStorage
+    localStorage.setItem('auth_user', JSON.stringify(updatedUser));
+    
+    return updatedUser;
+  }
+
+  async changePassword(passwordData: {
+    current_password: string;
+    new_password: string;
+    new_password_confirmation: string;
+  }): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/user/change-password`, {
+      method: 'PUT',
+      headers: this.getHeaders(true),
+      body: JSON.stringify(passwordData),
+    });
+
+    await this.handleResponse<void>(response);
+  }
+
   async forgotPassword(data: ForgotPasswordData): Promise<{ message: string }> {
     const response = await fetch(`${API_BASE_URL}/forgot-password`, {
       method: 'POST',

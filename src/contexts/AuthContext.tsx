@@ -9,6 +9,12 @@ interface AuthContextType extends AuthState {
   register: (data: RegisterData) => Promise<boolean>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  updateProfile: (data: Partial<User> | FormData) => Promise<boolean>;
+  changePassword: (passwordData: {
+    current_password: string;
+    new_password: string;
+    new_password_confirmation: string;
+  }) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -133,6 +139,53 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
+  const updateProfile = async (data: Partial<User> | FormData): Promise<boolean> => {
+    try {
+      const updatedUser = await authService.updateProfile(data);
+      setState((prev) => ({ ...prev, user: updatedUser }));
+      
+      toast({
+        title: "Perfil atualizado",
+        description: "Suas informações foram atualizadas com sucesso.",
+      });
+      
+      return true;
+    } catch (error) {
+      toast({
+        title: "Erro ao atualizar perfil",
+        description: error instanceof Error ? error.message : "Erro desconhecido",
+        variant: "destructive",
+      });
+      
+      return false;
+    }
+  };
+
+  const changePassword = async (passwordData: {
+    current_password: string;
+    new_password: string;
+    new_password_confirmation: string;
+  }): Promise<boolean> => {
+    try {
+      await authService.changePassword(passwordData);
+      
+      toast({
+        title: "Senha alterada",
+        description: "Sua senha foi alterada com sucesso.",
+      });
+      
+      return true;
+    } catch (error) {
+      toast({
+        title: "Erro ao alterar senha",
+        description: error instanceof Error ? error.message : "Erro desconhecido",
+        variant: "destructive",
+      });
+      
+      return false;
+    }
+  };
+
   // Inicialização - verificar se há sessão salva
   useEffect(() => {
     const initializeAuth = async () => {
@@ -174,6 +227,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     register,
     logout,
     refreshUser,
+    updateProfile,
+    changePassword,
   };
 
   return (

@@ -7,9 +7,15 @@ export function getTenantIdFromSubdomain(): string | null {
 export function getTenantApiUrl(): string {
   // Derive tenant API URL from VITE_API_URL by removing 'api-' prefix
   const baseUrl : string = import.meta.env.VITE_TENANT_API_URL || 'http://maisaqui1.localhost:8000/api/v1';
-  const tenant_id = getTenantIdFromSubdomain() || 'default';
-  const ret = baseUrl.replace('{tenant_id}', tenant_id);
-  return ret;
+  
+  // Se a URL contém placeholder {tenant_id}, substitui pelo tenant atual
+  if (baseUrl.includes('{tenant_id}')) {
+    const tenant_id = getTenantIdFromSubdomain() || 'default';
+    return baseUrl.replace('{tenant_id}', tenant_id);
+  }
+  
+  // Caso contrário, retorna a URL como está (para desenvolvimento local)
+  return baseUrl;
 }
 
 export function getVersionApi(): string {

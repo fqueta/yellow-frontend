@@ -1,107 +1,159 @@
-import { useState } from 'react';
-import { User, Pencil, Save, X, Camera, Mail, Calendar, Building, Phone } from 'lucide-react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { z } from 'zod';
+import { useAuth } from '../../contexts/AuthContext';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../../components/ui/dialog';
+import { toast } from '../../hooks/use-toast';
+import { Edit, Save, X, Eye, EyeOff } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { toast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
-
-// Schema de validação para edição do perfil
+// Schema de validacao para o perfil
 const profileSchema = z.object({
-  name: z.string().min(1, 'Nome é obrigatório'),
-  email: z.string().email('Email inválido'),
-  company: z.string().optional(),
-  role: z.string().optional(),
+  name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
+  email: z.string().email('Email invalido'),
+  phone: z.string().optional(),
+  bio: z.string().optional(),
+});
+
+// Schema de validacao para alteracao de senha
+const changePasswordSchema = z.object({
+  current_password: z.string().min(1, 'Senha atual e obrigatoria'),
+  new_password: z.string().min(6, 'Nova senha deve ter pelo menos 6 caracteres'),
+  new_password_confirmation: z.string().min(1, 'Confirmacao de senha e obrigatoria'),
+}).refine((data) => data.new_password === data.new_password_confirmation, {
+  message: 'As senhas nao coincidem',
+  path: ['new_password_confirmation'],
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
+type ChangePasswordFormData = z.infer<typeof changePasswordSchema>;
 
 /**
- * Página de visualização e edição do perfil do usuário logado
- * Permite ao usuário visualizar e editar suas informações pessoais
+ * Componente para gerenciar o perfil do usuario
+ * Permite edicao de informacoes pessoais, upload de avatar e alteracao de senha
  */
-export default function UserProfiles() {
-  const { user } = useAuth();
+const UserProfiles: React.FC = () => {
+  const { user, updateProfile, changePassword } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
-  const form = useForm<ProfileFormData>({
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showNewPasswordConfirmation, setShowNewPasswordConfirmation] = useState(false);
+
+  // Form para edicao do perfil
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    reset,
+    setValue,
+  } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
       name: user?.name || '',
       email: user?.email || '',
-      company: user?.company || '',
-      role: user?.role || '',
+      phone: user?.phone || '',
+      bio: user?.bio || '',
+    },
+  });
+
+  // Form para alteracao de senha
+  const passwordForm = useForm<ChangePasswordFormData>({
+    resolver: zodResolver(changePasswordSchema),
+    defaultValues: {
+      current_password: '',
+      new_password: '',
+      new_password_confirmation: '',
     },
   });
 
   /**
-   * Manipula o envio do formulário de edição do perfil
+   * Funcao para submeter as alteracoes do perfil
    */
   const onSubmit = async (data: ProfileFormData) => {
-    setIsLoading(true);
     try {
-      // Aqui você implementaria a chamada para a API para atualizar o perfil
-      // await updateUserProfile(data);
-      
-      toast({
-        title: "Perfil atualizado",
-        description: "Suas informações foram atualizadas com sucesso.",
-      });
-      
+      await updateProfile(data);
       setIsEditing(false);
-    } catch (error) {
       toast({
-        title: "Erro ao atualizar perfil",
-        description: "Ocorreu um erro ao atualizar suas informações.",
-        variant: "destructive",
+        title: 'Sucesso',
+        description: 'Perfil atualizado com sucesso!',
       });
-    } finally {
-      setIsLoading(false);
+    } catch (error) {
+      console.error('Erro ao atualizar perfil:', error);
+      toast({
+        title: 'Erro',
+        description: 'Erro ao atualizar perfil. Tente novamente.',
+        variant: 'destructive',
+      });
     }
   };
 
   /**
-   * Cancela a edição e restaura os valores originais
+   * Funcao para submeter a alteracao de senha
    */
-  const handleCancelEdit = () => {
-    form.reset({
-      name: user?.name || '',
-      email: user?.email || '',
-      company: user?.company || '',
-      role: user?.role || '',
-    });
-    setIsEditing(false);
+  const onPasswordSubmit = async (data: ChangePasswordFormData) => {
+    setIsChangingPassword(true);
+    try {
+      const success = await changePassword({
+        current_password: data.current_password,
+        new_password: data.new_password,
+        new_password_confirmation: data.new_password_confirmation,
+      });
+      
+      if (success) {
+        setIsChangePasswordOpen(false);
+        passwordForm.reset();
+        setShowCurrentPassword(false);
+        setShowNewPassword(false);
+        setShowNewPasswordConfirmation(false);
+      }
+    } catch (error) {
+      console.error('Erro ao alterar senha:', error);
+    } finally {
+      setIsChangingPassword(false);
+    }
   };
 
   /**
-   * Obtém as iniciais do nome do usuário para o avatar
+   * Funcao para cancelar a edicao
    */
-  const getUserInitials = (name: string) => {
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    reset({
+      name: user?.name || '',
+      email: user?.email || '',
+      phone: user?.phone || '',
+      bio: user?.bio || '',
+    });
+  };
+
+  /**
+   * Funcao para fechar o modal de alteracao de senha
+   */
+  const handleClosePasswordModal = () => {
+    setIsChangePasswordOpen(false);
+    passwordForm.reset();
+    setShowCurrentPassword(false);
+    setShowNewPassword(false);
+    setShowNewPasswordConfirmation(false);
+  };
+
+
+
+  /**
+   * Funcao para obter as iniciais do usuario
+   */
+  const getUserInitials = (name?: string) => {
+    if (!name || typeof name !== 'string') {
+      return 'U';
+    }
     return name
       .split(' ')
       .map(word => word.charAt(0))
@@ -112,268 +164,254 @@ export default function UserProfiles() {
 
   if (!user) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <p className="text-muted-foreground">Carregando informações do usuário...</p>
+      <div className="flex items-center justify-center h-64">
+        <p>Carregando...</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Cabeçalho da página */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Meu Perfil</h1>
-          <p className="text-muted-foreground">
-            Visualize e edite suas informações pessoais
-          </p>
-        </div>
-        {!isEditing && (
-          <Button onClick={() => setIsEditing(true)} className="gap-2">
-            <Pencil className="h-4 w-4" />
-            Editar Perfil
-          </Button>
-        )}
+    <div className="container mx-auto p-6 max-w-100">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold">Meu Perfil</h1>
+        <p className="text-muted-foreground">Gerencie suas informacoes pessoais e configuracoes de conta</p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
-        {/* Card do Avatar e Informações Básicas */}
-        <Card className="md:col-span-1">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <div className="relative">
-                <Avatar className="h-24 w-24">
-                  <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="text-lg">
-                    {getUserInitials(user.name)}
-                  </AvatarFallback>
-                </Avatar>
-                {isEditing && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full p-0"
-                  >
-                    <Camera className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            </div>
-            <CardTitle className="text-xl">{user.name}</CardTitle>
-            <CardDescription>{user.email}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {user.role && (
-              <div className="flex items-center gap-2">
-                <User className="h-4 w-4 text-muted-foreground" />
-                <Badge variant="secondary">{user.role}</Badge>
-              </div>
-            )}
-            {user.company && (
-              <div className="flex items-center gap-2">
-                <Building className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">{user.company}</span>
-              </div>
-            )}
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm">
-                Membro desde {format(new Date(user.created_at), 'MMMM yyyy', { locale: ptBR })}
-              </span>
-            </div>
-            {user.email_verified_at && (
-              <div className="flex items-center gap-2">
-                <Mail className="h-4 w-4 text-green-600" />
-                <Badge variant="outline" className="text-green-600 border-green-600">
-                  Email Verificado
-                </Badge>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Card de Informações Detalhadas */}
-        <Card className="md:col-span-2">
+      <div className="grid gap-6">
+        {/* Card do Perfil */}
+        <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
-              Informações Pessoais
-            </CardTitle>
-            <CardDescription>
-              {isEditing 
-                ? "Edite suas informações pessoais abaixo"
-                : "Suas informações pessoais cadastradas no sistema"
-              }
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Informacoes Pessoais</CardTitle>
+                <CardDescription>Atualize suas informacoes pessoais</CardDescription>
+              </div>
+              {!isEditing ? (
+                <Button onClick={() => setIsEditing(true)} variant="outline" size="sm">
+                  <Edit className="h-4 w-4 mr-2" />
+                  Editar
+                </Button>
+              ) : (
+                <div className="flex gap-2">
+                  <Button onClick={handleCancelEdit} variant="outline" size="sm">
+                    <X className="h-4 w-4 mr-2" />
+                    Cancelar
+                  </Button>
+                  <Button onClick={handleSubmit(onSubmit)} disabled={isSubmitting} size="sm">
+                    <Save className="h-4 w-4 mr-2" />
+                    {isSubmitting ? 'Salvando...' : 'Salvar'}
+                  </Button>
+                </div>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
-            {isEditing ? (
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Nome Completo</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Digite seu nome completo" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              {/* Avatar */}
+              <div className="flex items-center gap-6">
+                <div className="relative">
+                  <Avatar className="h-24 w-24">
+                    <AvatarImage 
+                      src={user.avatar_url || ''} 
+                      alt={user.name || 'Usuario'} 
                     />
-                    <FormField
-                      control={form.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Digite seu email" type="email" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <FormField
-                      control={form.control}
-                      name="company"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Empresa</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Digite o nome da empresa" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="role"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Cargo</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Digite seu cargo" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <Separator />
-
-                  <div className="flex gap-2 justify-end">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleCancelEdit}
-                      disabled={isLoading}
-                    >
-                      <X className="h-4 w-4 mr-2" />
-                      Cancelar
-                    </Button>
-                    <Button type="submit" disabled={isLoading}>
-                      <Save className="h-4 w-4 mr-2" />
-                      {isLoading ? 'Salvando...' : 'Salvar Alterações'}
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            ) : (
-              <div className="space-y-6">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-muted-foreground">Nome Completo</label>
-                    <p className="text-sm">{user.name}</p>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-muted-foreground">Email</label>
-                    <p className="text-sm">{user.email}</p>
-                  </div>
+                    <AvatarFallback className="text-lg">
+                      {getUserInitials(user.name)}
+                    </AvatarFallback>
+                  </Avatar>
                 </div>
-                
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-muted-foreground">Empresa</label>
-                    <p className="text-sm">{user.company || 'Não informado'}</p>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-muted-foreground">Cargo</label>
-                    <p className="text-sm">{user.role || 'Não informado'}</p>
-                  </div>
-                </div>
-
-                <Separator />
-
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-muted-foreground">Data de Criação</label>
-                    <p className="text-sm">
-                      {format(new Date(user.created_at), "dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR })}
-                    </p>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-muted-foreground">Última Atualização</label>
-                    <p className="text-sm">
-                      {format(new Date(user.updated_at), "dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR })}
-                    </p>
-                  </div>
+                <div>
+                  <h3 className="text-lg font-semibold">{user.name || 'Usuario'}</h3>
+                  <p className="text-muted-foreground">{user.email}</p>
                 </div>
               </div>
-            )}
+
+              {/* Campos do formulario */}
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Nome *</Label>
+                  <Input
+                    id="name"
+                    {...register('name')}
+                    disabled={!isEditing}
+                    className={!isEditing ? 'bg-muted' : ''}
+                  />
+                  {errors.name && (
+                    <p className="text-sm text-destructive">{errors.name.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email *</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    {...register('email')}
+                    disabled={!isEditing}
+                    className={!isEditing ? 'bg-muted' : ''}
+                  />
+                  {errors.email && (
+                    <p className="text-sm text-destructive">{errors.email.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Telefone</Label>
+                  <Input
+                    id="phone"
+                    {...register('phone')}
+                    disabled={!isEditing}
+                    className={!isEditing ? 'bg-muted' : ''}
+                    placeholder="(11) 99999-9999"
+                  />
+                  {errors.phone && (
+                    <p className="text-sm text-destructive">{errors.phone.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="bio">Bio</Label>
+                  <Input
+                    id="bio"
+                    {...register('bio')}
+                    disabled={!isEditing}
+                    className={!isEditing ? 'bg-muted' : ''}
+                    placeholder="Conte um pouco sobre voce..."
+                  />
+                  {errors.bio && (
+                    <p className="text-sm text-destructive">{errors.bio.message}</p>
+                  )}
+                </div>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+
+        {/* Card de Seguranca */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Seguranca</CardTitle>
+            <CardDescription>Gerencie suas configuracoes de seguranca</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div>
+                  <h4 className="font-medium">Senha</h4>
+                  <p className="text-sm text-muted-foreground">Altere sua senha de acesso</p>
+                </div>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsChangePasswordOpen(true)}
+                >
+                  Alterar Senha
+                </Button>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Card de Configurações de Segurança */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Phone className="h-5 w-5" />
-            Configurações de Segurança
-          </CardTitle>
-          <CardDescription>
-            Gerencie suas configurações de segurança e privacidade
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="text-sm font-medium">Alterar Senha</h4>
-                <p className="text-sm text-muted-foreground">
-                  Atualize sua senha para manter sua conta segura
-                </p>
+      {/* Modal de Alteracao de Senha */}
+      <Dialog open={isChangePasswordOpen} onOpenChange={setIsChangePasswordOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Alterar Senha</DialogTitle>
+            <DialogDescription>
+              Digite sua senha atual e escolha uma nova senha
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="current_password">Senha Atual *</Label>
+              <div className="relative">
+                <Input
+                  id="current_password"
+                  type={showCurrentPassword ? 'text' : 'password'}
+                  {...passwordForm.register('current_password')}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
-              <Button variant="outline" size="sm">
-                Alterar Senha
+              {passwordForm.formState.errors.current_password && (
+                <p className="text-sm text-destructive">
+                  {passwordForm.formState.errors.current_password.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="new_password">Nova Senha *</Label>
+              <div className="relative">
+                <Input
+                  id="new_password"
+                  type={showNewPassword ? 'text' : 'password'}
+                  {...passwordForm.register('new_password')}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              {passwordForm.formState.errors.new_password && (
+                <p className="text-sm text-destructive">
+                  {passwordForm.formState.errors.new_password.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="new_password_confirmation">Confirmar Nova Senha *</Label>
+              <div className="relative">
+                <Input
+                  id="new_password_confirmation"
+                  type={showNewPasswordConfirmation ? 'text' : 'password'}
+                  {...passwordForm.register('new_password_confirmation')}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPasswordConfirmation(!showNewPasswordConfirmation)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showNewPasswordConfirmation ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              {passwordForm.formState.errors.new_password_confirmation && (
+                <p className="text-sm text-destructive">
+                  {passwordForm.formState.errors.new_password_confirmation.message}
+                </p>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleClosePasswordModal}
+                disabled={isChangingPassword}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={isChangingPassword}>
+                {isChangingPassword ? 'Alterando...' : 'Alterar Senha'}
               </Button>
             </div>
-            
-            <Separator />
-            
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="text-sm font-medium">Autenticação de Dois Fatores</h4>
-                <p className="text-sm text-muted-foreground">
-                  Adicione uma camada extra de segurança à sua conta
-                </p>
-              </div>
-              <Button variant="outline" size="sm">
-                Configurar 2FA
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
-}
+};
+
+export default UserProfiles;

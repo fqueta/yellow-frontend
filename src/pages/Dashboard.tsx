@@ -16,6 +16,7 @@ import {
   Package,
   Handshake,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { useClientsList } from "@/hooks/clients";
 import { usePartnersList } from "@/hooks/partners";
@@ -26,6 +27,7 @@ import { ClientRegistrationChart } from "@/components/ClientRegistrationChart";
 import { VisitorTrendChart } from "@/components/VisitorTrendChart";
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   // Hooks para buscar dados das entidades
   const { data: clientsData, isLoading: clientsLoading } = useClientsList({ limit: 1 });
   const { data: partnersData, isLoading: partnersLoading } = usePartnersList({ limit: 1 });
@@ -330,12 +332,12 @@ export default function Dashboard() {
                       <Badge variant="secondary" className="mb-2">
                         Pré-cadastro
                       </Badge>
-                      <div className="flex gap-1">
-                        <Button size="sm" variant="outline" className="text-xs px-2">
-                          Aprovar
-                        </Button>
-                        <Button size="sm" variant="ghost" className="text-xs px-2">
+                      <div className="flex gap-1 text-right">
+                        {/* <Button size="sm" variant="ghost" className="text-xs px-2">
                           Rejeitar
+                        </Button> */}
+                        <Button onClick={() => navigate(`/clients/${item.id}/view`)} size="sm" variant="outline" className="text-xs px-2">
+                          Visualizar
                         </Button>
                       </div>
                     </div>
