@@ -1,3 +1,4 @@
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -6,17 +7,44 @@ import { DialogFooter } from '@/components/ui/dialog';
 import { AddressAccordion } from "@/components/lib/AddressAccordion";
 import { SmartDocumentInput } from '@/components/lib/SmartDocumentInput';
 import { MaskedInputField } from '@/components/lib/MaskedInputField';
+import { UseFormReturn } from 'react-hook-form';
+
+interface Permission {
+  id: number;
+  name: string;
+}
+
+interface UserFormData {
+  name: string;
+  email: string;
+  permission_id: string;
+  tipo_pessoa?: 'pf' | 'pj';
+  password?: string;
+  genero?: 'm' | 'f' | 'ni';
+  ativo?: 's' | 'n';
+  cpf?: string;
+  cnpj?: string;
+  razao?: string;
+  config?: {
+    celular?: string;
+    nascimento?: string;
+  };
+}
 
 interface UserFormProps {
-  form: any;
-  onSubmit: (data: any) => void;
+  form: UseFormReturn<UserFormData>;
+  onSubmit: (data: UserFormData) => void;
   onCancel: () => void;
-  editingUser: any;
-  permissions: any[];
+  editingUser?: UserFormData | null;
+  permissions: Permission[];
   isLoadingPermissions: boolean;
   handleOnclick?: () => void;
 }
 
+/**
+ * Componente de formulário para criação e edição de usuários
+ * Suporta tanto pessoa física quanto jurídica com validações específicas
+ */
 export function UserForm({
   form,
   onSubmit,
@@ -25,12 +53,12 @@ export function UserForm({
   permissions,
   isLoadingPermissions,
   handleOnclick,
-}: UserFormProps) {
+}: UserFormProps): React.ReactElement {
   return (
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit, (errors) => {
-          // Você pode adicionar um toast ou log de erro aqui se quiser
+          console.error('Erros de validação:', errors);
         })}
         className="space-y-6"
       >
@@ -201,6 +229,7 @@ export function UserForm({
             label="Celular"
             mask="(dd) ddddd-dddd"
             placeholder="(00) 00000-0000"
+            disabled={isLoadingPermissions}
           />
           <FormField
             control={form.control}

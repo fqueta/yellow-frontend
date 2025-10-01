@@ -71,7 +71,7 @@ import { UserRecord, CreateUserInput } from '@/types/users';
 import { toast } from '@/hooks/use-toast';
 
 const userSchema = z.object({
-  tipo_pessoa: z.enum(["pf", "pj"]),
+  tipo_pessoa: z.enum(["pf", "pj"]).optional(),
   permission_id: z.coerce.string().min(1, 'Permissão é obrigatória'),
   email: z.string().email('Email inválido'),
   password: z.string().transform(val => val === "" ? undefined : val).optional().refine(val => val === undefined || val.length >= 6, {
@@ -82,11 +82,11 @@ const userSchema = z.object({
   cnpj: z.string().optional(),
   // status: z.enum(["actived", "disabled"]),
   razao: z.string().optional(),
-  genero: z.enum(["m", "f", "ni"]),
-  ativo: z.enum(["s", "n"]),
+  genero: z.enum(["m", "f", "ni"]).optional(),
+  ativo: z.enum(["s", "n"]).optional(),
   config: z.object({
     nome_fantasia: z.string().nullable().optional(),
-    celular: z.string().min(14, 'Informe o celular').nullable().optional(),
+    celular: z.string().nullable().optional(),
     telefone_residencial: z.string().nullable().optional(),
     telefone_comercial: z.string().nullable().optional(),
     rg: z.string().nullable().optional(),
@@ -101,7 +101,7 @@ const userSchema = z.object({
     bairro: z.string().nullable().optional(),
     cidade: z.string().nullable().optional(),
     uf: z.string().nullable().optional(),
-  }),
+  }).optional(),
 });
 
 type UserFormData = z.infer<typeof userSchema>;
