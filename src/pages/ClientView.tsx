@@ -473,6 +473,46 @@ export default function ClientView() {
           </CardContent>
         </Card>
 
+        {/* Link de Ativação - Para clientes pré-registrados */}
+        {client.status === 'pre_registred' && client.link_active_cad && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <FileText className="mr-2 h-5 w-5" />
+                Ativação de Cadastro
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Status</label>
+                <p className="text-sm">
+                  <Badge variant="secondary">
+                    Aguardando Ativação
+                  </Badge>
+                </p>
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Link de Ativação</label>
+                <div className="mt-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => window.open(client.link_active_cad, '_blank')}
+                    className="w-full"
+                  >
+                    <FileText className="mr-2 h-4 w-4" />
+                    Acessar Link de Ativação
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Clique para abrir o link de ativação do cadastro
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Integração Alloyal */}
         {client.is_alloyal && (
           <Card>

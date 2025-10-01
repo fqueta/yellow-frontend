@@ -68,7 +68,12 @@ export function ClientsTable({ clients, onEdit, onDelete, isLoading }: ClientsTa
       </TableHeader>
       <TableBody>
         {clientsList.map((client) => (
-          <TableRow key={client.id}>
+          <TableRow 
+            key={client.id}
+            onDoubleClick={() => navigate(`/clients/${client.id}/view`)}
+            className="cursor-pointer hover:bg-muted/50"
+            title={`Visualizar detalhes do cliente ${client.name} com dois cliques`}
+          >
             <TableCell className="font-medium">{client.name}</TableCell>
             <TableCell>
               {client.tipo_pessoa === 'pf' ? (client.cpf || 'Não informado') : (client.cnpj || 'Não informado')}
