@@ -81,7 +81,30 @@ export default function ServiceOrders() {
       refetch();
     } catch (error) {
       console.error("Erro ao excluir ordem de serviço:", error);
-      toast.error("Erro ao excluir ordem de serviço. Tente novamente.");
+      
+      // Função para determinar mensagem de erro específica
+      const getErrorMessage = () => {
+        const errorWithStatus = error as Error & { status?: number };
+        
+        switch (errorWithStatus.status) {
+          case 400:
+            return "Não é possível excluir esta ordem de serviço. Verifique se não há dependências.";
+          case 404:
+            return "Ordem de serviço não encontrada. Pode ter sido removida por outro usuário.";
+          case 409:
+            return "Ordem de serviço não pode ser excluída pois possui registros vinculados.";
+          case 500:
+            return "Erro interno do servidor. Tente novamente em alguns minutos.";
+          case 403:
+            return "Você não tem permissão para excluir esta ordem de serviço.";
+          case 401:
+            return "Sua sessão expirou. Faça login novamente.";
+          default:
+            return (error as Error).message || "Ocorreu um erro inesperado ao excluir a ordem de serviço.";
+        }
+      };
+      
+      toast.error(getErrorMessage());
     }
   };
 
@@ -93,7 +116,32 @@ export default function ServiceOrders() {
       refetch();
     } catch (error) {
       console.error("Erro ao atualizar status:", error);
-      toast.error("Erro ao atualizar status. Tente novamente.");
+      
+      // Função para determinar mensagem de erro específica
+      const getErrorMessage = () => {
+        const errorWithStatus = error as Error & { status?: number };
+        
+        switch (errorWithStatus.status) {
+          case 400:
+            return "Status inválido ou transição não permitida.";
+          case 404:
+            return "Ordem de serviço não encontrada. Pode ter sido removida por outro usuário.";
+          case 409:
+            return "Não é possível alterar o status devido ao estado atual da ordem de serviço.";
+          case 422:
+            return "Dados não processáveis. Verifique se o status é válido.";
+          case 500:
+            return "Erro interno do servidor. Tente novamente em alguns minutos.";
+          case 403:
+            return "Você não tem permissão para alterar o status desta ordem de serviço.";
+          case 401:
+            return "Sua sessão expirou. Faça login novamente.";
+          default:
+            return (error as Error).message || "Ocorreu um erro inesperado ao atualizar o status.";
+        }
+      };
+      
+      toast.error(getErrorMessage());
     }
   };
 

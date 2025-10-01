@@ -136,6 +136,18 @@ class UsersService {
       throw new Error(`Erro ao excluir usuário: ${(error as Error).message}`);
     }
   }
+
+  /**
+   * Busca propriedades dos usuários
+   */
+  async getUsersPropertys(): Promise<UserRecord[]> {
+    const response = await fetch(`${API_BASE_URL}/users/propertys`, {
+      method: 'GET',
+      headers: this.getHeaders(),
+    });
+
+    return this.handleResponse<UserRecord[]>(response);
+  }
 }
 
 export const usersService = new UsersService();

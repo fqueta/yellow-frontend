@@ -11,7 +11,7 @@ import {
 import { MaskedInputField } from '@/components/lib/MaskedInputField';
 import { cepApplyMask, cepRemoveMask } from '@/lib/masks/cep-apply-mask';
 import { Controller } from 'react-hook-form';
-import { InputMask } from "@react-input/mask";
+import { InputMask, format } from "@react-input/mask";
 
 interface AddressInputsProps {
   form: any;
@@ -93,9 +93,9 @@ export function AddressInputs({form}: AddressInputsProps){
                 control={form.control}
                 render={({ field }) => (
                   <InputMask
-                    mask="_____-___"
-                    replacement={{ _: /\d/ }}
-                    value={field.value || ""}
+                    mask="ddddd-ddd"
+                    replacement={{ d: /\d/ }}
+                    value={field.value && typeof field.value === 'string' && field.value.trim() !== '' ? format(field.value, { mask: "ddddd-ddd", replacement: { d: /\d/ } }) : ""}
                     onChange={(e) => {
                         field.onChange(e.target.value);
                         handleCepChange(e.target.value);
@@ -103,6 +103,7 @@ export function AddressInputs({form}: AddressInputsProps){
                     disabled={isLoadingCep}
                     placeholder="00000-000"
                     ref={field.ref}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   />
                 )}
               />

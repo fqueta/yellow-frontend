@@ -24,6 +24,11 @@ export function useClient(id: string, queryOptions?: any) {
   return api.useGetById(id, queryOptions);
 }
 
+export function useClientById(id: string, queryOptions?: any) {
+  const api = getClientsApi();
+  return api.useGetById(id, queryOptions);
+}
+
 export function useCreateClient(mutationOptions?: any) {
   const api = getClientsApi();
   return api.useCreate(mutationOptions);

@@ -1,7 +1,7 @@
 import { Controller, Control } from "react-hook-form";
 import { FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { InputMask } from "@react-input/mask";
+import { InputMask, format } from "@react-input/mask";
 import { useEffect, useState } from "react";
 import { CheckCircle, AlertCircle } from 'lucide-react';
 
@@ -41,11 +41,11 @@ export function SmartDocumentInput({
    */
   useEffect(() => {
     if (tipoPessoa === 'pf') {
-      setMask("999.999.999-99");
+      setMask("ddd.ddd.ddd-dd");
       setInputPlaceholder(placeholder || "000.000.000-00");
       setInputLabel(label || "CPF");
     } else if (tipoPessoa === 'pj') {
-      setMask("99.999.999/9999-99");
+      setMask("dd.ddd.ddd/dddd-dd");
       setInputPlaceholder(placeholder || "00.000.000/0000-00");
       setInputLabel(label || "CNPJ");
     } else {
@@ -207,8 +207,8 @@ export function SmartDocumentInput({
             render={({ field }) => (
               <InputMask
                 mask={mask}
-                replacement={{ _: /\d/ }}
-                value={field.value || ""}
+                replacement={{ d: /\d/ }}
+                value={field.value && mask && typeof field.value === 'string' && field.value.trim() !== '' ? format(field.value, { mask, replacement: { d: /\d/ } }) : ""}
                 onChange={(e) => {
                   field.onChange(e);
                   handleValueChange(e.target.value);
@@ -217,7 +217,7 @@ export function SmartDocumentInput({
                 disabled={disabled}
                 placeholder={inputPlaceholder}
                 ref={field.ref}
-                className="h-11 pr-10"
+                className="h-11 pr-10 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               />
             )}
           />

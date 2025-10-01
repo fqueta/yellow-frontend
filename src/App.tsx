@@ -11,6 +11,8 @@ import { AppLayout } from "./components/layout/AppLayout";
 // import Dashboard from "./pages/Dashboard";
 import Clients from "./pages/Clients";
 import ClientView from "./pages/ClientView";
+import ClientCreate from "./pages/ClientCreate";
+import ClientEdit from "./pages/ClientEdit";
 import Partners from "./pages/Partners";
 import PartnerView from "./pages/PartnerView";
 import ServiceObjects from "./pages/ServiceObjects";
@@ -120,10 +122,24 @@ const App = () => {
                   </AppLayout>
                 </ProtectedRoute>
               } />
-              <Route path="/clients/:id" element={
+              <Route path="/clients/create" element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <ClientCreate />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/clients/:id/view" element={
                 <ProtectedRoute>
                   <AppLayout>
                     <ClientView />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/clients/:id/edit" element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <ClientEdit />
                   </AppLayout>
                 </ProtectedRoute>
               } />

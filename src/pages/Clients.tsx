@@ -1,10 +1,7 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -28,19 +25,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
-import * as z from "zod";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -51,20 +35,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
+import * as z from "zod";
 import { 
   Plus, 
-  Search, 
-  MoreHorizontal, 
-  Edit, 
-  Trash2, 
-  Eye,
-  FileText,
-  ClipboardList,
-  Phone,
-  Mail,
-  Pencil
+  Search
 } from "lucide-react";
-import { cn } from '@/lib/utils';
+import { getBrazilianStates } from '@/lib/qlib';
 import { 
   useClientsList, 
   useCreateClient, 
@@ -157,7 +137,7 @@ const clientSchema = z.object({
   genero: z.enum(["m", "f", "ni"], {
     errorMap: () => ({ message: "Selecione o gênero" })
   }),
-  ativo: z.enum(["actived", "inactived", "pre_registred"], {
+  status: z.enum(["actived", "inactived", "pre_registred"], {
     errorMap: () => ({ message: "Selecione o status" })
   }),
   autor: z.string().optional(),
@@ -221,39 +201,12 @@ const clientSchema = z.object({
 type ClientFormData = z.infer<typeof clientSchema>;
 
 // Brazilian states for the select dropdown
-const brazilianStates = [
-  { value: "AC", label: "Acre" },
-  { value: "AL", label: "Alagoas" },
-  { value: "AP", label: "Amapá" },
-  { value: "AM", label: "Amazonas" },
-  { value: "BA", label: "Bahia" },
-  { value: "CE", label: "Ceará" },
-  { value: "DF", label: "Distrito Federal" },
-  { value: "ES", label: "Espírito Santo" },
-  { value: "GO", label: "Goiás" },
-  { value: "MA", label: "Maranhão" },
-  { value: "MT", label: "Mato Grosso" },
-  { value: "MS", label: "Mato Grosso do Sul" },
-  { value: "MG", label: "Minas Gerais" },
-  { value: "PA", label: "Pará" },
-  { value: "PB", label: "Paraíba" },
-  { value: "PR", label: "Paraná" },
-  { value: "PE", label: "Pernambuco" },
-  { value: "PI", label: "Piauí" },
-  { value: "RJ", label: "Rio de Janeiro" },
-  { value: "RN", label: "Rio Grande do Norte" },
-  { value: "RS", label: "Rio Grande do Sul" },
-  { value: "RO", label: "Rondônia" },
-  { value: "RR", label: "Roraima" },
-  { value: "SC", label: "Santa Catarina" },
-  { value: "SP", label: "São Paulo" },
-  { value: "SE", label: "Sergipe" },
-  { value: "TO", label: "Tocantins" },
-];
+const brazilianStates = getBrazilianStates();
 
 export default function Clients() {
   // State for search, dialogs, and client operations
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [editingClient, setEditingClient] = useState<ClientRecord | null>(null);
@@ -283,7 +236,7 @@ export default function Clients() {
       cnpj: "",
       razao: "",
       genero: "ni",
-      ativo: "actived",
+      status: "actived",
       autor: "",
       config: {
         nome_fantasia: "",
@@ -306,41 +259,13 @@ export default function Clients() {
     },
   });
 
-  const handleNewClient = () => {
-    setEditingClient(null);
-    form.reset({
-      tipo_pessoa: "pf",
-      email: "",
-      name: "",
-      cpf: "",
-      cnpj: "",
-      razao: "",
-      genero: "ni",
-      ativo: "s",
-      autor: "",
-      config: {
-        nome_fantasia: "",
-        celular: "",
-        telefone_residencial: "",
-        rg: "",
-        nascimento: "",
-        escolaridade: "",
-        profissao: "",
-        tipo_pj: "",
-        cep: "",
-        endereco: "",
-        numero: "",
-        complemento: "",
-        bairro: "",
-        cidade: "",
-        uf: "",
-        observacoes: "",
-      },
-    });
-    setIsDialogOpen(true);
-  };
-
-  const handleEditClient = (client: ClientRecord) => {
+  // Handle opening new client dialog - memoized for performance
+  const handleNewClient = useCallback(() => {
+    navigate('/clients/create');
+  }, [navigate]);
+  // console.log('Autor inicial:', form.getValues());
+  // Handle opening edit dialog - memoized for performance
+  const handleEditClient = useCallback((client: ClientRecord) => {
     setEditingClient(client);
     form.reset({
       tipo_pessoa: client.tipo_pessoa,
@@ -350,7 +275,7 @@ export default function Clients() {
       cnpj: client.cnpj || "",
       razao: client.razao || "",
       genero: client.genero,
-      ativo: client.ativo,
+      status: client.status,
       autor: client.autor || "",
       config: {
         nome_fantasia: client.config?.nome_fantasia || "",
@@ -372,14 +297,16 @@ export default function Clients() {
       },
     });
     setIsDialogOpen(true);
-  };
+  }, [form]);
   
-  const handleDeleteClient = (client: ClientRecord) => {
+  // Handle delete confirmation - memoized for performance
+  const handleDeleteClient = useCallback((client: ClientRecord) => {
     setClientToDelete(client);
     setOpenDeleteDialog(true);
-  };
+  }, []);
   
-  const confirmDeleteClient = () => {
+  // Confirm client deletion - memoized for performance
+  const confirmDeleteClient = useCallback(() => {
     if (clientToDelete) {
       deleteClientMutation.mutate(clientToDelete.id, {
         onSuccess: () => {
@@ -391,17 +318,41 @@ export default function Clients() {
           setClientToDelete(null);
         },
         onError: (error) => {
+          // Função para determinar mensagem de erro específica
+          const getErrorMessage = () => {
+            const errorWithStatus = error as Error & { status?: number };
+            
+            switch (errorWithStatus.status) {
+              case 400:
+                return "Não é possível excluir este cliente. Verifique se não há dependências.";
+              case 404:
+                return "Cliente não encontrado. Pode ter sido removido por outro usuário.";
+              case 409:
+                return "Cliente não pode ser excluído pois possui registros vinculados.";
+              case 500:
+                return "Erro interno do servidor. Tente novamente em alguns minutos.";
+              case 403:
+                return "Você não tem permissão para excluir este cliente.";
+              case 401:
+                return "Sua sessão expirou. Faça login novamente.";
+              default:
+                return error.message || "Ocorreu um erro inesperado ao excluir o cliente.";
+            }
+          };
+          
           toast({
             title: "Erro ao excluir cliente",
-            description: `Ocorreu um erro: ${error.message}`,
+            description: getErrorMessage(),
             variant: "destructive",
           });
         },
       });
     }
-  };
+  }, [clientToDelete, deleteClientMutation, toast]);
 
   const onSubmit = (data: ClientFormData) => {
+    console.log('Dados do formulário:', data);
+    console.log('Campo autor:', data.autor);
     const clientData = {
       tipo_pessoa: data.tipo_pessoa,
       email: data.email,
@@ -410,10 +361,14 @@ export default function Clients() {
       cnpj: data.tipo_pessoa === 'pj' ? data.cnpj : undefined,
       razao: data.tipo_pessoa === 'pj' ? data.razao : undefined,
       genero: data.genero,
-      ativo: data.ativo,
+      status: data.status,
       autor: data.autor,
       config: data.config,
     };
+    // Dados enviados para API em modo de desenvolvimento
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Dados enviados para API:', clientData);
+    }
     
     if (editingClient) {
       updateClientMutation.mutate(
@@ -453,9 +408,31 @@ export default function Clients() {
             form.reset();
           },
           onError: (error) => {
+            // Função para determinar mensagem de erro específica
+            const getErrorMessage = () => {
+              const errorWithStatus = error as Error & { status?: number };
+              
+              switch (errorWithStatus.status) {
+                case 400:
+                  return "Dados inválidos. Verifique as informações preenchidas.";
+                case 409:
+                  return "Já existe um cliente com este CPF/CNPJ ou email.";
+                case 422:
+                  return "Dados não processáveis. Verifique os campos obrigatórios.";
+                case 500:
+                  return "Erro interno do servidor. Tente novamente em alguns minutos.";
+                case 403:
+                  return "Você não tem permissão para criar clientes.";
+                case 401:
+                  return "Sua sessão expirou. Faça login novamente.";
+                default:
+                  return error.message || "Ocorreu um erro inesperado ao criar o cliente.";
+              }
+            };
+            
             toast({
               title: "Erro ao criar cliente",
-              description: `Ocorreu um erro: ${error.message}`,
+              description: getErrorMessage(),
               variant: "destructive",
             });
           },
@@ -464,26 +441,34 @@ export default function Clients() {
     }
   };
 
-  const onCancel = () => {
+  // Handle dialog cancellation - memoized for performance
+  const onCancel = useCallback(() => {
     setIsDialogOpen(false);
     setEditingClient(null);
     form.reset();
-  };
+  }, [form]);
 
-  // Filter clients based on search term
+  // Filter clients based on search term and status - memoized for performance
   const filteredClients = useMemo(() => {
     if (!clientsQuery.data?.data) return [];
     
     const searchTermLower = searchTerm.toLowerCase();
     return clientsQuery.data.data.filter((client) => {
       const document = client.tipo_pessoa === 'pf' ? client.cpf : client.cnpj;
-      return (
+      
+      // Filter by search term
+      const matchesSearch = (
         client.name.toLowerCase().includes(searchTermLower) ||
         (client.email && client.email.toLowerCase().includes(searchTermLower)) ||
         (document && document.toLowerCase().includes(searchTermLower))
       );
+      
+      // Filter by status
+      const matchesStatus = statusFilter === "all" || client.status === statusFilter;
+      
+      return matchesSearch && matchesStatus;
     });
-  }, [clientsQuery.data, searchTerm]);
+  }, [clientsQuery.data, searchTerm, statusFilter]);
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -516,7 +501,7 @@ export default function Clients() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {clientsQuery.data?.data?.filter(client => client.ativo === 'actived').length || 0}
+              {clientsQuery.data?.data?.filter(client => client.status === 'actived').length || 0}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               Clientes com status ativo
@@ -525,27 +510,27 @@ export default function Clients() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Pessoa Física</CardTitle>
+            <CardTitle className="text-sm font-medium">Pré-registrados</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {clientsQuery.data?.data?.filter(client => client.tipo_pessoa === 'pf').length || 0}
+              {clientsQuery.data?.data?.filter(client => client.status === 'pre_registred').length || 0}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Clientes pessoa física
+              Clientes pré-registrados
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Pessoa Jurídica</CardTitle>
+            <CardTitle className="text-sm font-medium">Clientes Inativos</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {clientsQuery.data?.data?.filter(client => client.tipo_pessoa === 'pj').length || 0}
+              {clientsQuery.data?.data?.filter(client => client.status === 'inactived').length || 0}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Clientes pessoa jurídica
+              Clientes com status inativo
             </p>
           </CardContent>
         </Card>
@@ -558,14 +543,29 @@ export default function Clients() {
           <CardDescription>
             Gerencie seus clientes, visualize informações e histórico de atividades.
           </CardDescription>
-          <div className="flex items-center mt-4">
-            <Search className="h-4 w-4 mr-2 opacity-50" />
-            <Input
-              placeholder="Buscar por nome, email ou documento..."
-              className="max-w-sm"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+          <div className="flex flex-col sm:flex-row gap-4 mt-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por nome, email ou documento..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-8"
+              />
+            </div>
+            <div className="w-full sm:w-48">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Filtrar por status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os Status</SelectItem>
+                  <SelectItem value="actived">Ativados</SelectItem>
+                  <SelectItem value="pre_registred">Pré-registrados</SelectItem>
+                  <SelectItem value="inactived">Inativos</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -574,8 +574,40 @@ export default function Clients() {
               <p>Carregando clientes...</p>
             </div>
           ) : clientsQuery.isError ? (
-            <div className="flex justify-center items-center py-8 text-red-500">
-              <p>Erro ao carregar clientes: {clientsQuery.error.message}</p>
+            <div className="flex flex-col items-center justify-center py-12 space-y-4">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+                <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              </div>
+              <div className="text-center">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Erro ao carregar clientes</h3>
+                <p className="text-gray-600 mb-4 max-w-md">
+                  {(() => {
+                    const errorWithStatus = clientsQuery.error as Error & { status?: number };
+                    switch (errorWithStatus?.status) {
+                      case 500:
+                        return "Erro interno do servidor. Tente novamente em alguns minutos.";
+                      case 403:
+                        return "Você não tem permissão para visualizar os clientes.";
+                      case 401:
+                        return "Sua sessão expirou. Faça login novamente.";
+                      default:
+                        return clientsQuery.error?.message || "Ocorreu um erro inesperado ao carregar a lista de clientes.";
+                    }
+                  })()}
+                </p>
+                <Button 
+                  onClick={() => clientsQuery.refetch()} 
+                  variant="outline"
+                  className="mr-2"
+                >
+                  <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Tentar novamente
+                </Button>
+              </div>
             </div>
           ) : filteredClients.length === 0 ? (
             <div className="flex justify-center items-center py-8">
@@ -586,7 +618,6 @@ export default function Clients() {
               clients={filteredClients}
               onEdit={handleEditClient}
               onDelete={handleDeleteClient}
-              onView={(client) => navigate(`/clients/${client.id}`)}
               isLoading={clientsQuery.isLoading}
             />
           )}

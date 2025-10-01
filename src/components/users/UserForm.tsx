@@ -1,10 +1,11 @@
-import InputMask from 'react-input-mask';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DialogFooter } from '@/components/ui/dialog';
 import { AddressAccordion } from "@/components/lib/AddressAccordion";
+import { SmartDocumentInput } from '@/components/lib/SmartDocumentInput';
+import { MaskedInputField } from '@/components/lib/MaskedInputField';
 
 interface UserFormProps {
   form: any;
@@ -162,46 +163,22 @@ export function UserForm({
             )}
           />
           {form.watch('tipo_pessoa') === 'pf' && (
-            <FormField
-              control={form.control}
+            <SmartDocumentInput
               name="cpf"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>CPF</FormLabel>
-                  <FormControl>
-                    <InputMask
-                      mask="999.999.999-99"
-                      value={field.value || ""}
-                      onChange={field.onChange}
-                    >
-                      {(inputProps: any) => <Input {...inputProps} />}
-                    </InputMask>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              control={form.control}
+              label="CPF"
+              tipoPessoa="pf"
+              placeholder="000.000.000-00"
             />
           )}
           {form.watch('tipo_pessoa') === 'pj' && (
             <>
-              <FormField
-                control={form.control}
+              <SmartDocumentInput
                 name="cnpj"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>CNPJ</FormLabel>
-                    <FormControl>
-                      <InputMask
-                        mask="99.999.999/9999-99"
-                        value={field.value || ""}
-                        onChange={field.onChange}
-                      >
-                        {(inputProps: any) => <Input {...inputProps} />}
-                      </InputMask>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                control={form.control}
+                label="CNPJ"
+                tipoPessoa="pj"
+                placeholder="00.000.000/0000-00"
               />
               <FormField
                 control={form.control}
@@ -218,24 +195,12 @@ export function UserForm({
               />
             </>
           )}
-          <FormField
-            control={form.control}
+          <MaskedInputField
             name="config.celular"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Celular</FormLabel>
-                <FormControl>
-                  <InputMask
-                    mask="(99) 99999-9999"
-                    value={field.value || ""}
-                    onChange={field.onChange}
-                  >
-                    {(inputProps: any) => <Input {...inputProps} />}
-                  </InputMask>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            control={form.control}
+            label="Celular"
+            mask="(dd) ddddd-dddd"
+            placeholder="(00) 00000-0000"
           />
           <FormField
             control={form.control}

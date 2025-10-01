@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal, Pencil, Trash2, Eye } from "lucide-react";
@@ -9,11 +10,11 @@ interface ClientsTableProps {
   clients: ClientRecord[];
   onEdit: (client: ClientRecord) => void;
   onDelete: (client: ClientRecord) => void;
-  onView?: (client: ClientRecord) => void;
   isLoading: boolean;
 }
 
-export function ClientsTable({ clients, onEdit, onDelete, onView, isLoading }: ClientsTableProps) {
+export function ClientsTable({ clients, onEdit, onDelete, isLoading }: ClientsTableProps) {
+  const navigate = useNavigate();
   // Garantir que clients seja sempre um array válido
   const clientsList = Array.isArray(clients) ? clients : [];
   
@@ -51,7 +52,8 @@ export function ClientsTable({ clients, onEdit, onDelete, onView, isLoading }: C
   if (clientsList.length === 0) {
     return <div className="text-center py-4">Nenhum cliente encontrado</div>;
   }
-
+  // console.log('Clientes:', clientsList);
+  
   return (
     <Table>
       <TableHeader>
@@ -76,9 +78,9 @@ export function ClientsTable({ clients, onEdit, onDelete, onView, isLoading }: C
             <TableCell>
               {/* Debug temporário */}
               <div style={{fontSize: '10px', color: 'gray', marginBottom: '4px'}}>
-                Debug: {JSON.stringify({ativo: client.ativo, type: typeof client.ativo})}
+                {/* Debug: {JSON.stringify({ativo: client.status, type: typeof client.status})} */}
               </div>
-              {getStatusBadge(client.ativo)}
+              {getStatusBadge(client.status)}
             </TableCell>
             <TableCell className="text-right">
               <DropdownMenu>
@@ -86,12 +88,10 @@ export function ClientsTable({ clients, onEdit, onDelete, onView, isLoading }: C
                   <MoreHorizontal className="h-4 w-4" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  {onView && (
-                    <DropdownMenuItem onClick={() => onView(client)}>
-                      <Eye className="mr-2 h-4 w-4" /> Visualizar
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem onClick={() => onEdit(client)}>
+                  <DropdownMenuItem onClick={() => navigate(`/clients/${client.id}/view`)}>
+                    <Eye className="mr-2 h-4 w-4" /> Visualizar
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate(`/clients/${client.id}/edit`)}>
                     <Pencil className="mr-2 h-4 w-4" /> Editar
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => onDelete(client)}>

@@ -87,16 +87,31 @@ export function useDeleteUser() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [USERS_QUERY_KEY] });
       toast({
-        title: "Usuário excluído",
-        description: "O usuário foi excluído com sucesso.",
+        title: "Usuário deletado",
+        description: "O usuário foi deletado com sucesso.",
       });
     },
     onError: (error: Error & { status?: number }) => {
       toast({
-        title: "Erro ao excluir usuário",
-        description: error.message || "Erro desconhecido",
+        title: "Erro ao deletar usuário",
+        description: error.message || "Ocorreu um erro inesperado.",
         variant: "destructive",
       });
+    },
+  });
+}
+
+/**
+ * Hook para buscar propriedades dos usuários
+ */
+export function useUsersPropertys() {
+  return useQuery({
+    queryKey: [USERS_QUERY_KEY, 'propertys'],
+    queryFn: () => usersService.getUsersPropertys(),
+    retry: (failureCount, error: any) => {
+      // Don't retry on 403 errors (permission issues)
+      if (error?.status === 403) return false;
+      return failureCount < 2;
     },
   });
 }

@@ -129,6 +129,18 @@ export default function PublicClientForm() {
       }
     } catch (error) {
       console.error('Erro ao criar conta:', error);
+      
+      // Verificar se é um erro de validação específico
+      if (error && typeof error === 'object' && 'body' in error) {
+        const errorBody = (error as any).body;
+        if (errorBody?.message === 'Erro de validação' && errorBody?.errors) {
+          const errors = errorBody.errors;
+          if (errors.email && errors.email.includes('O e-mail já está em uso')) {
+            toast.error('Este e-mail já está cadastrado. Tente fazer login ou use outro e-mail.');
+            return;
+          }
+        }
+      }      
       toast.error('Erro ao criar conta. Tente novamente.');
     } finally {
       setIsSubmitting(false);

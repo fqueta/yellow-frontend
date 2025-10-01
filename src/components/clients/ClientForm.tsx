@@ -32,7 +32,7 @@ import { MaskedInputField } from '@/components/lib/MaskedInputField';
 import { useCep } from '@/hooks/useCep';
 import { SmartDocumentInput } from '@/components/lib/SmartDocumentInput';
 import { ImageUpload } from '@/components/lib/ImageUpload';
-import { useUsersList } from '@/hooks/users';
+import { useUsersPropertys } from '@/hooks/users';
 interface ClientFormProps {
   form: any;
   onSubmit: (data: any) => void;
@@ -48,8 +48,8 @@ export function ClientForm({
 }: ClientFormProps) {
   const tipoPessoa = form.watch('tipo_pessoa');
   const { fetchCep, loading: cepLoading } = useCep();
-  const { data: usersResponse, isLoading: isLoadingUsers } = useUsersList();
-  const usersList = usersResponse?.data || [];
+  const { data: usersPropertys, isLoading: isLoadingUsers } = useUsersPropertys();
+  const usersList = usersPropertys || [];
   
   // Watch para validação em tempo real
   const emailWatch = form.watch("email");
@@ -154,10 +154,9 @@ export function ClientForm({
        validateNameRealTime.cancel();
      };
    }, [validateEmailRealTime, validateNameRealTime]);
-  
+  // console.log('Status inicial:', form.getValues());
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+    <div className="space-y-8">
         {/* Seção: Informações Básicas */}
         <div className="bg-gray-50 p-6 rounded-lg border">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
@@ -190,6 +189,8 @@ export function ClientForm({
                 </FormItem>
               )}
             />
+            
+            
             
             <FormField
               control={form.control}
@@ -272,7 +273,7 @@ export function ClientForm({
             
             <FormField
               control={form.control}
-              name="ativo"
+              name="status"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-sm font-medium text-gray-700">Status *</FormLabel>
@@ -305,8 +306,10 @@ export function ClientForm({
                 <FormItem>
                   <FormLabel className="text-sm font-medium text-gray-700">Proprietário</FormLabel>
                   <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                    }}
+                    value={field.value}
                     disabled={isLoadingUsers}
                   >
                     <FormControl>
@@ -333,6 +336,25 @@ export function ClientForm({
                       )}
                     </SelectContent>
                   </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium text-gray-700">Senha</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="Digite a senha (opcional)" 
+                      type="password" 
+                      {...field} 
+                      value={field.value || ''}
+                      className="h-11"
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -471,7 +493,7 @@ export function ClientForm({
                     name="config.celular"
                     control={form.control}
                     label="Celular"
-                    mask="(99) 99999-9999"
+                    mask="(dd) ddddd-dddd"
                     placeholder="(00) 00000-0000"
                   />
                   {form.watch('config.celular') && form.watch('config.celular').replace(/\D/g, '').length >= 10 && (
@@ -485,7 +507,7 @@ export function ClientForm({
                     name="config.telefone_residencial"
                     control={form.control}
                     label="Telefone Residencial"
-                    mask="(99) 9999-9999"
+                    mask="(dd) dddd-dddd"
                     placeholder="(00) 0000-0000"
                   />
                   {form.watch('config.telefone_residencial') && form.watch('config.telefone_residencial').replace(/\D/g, '').length >= 10 && (
@@ -513,38 +535,17 @@ export function ClientForm({
                     control={form.control}
                     name="config.nascimento"
                     render={({ field }) => (
-                      <FormItem className="flex flex-col">
+                      <FormItem>
                         <FormLabel className="text-sm font-medium text-gray-700">Data de Nascimento</FormLabel>
-                        <div className="relative">
-                          <FormControl>
-                            <Input
-                              placeholder="DD/MM/AAAA"
-                              value={field.value ? format(new Date(field.value), 'dd/MM/yyyy') : ''}
-                              onChange={() => {}}
-                              onClick={() => document.getElementById('calendar-popup')?.click()}
-                              className="h-11"
-                            />
-                          </FormControl>
-                          <div className="absolute right-2 top-2">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              className="h-6 w-6 p-0"
-                              id="calendar-popup"
-                            >
-                              <CalendarIcon className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                        <div className="mt-2">
-                          <Calendar
-                            mode="single"
-                            selected={field.value ? new Date(field.value) : undefined}
-                            onSelect={(date) => field.onChange(date ? format(date, 'yyyy-MM-dd') : '')}
-                            disabled={(date) => date > new Date()}
-                            initialFocus
+                        <FormControl>
+                          <Input
+                            type="date"
+                            {...field}
+                            value={field.value || ''}
+                            max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
+                            className="h-11"
                           />
-                        </div>
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -638,7 +639,7 @@ export function ClientForm({
                     name="config.cep"
                     control={form.control}
                     label="CEP"
-                    mask="99999-999"
+                    mask="ddddd-ddd"
                     placeholder="00000-000"
                     onBlur={(e) => handleCepBlur(e.target.value)}
                     disabled={cepLoading}
@@ -761,7 +762,7 @@ export function ClientForm({
                       <FormLabel className="text-sm font-medium text-gray-700">UF</FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        defaultValue={field.value || ''}
+                        value={field.value || ''}
                       >
                         <FormControl>
                           <SelectTrigger className="h-11">
@@ -806,7 +807,7 @@ export function ClientForm({
             </AccordionContent>
           </AccordionItem>
           {/* Seção: Foto */}
-          <AccordionItem value="foto" className="bg-gray-50 rounded-lg border px-6">
+          {/* <AccordionItem value="foto" className="bg-gray-50 rounded-lg border px-6">
             <AccordionTrigger className="text-lg font-semibold text-gray-900 hover:no-underline">
               <div className="flex items-center">
                 <div className="w-2 h-2 bg-pink-500 rounded-full mr-2"></div>
@@ -831,7 +832,7 @@ export function ClientForm({
                  />
               </div>
             </AccordionContent>
-          </AccordionItem>
+          </AccordionItem> */}
 
           {/* Seção: Observações */}
           <AccordionItem value="observacoes" className="bg-gray-50 rounded-lg border px-6">
@@ -866,15 +867,14 @@ export function ClientForm({
           </AccordionItem>
         </Accordion>
 
-        <div className="flex justify-end space-x-2">
+        {/* <div className="flex justify-end space-x-2">
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancelar
           </Button>
           <Button type="submit">
             {editingClient ? 'Atualizar' : 'Cadastrar'}
           </Button>
-        </div>
-      </form>
-    </Form>
+        </div> */}
+    </div>
   );
 }
