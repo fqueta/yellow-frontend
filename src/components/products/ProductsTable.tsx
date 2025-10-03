@@ -94,10 +94,10 @@ export default function ProductsTable({
               <TableRow>
                 <TableHead>Produto</TableHead>
                 <TableHead>Categoria</TableHead>
-                <TableHead>Preços</TableHead>
-                <TableHead>Estoque</TableHead>
-                <TableHead>Margem</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Pontos</TableHead>
+                <TableHead>Avaliação</TableHead>
+                <TableHead>Reviews</TableHead>
+                <TableHead>Disponibilidade</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
@@ -177,38 +177,31 @@ export default function ProductsTable({
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline">{product.categoryData.name}</Badge>
+                      <Badge variant="outline">{product.category}</Badge>
                     </TableCell>
                     <TableCell>
-                      <div className="space-y-1">
-                        <div className="text-sm font-medium">
-                          Venda: R$ {product.salePrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          Custo: R$ {product.costPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </div>
+                      <div className="text-sm font-medium">
+                        {product.points.toLocaleString('pt-BR')} pts
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div>
-                        <div className={`text-sm font-medium ${product.stock <= 10 ? 'text-destructive' : ''}`}>
-                          {product.stock} {product.unit}
-                        </div>
-                        {product.stock <= 10 && (
-                          <div className="text-xs text-destructive">
-                            Estoque baixo
-                          </div>
-                        )}
+                      <div className="flex items-center space-x-1">
+                        <span className="text-sm font-medium">{product.rating.toFixed(1)}</span>
+                        <span className="text-xs text-muted-foreground">/5</span>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="text-sm font-medium">
-                        {Math.round(((product.salePrice - product.costPrice) / product.salePrice) * 100)}%
+                        {product.reviews.toLocaleString('pt-BR')}
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={product.active ? "default" : "secondary"}>
-                        {product.active ? "Ativo" : "Inativo"}
+                      <Badge variant={
+                        product.availability === 'available' ? "default" : 
+                        product.availability === 'limited' ? "secondary" : "destructive"
+                      }>
+                        {product.availability === 'available' ? "Disponível" : 
+                         product.availability === 'limited' ? "Limitado" : "Indisponível"}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">

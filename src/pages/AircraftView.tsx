@@ -24,7 +24,7 @@ export default function AircraftView() {
    * Navega de volta para a listagem de aeronaves
    */
   const handleBack = () => {
-    navigate('/aircraft');
+    navigate('/admin/aircraft');
   };
 
   /**

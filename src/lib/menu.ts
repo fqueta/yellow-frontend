@@ -64,31 +64,31 @@ export function findMenuItemByUrl(menu: MenuItemDTO[], url: string): MenuItemDTO
 export const defaultMenu: MenuItemDTO[] = [
   {
     title: "Dashboard",
-    url: "/",
+    url: "/admin",
     icon: "Home",
     permission: "dashboard.view"
   },
   {
     title: "Dashboard de Métricas",
-    url: "/metrics-dashboard",
+    url: "/admin/metrics-dashboard",
     icon: "BarChart3",
     permission: "settings.metrics.view"
   },
   {
     title: "Clientes",
-    url: "/clients",
+    url: "/admin/clients",
     icon: "Users",
     permission: "clients.view"
   },
   {
     title: "Parceiros",
-    url: "/partners",
+    url: "/admin/partners",
     icon: "Users",
     permission: "partners.view"
   },
   {
     title: "Objetos de Serviço",
-    url: "/service-objects",
+    url: "/admin/service-objects",
     icon: "Wrench",
     permission: "service-objects.view"
   },
@@ -99,30 +99,30 @@ export const defaultMenu: MenuItemDTO[] = [
     items: [
       {
         title: "Produtos",
-        url: "/products",
+        url: "/admin/products",
         permission: "catalog.products.view"
       },
       {
         title: "Serviços",
-        url: "/services",
+        url: "/admin/services",
         permission: "catalog.services.view"
       },
       {
         title: "Categorias",
-        url: "/categories",
+        url: "/admin/categories",
         permission: "catalog.categories.view"
       }
     ]
   },
   {
     title: "Orçamentos",
-    url: "/budgets",
+    url: "/admin/budgets",
     icon: "FileText",
     permission: "budgets.view"
   },
   {
     title: "Ordens de Serviço",
-    url: "/service-orders",
+    url: "/admin/service-orders",
     icon: "ClipboardList",
     permission: "service-orders.view"
   },
@@ -133,27 +133,27 @@ export const defaultMenu: MenuItemDTO[] = [
     items: [
       {
         title: "Categorias",
-        url: "/financial/categories",
+        url: "/admin/financial/categories",
         permission: "financial.categories.view"
       },
       {
         title: "Pagamentos",
-        url: "/finance/payments",
+        url: "/admin/finance/payments",
         permission: "finance.payments.view"
       },
       {
         title: "Fluxo de Caixa",
-        url: "/finance/cash-flow",
+        url: "/admin/finance/cash-flow",
         permission: "finance.cash-flow.view"
       },
       {
         title: "Contas a Receber",
-        url: "/finance/accounts-receivable",
+        url: "/admin/finance/accounts-receivable",
         permission: "finance.accounts-receivable.view"
       },
       {
         title: "Contas a Pagar",
-        url: "/finance/accounts-payable",
+        url: "/admin/finance/accounts-payable",
         permission: "finance.accounts-payable.view"
       }
     ]
@@ -165,22 +165,22 @@ export const defaultMenu: MenuItemDTO[] = [
     items: [
       {
         title: "Receita",
-        url: "/reports/revenue",
+        url: "/admin/reports/revenue",
         permission: "reports.revenue.view"
       },
       {
         title: "Ordens de Serviço",
-        url: "/reports/service-orders",
+        url: "/admin/reports/service-orders",
         permission: "reports.service-orders.view"
       },
       {
         title: "Top Produtos",
-        url: "/reports/top-products",
+        url: "/admin/reports/top-products",
         permission: "reports.top-products.view"
       },
       {
         title: "Financeiro",
-        url: "/reports/financial",
+        url: "/admin/reports/financial",
         permission: "reports.financial.view"
       }
     ]
@@ -192,32 +192,32 @@ export const defaultMenu: MenuItemDTO[] = [
     items: [
       {
         title: "Usuários",
-        url: "/settings/users",
+        url: "/admin/settings/users",
         permission: "settings.users.view"
       },
       {
         title: "Perfis de Usuário",
-        url: "/settings/user-profiles",
+        url: "/admin/settings/user-profiles",
         permission: "settings.user-profiles.view"
       },
       {
         title: "Permissões",
-        url: "/settings/permissions",
+        url: "/admin/settings/permissions",
         permission: "settings.permissions.view"
       },
       {
         title: "Status de OS",
-        url: "/settings/os-statuses",
+        url: "/admin/settings/os-statuses",
         permission: "settings.os-statuses.view"
       },
       {
         title: "Métodos de Pagamento",
-        url: "/settings/payment-methods",
+        url: "/admin/settings/payment-methods",
         permission: "settings.payment-methods.view"
       },
       {
         title: "Sistema",
-        url: "/settings/system",
+        url: "/admin/settings/system",
         permission: "settings.system.view"
       }
     ]

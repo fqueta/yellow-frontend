@@ -8,13 +8,13 @@ interface ProductsStatsProps {
 
 export function ProductsStats({ products }: ProductsStatsProps) {
   const totalProducts = products.length;
-  const activeProducts = products.filter(p => p.active).length;
-  const totalStockValue = products.reduce((sum, product) => sum + (product.stock * product.costPrice), 0);
-  const lowStockProducts = products.filter(p => p.stock <= 10).length;
+  const availableProducts = products.filter(p => p.availability === 'available').length;
+  const totalPointsValue = products.reduce((sum, product) => sum + product.points, 0);
+  const limitedProducts = products.filter(p => p.availability === 'limited').length;
   
-  // Calcula a margem média apenas se houver produtos
-  const averageMargin = products.length > 0 
-    ? Math.round(products.reduce((sum, p) => sum + ((p.salePrice - p.costPrice) / p.salePrice * 100), 0) / products.length)
+  // Calcula a avaliação média apenas se houver produtos
+  const averageRating = products.length > 0 
+    ? Math.round((products.reduce((sum, p) => sum + p.rating, 0) / products.length) * 10) / 10
     : 0;
 
   return (
@@ -27,49 +27,49 @@ export function ProductsStats({ products }: ProductsStatsProps) {
         <CardContent>
           <div className="text-2xl font-bold">{totalProducts}</div>
           <p className="text-xs text-muted-foreground">
-            {activeProducts} ativos
+            {availableProducts} disponíveis
           </p>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Valor em Estoque</CardTitle>
+          <CardTitle className="text-sm font-medium">Total de Pontos</CardTitle>
           <TrendingUp className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">
-            R$ {totalStockValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            {totalPointsValue.toLocaleString('pt-BR')} pts
           </div>
           <p className="text-xs text-muted-foreground">
-            Custo total
+            Valor total em pontos
           </p>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Estoque Baixo</CardTitle>
+          <CardTitle className="text-sm font-medium">Disponibilidade Limitada</CardTitle>
           <AlertTriangle className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{lowStockProducts}</div>
+          <div className="text-2xl font-bold">{limitedProducts}</div>
           <p className="text-xs text-muted-foreground">
-            ≤ 10 unidades
+            Produtos com estoque limitado
           </p>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Margem Média</CardTitle>
+          <CardTitle className="text-sm font-medium">Avaliação Média</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">
-            {averageMargin}%
+            {averageRating}/5
           </div>
           <p className="text-xs text-muted-foreground">
-            Lucro sobre venda
+            Classificação dos produtos
           </p>
         </CardContent>
       </Card>

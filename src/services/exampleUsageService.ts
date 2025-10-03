@@ -25,9 +25,15 @@ interface UpdateUserInput {
 interface Product {
   id: string;
   name: string;
-  price: number;
-  stock: number;
-  category_id: string;
+  description: string;
+  points: number;
+  category: string;
+  image: string;
+  rating: number;
+  reviews: number;
+  availability: 'available' | 'limited' | 'unavailable';
+  terms: string[];
+  validUntil?: string;
 }
 
 interface CreateProductInput {

@@ -91,7 +91,7 @@ export default function QuickCreateServiceOrder() {
   const handleFinish = () => {
     if (createdClient && createdAircraft) {
       // Redireciona para a página de criação com dados preenchidos
-      navigate("/service-orders/create", {
+      navigate("/admin/service-orders/create", {
         state: {
           quickCreate: true,
           clientId: createdClient.id,
@@ -105,7 +105,7 @@ export default function QuickCreateServiceOrder() {
    * Volta para a página de ordens de serviço
    */
   const handleCancel = () => {
-    navigate("/service-orders");
+    navigate("/admin/service-orders");
   };
 
   /**

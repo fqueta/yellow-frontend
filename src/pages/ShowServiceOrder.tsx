@@ -92,7 +92,7 @@ export default function ShowServiceOrder() {
     try {
       await deleteServiceOrderMutation.mutateAsync(id);
       toast.success("Ordem de serviço excluída com sucesso!");
-      navigate("/service-orders");
+      navigate("/admin/service-orders");
     } catch (error) {
       console.error("Erro ao excluir ordem de serviço:", error);
       toast.error("Erro ao excluir ordem de serviço. Tente novamente.");
@@ -101,7 +101,7 @@ export default function ShowServiceOrder() {
 
   // Volta para a listagem
   const handleBack = () => {
-    navigate("/service-orders");
+    navigate("/admin/service-orders");
   };
 
   // Atualiza os dados
@@ -133,7 +133,7 @@ export default function ShowServiceOrder() {
     if (!serviceOrder) return;
     
     // Navega para a página de criação passando os dados da ordem atual
-    navigate('/service-orders/create', {
+    navigate('/admin/service-orders/create', {
       state: {
         duplicateData: {
           title: serviceOrder.title,

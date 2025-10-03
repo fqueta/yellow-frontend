@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -29,11 +29,25 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
-  const { login, isLoading } = useAuth();
+  const [loginSuccess, setLoginSuccess] = useState(false);
+  const { login, isLoading, user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   const from = location.state?.from?.pathname || '/';
+
+  // Efeito para redirecionar após login bem-sucedido
+  useEffect(() => {
+    if (loginSuccess && isAuthenticated && user) {
+      // Verificar se o usuário tem permission_id < 5 para redirecionar para /admin
+      if (user.permission_id && parseInt(user.permission_id) < 5) {
+        navigate('/admin', { replace: true });
+      } else {
+        navigate(from, { replace: true });
+      }
+      setLoginSuccess(false);
+    }
+  }, [loginSuccess, isAuthenticated, user, navigate, from]);
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -51,7 +65,7 @@ export default function Login() {
       remember: data.remember,
     });
     if (success) {
-      navigate(from, { replace: true });
+      setLoginSuccess(true);
     }
   };
 

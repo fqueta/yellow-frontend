@@ -261,7 +261,7 @@ export default function Clients() {
 
   // Handle opening new client dialog - memoized for performance
   const handleNewClient = useCallback(() => {
-    navigate('/clients/create');
+    navigate('/admin/clients/create');
   }, [navigate]);
   // console.log('Autor inicial:', form.getValues());
   // Handle opening edit dialog - memoized for performance

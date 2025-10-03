@@ -21,7 +21,7 @@ export default function ServiceView() {
    * Navega de volta para a listagem de serviços
    */
   const handleBack = () => {
-    navigate('/services');
+    navigate('/admin/services');
   };
 
   /**

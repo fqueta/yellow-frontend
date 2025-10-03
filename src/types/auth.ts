@@ -11,6 +11,7 @@ export interface User {
   bio?: string;
   role?: string;
   company?: string;
+  permission_id?: string;
   created_at: string;
   updated_at: string;
 }

@@ -139,8 +139,8 @@ class ServiceOrdersService extends BaseApiService {
   /**
    * Obtém lista de produtos disponíveis
    */
-  async getAvailableProducts(): Promise<{ id: string; name: string; salePrice: number; unit: string; stock: number }[]> {
-    const response = await this.get<ApiResponse<{ id: string; name: string; salePrice: number; unit: string; stock: number }[]>>('/products/available');
+  async getAvailableProducts(): Promise<{ id: string; name: string; points: number; availability: string; category: string }[]> {
+    const response = await this.get<ApiResponse<{ id: string; name: string; points: number; availability: string; category: string }[]>>('/products/available');
     return response.data;
   }
 
@@ -148,9 +148,9 @@ class ServiceOrdersService extends BaseApiService {
    * Busca produtos dinamicamente por termo de pesquisa
    * @param search - Termo de pesquisa
    */
-  async searchProducts(search?: string): Promise<{ id: string; name: string; salePrice: number; unit: string; stock: number }[]> {
+  async searchProducts(search?: string): Promise<{ id: string; name: string; points: number; availability: string; category: string }[]> {
     const params = search ? { search } : {};
-    const response = await this.get<ApiResponse<{ id: string; name: string; salePrice: number; unit: string; stock: number }[]>>('/products', params);
+    const response = await this.get<ApiResponse<{ id: string; name: string; points: number; availability: string; category: string }[]>>('/products', params);
     return response.data;
   }
 

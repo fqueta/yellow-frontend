@@ -108,13 +108,13 @@ export default function Dashboard() {
         </div>
         <div className="flex gap-2">
           {/* <Button asChild>
-            <Link to="/budgets/new">
+            <Link to="/admin/budgets/new">
               <Plus className="mr-2 h-4 w-4" />
               Novo Cliente
             </Link>
           </Button> */}
           {/* <Button variant="outline" asChild>
-            <Link to="/service-orders/new">
+            <Link to="/admin/service-orders/new">
               <FileText className="mr-2 h-4 w-4" />
               Todos clientes
             </Link>
@@ -143,7 +143,7 @@ export default function Dashboard() {
                 <p className="text-xs text-muted-foreground">Total cadastrados</p>
               </div>
               <Button variant="outline" size="sm" asChild>
-                <Link to="/partners">
+                <Link to="/admin/partners">
                   Ver todos
                 </Link>
               </Button>
@@ -168,7 +168,7 @@ export default function Dashboard() {
                 <p className="text-xs text-muted-foreground">Total cadastrados</p>
               </div>
               <Button variant="outline" size="sm" asChild>
-                <Link to="/clients">
+                <Link to="/admin/clients">
                   Ver todos
                 </Link>
               </Button>
@@ -193,7 +193,7 @@ export default function Dashboard() {
                 <p className="text-xs text-muted-foreground">Usuários ativos</p>
               </div>
               <Button variant="outline" size="sm" asChild>
-                <Link to="/settings/users">
+                <Link to="/admin/settings/users">
                   Gerenciar
                 </Link>
               </Button>

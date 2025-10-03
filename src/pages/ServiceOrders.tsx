@@ -147,7 +147,7 @@ export default function ServiceOrders() {
 
   // Navega para a página de criação
   const handleCreate = () => {
-    navigate("/service-orders/create");
+    navigate("/admin/service-orders/create");
   };
 
   // Atualiza a página atual
@@ -239,7 +239,7 @@ export default function ServiceOrders() {
           </Button>
           <Button
             variant="outline"
-            onClick={() => navigate("/service-orders/quick-create")}
+            onClick={() => navigate("/admin/service-orders/quick-create")}
             className="bg-gradient-to-r from-blue-500 to-purple-600 text-white border-0 hover:from-blue-600 hover:to-purple-700 w-full sm:w-auto text-xs sm:text-sm"
           >
             <Zap className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />

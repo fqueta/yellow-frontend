@@ -187,12 +187,12 @@ export default function CreateServiceOrder() {
 
   // Cancela a criação e volta para a listagem
   const handleCancel = () => {
-    navigate("/service-orders");
+    navigate("/admin/service-orders");
   };
 
   // Volta para a listagem
   const handleBack = () => {
-    navigate("/service-orders");
+    navigate("/admin/service-orders");
   };
 
   // Callback para quando um serviço é criado via cadastro rápido

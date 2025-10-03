@@ -8,18 +8,15 @@
 export interface Product {
   id: string;
   name: string;
-  description?: string;
+  description: string;
+  points: number;
   category: string;
-  category_id?: string;
-  categoryData?: ProductCategory;
-  unitData?: ProductUnit;
-  salePrice: number;
-  costPrice: number;
-  stock: number;
-  unit: string;
-  active: boolean;
-  created_at?: string;
-  updated_at?: string;
+  image: string;
+  rating: number;
+  reviews: number;
+  availability: 'available' | 'limited' | 'unavailable';
+  terms: string[];
+  validUntil?: string;
 }
 
 /**

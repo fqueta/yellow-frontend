@@ -181,7 +181,7 @@ export default function UpdateServiceOrder() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button onClick={() => navigate("/service-orders")}>
+            <Button onClick={() => navigate("/admin/service-orders")}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Voltar para Listagem
             </Button>
@@ -204,7 +204,7 @@ export default function UpdateServiceOrder() {
           </CardHeader>
           <CardContent>
             <div className="flex gap-2">
-              <Button onClick={() => navigate("/service-orders")} variant="outline">
+              <Button onClick={() => navigate("/admin/service-orders")} variant="outline">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Voltar para Listagem
               </Button>
@@ -261,7 +261,7 @@ export default function UpdateServiceOrder() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button onClick={() => navigate("/service-orders")}>
+            <Button onClick={() => navigate("/admin/service-orders")}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Voltar para Listagem
             </Button>

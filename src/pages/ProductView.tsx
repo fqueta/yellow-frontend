@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Package, Tag, DollarSign, Archive, BarChart3, Calendar, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Package, Tag, Star, MessageSquare, Calendar, AlertTriangle, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -21,25 +21,20 @@ export default function ProductView() {
    * Navega de volta para a listagem de produtos
    */
   const handleBack = () => {
-    navigate('/products');
+    navigate('/admin/products');
   };
 
   /**
-   * Formata valores monetários para exibição
+   * Formata a data de validade
    */
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value);
-  };
-
-  /**
-   * Calcula a margem de lucro
-   */
-  const calculateMargin = (salePrice: number, costPrice: number) => {
-    if (salePrice === 0) return 0;
-    return Math.round(((salePrice - costPrice) / salePrice) * 100);
+  const formatValidUntil = (dateString?: string) => {
+    if (!dateString) return null;
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('pt-BR');
+    } catch {
+      return dateString;
+    }
   };
 
   /**
@@ -117,8 +112,8 @@ export default function ProductView() {
     );
   }
 
-  const margin = calculateMargin(product.salePrice, product.costPrice);
-  const isLowStock = product.stock <= 10;
+  const isLimitedAvailability = product.availability === 'limited';
+  const isUnavailable = product.availability === 'unavailable';
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -140,8 +135,12 @@ export default function ProductView() {
             </p>
           </div>
         </div>
-        <Badge variant={product.active ? "default" : "secondary"} className="text-sm">
-          {product.active ? "Ativo" : "Inativo"}
+        <Badge variant={
+          product.availability === 'available' ? "default" : 
+          product.availability === 'limited' ? "secondary" : "destructive"
+        } className="text-sm">
+          {product.availability === 'available' ? "Disponível" : 
+           product.availability === 'limited' ? "Limitado" : "Indisponível"}
         </Badge>
       </div>
 
@@ -183,80 +182,78 @@ export default function ProductView() {
                 <p className="text-sm font-medium">{product.unitData.name}</p>
               </div>
             </div>
+            
+            <Separator />
+            
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Pontos Necessários</label>
+              <p className="text-2xl font-bold text-primary">{product.points}</p>
+            </div>
           </CardContent>
         </Card>
 
-        {/* Informações Financeiras */}
+        {/* Avaliações e Reviews */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <DollarSign className="h-5 w-5" />
-              Informações Financeiras
+              <Star className="h-5 w-5" />
+              Avaliações e Reviews
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium text-muted-foreground">Preço de Venda</label>
-                <p className="text-lg font-bold text-green-600">
-                  {formatCurrency(product.salePrice)}
-                </p>
+                <label className="text-sm font-medium text-muted-foreground">Avaliação</label>
+                <div className="flex items-center gap-2">
+                  <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                  <p className="text-lg font-medium">{product.rating.toFixed(1)}</p>
+                </div>
               </div>
-              
               <div>
-                <label className="text-sm font-medium text-muted-foreground">Preço de Custo</label>
-                <p className="text-lg font-medium text-orange-600">
-                  {formatCurrency(product.costPrice)}
-                </p>
-              </div>
-            </div>
-            
-            <Separator />
-            
-            <div>
-              <label className="text-sm font-medium text-muted-foreground flex items-center gap-1">
-                <BarChart3 className="h-4 w-4" />
-                Margem de Lucro
-              </label>
-              <div className="flex items-center gap-2 mt-1">
-                <Badge 
-                  variant={margin > 30 ? "default" : margin > 15 ? "secondary" : "destructive"}
-                  className="text-sm"
-                >
-                  {margin}%
-                </Badge>
-                <span className="text-sm text-muted-foreground">
-                  Lucro: {formatCurrency(product.salePrice - product.costPrice)}
-                </span>
+                <label className="text-sm font-medium text-muted-foreground">Total de Reviews</label>
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4" />
+                  <p className="text-lg font-medium">{product.reviews}</p>
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Informações de Estoque */}
+        {/* Termos e Condições */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Archive className="h-5 w-5" />
-              Controle de Estoque
+              <AlertTriangle className="h-5 w-5" />
+              Termos e Condições
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label className="text-sm font-medium text-muted-foreground">Quantidade em Estoque</label>
+              <label className="text-sm font-medium text-muted-foreground">Disponibilidade</label>
               <div className="flex items-center gap-2 mt-1">
-                <p className={`text-2xl font-bold ${
-                  isLowStock ? 'text-destructive' : 'text-foreground'
-                }`}>
-                  {product.stock}
+                <div className={`w-2 h-2 rounded-full ${
+                  product.availability === 'available' ? 'bg-green-500' : 
+                  product.availability === 'limited' ? 'bg-yellow-500' : 'bg-red-500'
+                }`} />
+                <p className="text-lg font-medium">
+                  {product.availability === 'available' ? 'Disponível' : 
+                   product.availability === 'limited' ? 'Limitado' : 'Indisponível'}
                 </p>
-                <span className="text-sm text-muted-foreground">{product.unit}</span>
               </div>
-              {isLowStock && (
+              {isLimitedAvailability && (
+                <div className="flex items-center gap-1 mt-2">
+                  <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                  <span className="text-sm text-yellow-600 font-medium">
+                    Disponibilidade limitada - Resgate enquanto há estoque
+                  </span>
+                </div>
+              )}
+              {isUnavailable && (
                 <div className="flex items-center gap-1 mt-2">
                   <AlertTriangle className="h-4 w-4 text-destructive" />
                   <span className="text-sm text-destructive font-medium">
-                    Estoque baixo - Reposição necessária
+                    Produto indisponível no momento
                   </span>
                 </div>
               )}
@@ -265,16 +262,37 @@ export default function ProductView() {
             <Separator />
             
             <div>
-              <label className="text-sm font-medium text-muted-foreground">Valor Total em Estoque</label>
+              <label className="text-sm font-medium text-muted-foreground">Termos de Uso</label>
               <div className="space-y-1 mt-1">
-                <p className="text-lg font-medium">
-                  Custo: {formatCurrency(product.stock * product.costPrice)}
-                </p>
-                <p className="text-lg font-medium text-green-600">
-                  Venda: {formatCurrency(product.stock * product.salePrice)}
-                </p>
+                {product.terms && product.terms.length > 0 ? (
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    {product.terms.map((term, index) => (
+                      <li key={index} className="flex items-start gap-2">
+                        <span className="text-primary mt-1">•</span>
+                        <span>{term.trim()}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Nenhum termo específico</p>
+                )}
               </div>
             </div>
+            
+            {product.validUntil && (
+              <>
+                <Separator />
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+                    <Clock className="h-4 w-4" />
+                    Válido Até
+                  </label>
+                  <p className="text-lg font-medium text-orange-600 mt-1">
+                    {formatValidUntil(product.validUntil)}
+                  </p>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -292,31 +310,21 @@ export default function ProductView() {
               <p className="text-sm font-mono bg-muted px-2 py-1 rounded">{product.id}</p>
             </div>
             
-            {product.created_at && (
+            {product.image && (
               <div>
-                <label className="text-sm font-medium text-muted-foreground">Data de Criação</label>
-                <p className="text-sm">{formatDate(product.created_at)}</p>
+                <label className="text-sm font-medium text-muted-foreground">Imagem do Produto</label>
+                <div className="mt-2">
+                  <img 
+                    src={product.image} 
+                    alt={product.name}
+                    className="w-full max-w-xs rounded-lg border"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                </div>
               </div>
             )}
-            
-            {product.updated_at && (
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Última Atualização</label>
-                <p className="text-sm">{formatDate(product.updated_at)}</p>
-              </div>
-            )}
-            
-            <div>
-              <label className="text-sm font-medium text-muted-foreground">Status</label>
-              <div className="flex items-center gap-2 mt-1">
-                <div className={`w-2 h-2 rounded-full ${
-                  product.active ? 'bg-green-500' : 'bg-gray-400'
-                }`} />
-                <span className="text-sm">
-                  {product.active ? 'Produto ativo e disponível' : 'Produto inativo'}
-                </span>
-              </div>
-            </div>
           </CardContent>
         </Card>
       </div>

@@ -308,7 +308,7 @@ export default function ClientEdit() {
             description: `Cliente ${data.name} atualizado com sucesso`,
           });
           setIsLoading(false);
-          navigate('/clients');
+          navigate('/admin/clients');
         },
         onError: (error) => {
           // Função para determinar mensagem de erro específica
@@ -350,7 +350,7 @@ export default function ClientEdit() {
    * Função para cancelar a edição e voltar para a lista
    */
   const handleCancel = () => {
-    navigate('/clients');
+    navigate('/admin/clients');
   };
 
   // Estados de carregamento e erro
@@ -469,7 +469,7 @@ export default function ClientEdit() {
               </div>
               
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Button onClick={() => navigate('/clients')} variant="outline">
+                <Button onClick={() => navigate('/admin/clients')} variant="outline">
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   Voltar para lista
                 </Button>
@@ -516,7 +516,7 @@ export default function ClientEdit() {
           <Button 
             variant="outline" 
             size="sm" 
-            onClick={() => navigate('/clients')}
+            onClick={() => navigate('/admin/clients')}
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Voltar

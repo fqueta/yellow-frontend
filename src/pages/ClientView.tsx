@@ -29,7 +29,7 @@ export default function ClientView() {
    * Navega de volta para a listagem de clientes
    */
   const handleBack = () => {
-    navigate('/clients');
+    navigate('/admin/clients');
   };
 
   /**

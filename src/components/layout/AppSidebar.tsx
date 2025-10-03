@@ -44,7 +44,7 @@ export function AppSidebar() {
   const isActive = (path: string) => currentPath === path;
   const hasActiveChild = (items: any[]) => 
     items?.some((item) => isActive(item.url));
-
+  const rota_admin = 'admin';
   return (
     <Sidebar className={collapsed ? "w-14" : "w-64"} collapsible="icon">
       <SidebarHeader className="border-b border-border">
@@ -80,7 +80,7 @@ export function AppSidebar() {
                     // Simple menu item
                      <SidebarMenuButton asChild>
                       <NavLink 
-                        to={item.url || "#"} 
+                        to={`/${rota_admin}${item.url || "#"}`} 
                         className={({ isActive }) => 
                           isActive 
                             ? "bg-primary font-medium" 
@@ -98,7 +98,7 @@ export function AppSidebar() {
                         <SidebarMenuSubItem key={subItem.title}>
                            <SidebarMenuSubButton asChild>
                              <NavLink 
-                               to={subItem.url || "#"} 
+                               to={`/${rota_admin}${subItem.url || "#"}`} 
                                className={({ isActive }) => 
                                  isActive 
                                    ? "bg-primary font-medium" 

@@ -24,13 +24,15 @@ import * as z from "zod";
 // Form validation schema
 const productSchema = z.object({
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
-  description: z.string().optional(),
+  description: z.string().min(1, "Descrição é obrigatória"),
   category: z.string().min(1, "Categoria é obrigatória"),
-  salePrice: z.number().min(0.01, "Preço de venda deve ser maior que 0"),
-  costPrice: z.number().min(0.01, "Preço de custo deve ser maior que 0"),
-  stock: z.number().int().min(0, "Estoque não pode ser negativo"),
-  unit: z.string().min(1, "Unidade é obrigatória"),
-  active: z.boolean(),
+  points: z.number().int().min(1, "Pontos devem ser maior que 0"),
+  image: z.string().url("URL da imagem deve ser válida"),
+  rating: z.number().min(0).max(5, "Avaliação deve estar entre 0 e 5"),
+  reviews: z.number().int().min(0, "Número de avaliações não pode ser negativo"),
+  availability: z.enum(["available", "limited", "unavailable"]),
+  terms: z.array(z.string()).min(1, "Pelo menos um termo é obrigatório"),
+  validUntil: z.string().optional(),
 });
 
 export type ProductFormData = z.infer<typeof productSchema>;
@@ -152,89 +154,10 @@ export default function ProductForm({
 
           <FormField
             control={form.control}
-            name="unit"
+            name="points"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Unidade</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoadingUnits || !!unitsError}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione uma unidade" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {isLoadingUnits ? (
-                      <div className="p-2 text-sm text-muted-foreground">
-                        Carregando unidades...
-                      </div>
-                    ) : unitsError ? (
-                      <div className="p-2 text-sm text-destructive">
-                        Erro ao carregar unidades
-                      </div>
-                    ) : units.length === 0 ? (
-                      <div className="p-2 text-sm text-muted-foreground">
-                        Nenhuma unidade disponível
-                      </div>
-                    ) : (
-                      units.map((unit) => (
-                        <SelectItem key={unit.id} value={String(unit.id)}>
-                          {unit.label}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="salePrice"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Preço de Venda (R$)</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="number" 
-                    step="0.01" 
-                    placeholder="0,00" 
-                    {...field}
-                    onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="costPrice"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Preço de Custo (R$)</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="number" 
-                    step="0.01" 
-                    placeholder="0,00" 
-                    {...field}
-                    onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="stock"
-            render={({ field }) => (
-              <FormItem className="col-span-2">
-                <FormLabel>Estoque</FormLabel>
+                <FormLabel>Pontos</FormLabel>
                 <FormControl>
                   <Input 
                     type="number" 
@@ -250,23 +173,122 @@ export default function ProductForm({
 
           <FormField
             control={form.control}
-            name="active"
+            name="image"
             render={({ field }) => (
-              <FormItem className="col-span-2 flex flex-row items-center justify-between rounded-lg border p-4">
-                <div className="space-y-0.5">
-                  <FormLabel className="text-base">
-                    Produto Ativo
-                  </FormLabel>
-                  <div className="text-sm text-muted-foreground">
-                    Produto disponível para venda
-                  </div>
-                </div>
+              <FormItem>
+                <FormLabel>URL da Imagem</FormLabel>
                 <FormControl>
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
+                  <Input 
+                    type="url" 
+                    placeholder="https://exemplo.com/imagem.jpg" 
+                    {...field}
                   />
                 </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="rating"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Avaliação (0-5)</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="number" 
+                    step="0.1" 
+                    min="0" 
+                    max="5" 
+                    placeholder="4.5" 
+                    {...field}
+                    onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="reviews"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Número de Avaliações</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="number" 
+                    placeholder="0" 
+                    {...field}
+                    onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="availability"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Disponibilidade</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a disponibilidade" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="available">Disponível</SelectItem>
+                    <SelectItem value="limited">Limitado</SelectItem>
+                    <SelectItem value="unavailable">Indisponível</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="terms"
+            render={({ field }) => (
+              <FormItem className="col-span-2">
+                <FormLabel>Termos e Condições</FormLabel>
+                <FormControl>
+                  <Textarea 
+                    placeholder="Digite os termos separados por vírgula" 
+                    className="resize-none"
+                    {...field}
+                    value={Array.isArray(field.value) ? field.value.join(', ') : field.value || ''}
+                    onChange={(e) => {
+                      const terms = e.target.value.split(',').map(term => term.trim()).filter(term => term.length > 0);
+                      field.onChange(terms);
+                    }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="validUntil"
+            render={({ field }) => (
+              <FormItem className="col-span-2">
+                <FormLabel>Válido Até (Opcional)</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="date" 
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
               </FormItem>
             )}
           />

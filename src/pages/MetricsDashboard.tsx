@@ -192,13 +192,13 @@ export default function MetricsDashboard() {
         </div>
         <div className="flex gap-2">
           <Button asChild>
-            <Link to="/metrics">
+            <Link to="/admin/settings/metrics">
               <BarChart3 className="mr-2 h-4 w-4" />
               Gerenciar Métricas
             </Link>
           </Button>
           <Button variant="outline" asChild>
-            <Link to="/dashboard">
+            <Link to="/admin">
               <Activity className="mr-2 h-4 w-4" />
               Dashboard Principal
             </Link>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -33,8 +33,22 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false);
-  const { register: registerUser, isLoading } = useAuth();
+  const [registerSuccess, setRegisterSuccess] = useState(false);
+  const { register: registerUser, isLoading, user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+
+  // Efeito para redirecionar após registro bem-sucedido
+  useEffect(() => {
+    if (registerSuccess && isAuthenticated && user) {
+      // Verificar se o usuário tem permission_id < 5 para redirecionar para /admin
+      if (user.permission_id && parseInt(user.permission_id) < 5) {
+        navigate('/admin', { replace: true });
+      } else {
+        navigate('/', { replace: true });
+      }
+      setRegisterSuccess(false);
+    }
+  }, [registerSuccess, isAuthenticated, user, navigate]);
 
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
@@ -54,7 +68,7 @@ export default function Register() {
       password_confirmation: data.password_confirmation,
     });
     if (success) {
-      navigate('/');
+      setRegisterSuccess(true);
     }
   };
 

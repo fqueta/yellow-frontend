@@ -244,7 +244,7 @@ export default function ClientCreate() {
             title: "Cliente criado",
             description: `Cliente ${data.name} criado com sucesso`,
           });
-          navigate('/clients');
+          navigate('/admin/clients');
         },
         onError: (error) => {
           // Função para determinar mensagem de erro específica
@@ -284,7 +284,7 @@ export default function ClientCreate() {
    * Navega de volta para a lista de clientes
    */
   const onCancel = () => {
-    navigate('/clients');
+    navigate('/admin/clients');
   };
 
   return (
@@ -294,7 +294,7 @@ export default function ClientCreate() {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => navigate('/clients')}
+          onClick={() => navigate('/admin/clients')}
           className="flex items-center gap-2"
         >
           <ArrowLeft className="h-4 w-4" />

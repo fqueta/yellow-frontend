@@ -67,7 +67,7 @@ export default function PartnerView() {
    * Navega de volta para a listagem de parceiros
    */
   const handleBack = () => {
-    navigate('/partners');
+    navigate('/admin/partners');
   };
 
   /**

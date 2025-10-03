@@ -44,6 +44,14 @@ import QuickCreateServiceOrder from "./pages/QuickCreateServiceOrder";
 import Financial from "./pages/financial/Financial";
 import FinancialCategories from "./pages/FinancialCategories";
 import PublicClientForm from "@/pages/PublicClientForm";
+import PointsStore from "@/pages/PointsStore";
+import ProductDetails from "./pages/ProductDetails";
+import MyRedemptions from "./pages/MyRedemptions";
+import LandingPage from "./pages/LandingPage";
+import AdminRedemptions from "./pages/AdminRedemptions";
+import AdminPointsExtracts from "./pages/AdminPointsExtracts";
+import AdminRedemptionDetails from "./pages/AdminRedemptionDetails";
+import AdminPointsExtractDetails from "./pages/AdminPointsExtractDetails";
 
 // console.log('App.tsx: Starting app initialization');
 // console.log('QueryClient available:', QueryClient);
@@ -93,14 +101,18 @@ const App = () => {
           <BrowserRouter>
             <Routes>
               {/* Rotas públicas */}
+              <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/form-client-active/:cpf" element={<PublicClientForm />} />
+              <Route path="/loja-oi" element={<PointsStore />} />
+              <Route path="/loja-oi/produto/:productId" element={<ProductDetails />} />
+              <Route path="/loja-oi/meus-resgates" element={<MyRedemptions />} />
               
               {/* Rotas protegidas */}
-              <Route path="/" element={
+              <Route path="/admin" element={
                 <ProtectedRoute>
                   <AppLayout>
                     {/* <Dashboard2 /> */}
@@ -115,117 +127,117 @@ const App = () => {
                   </AppLayout>
                 </ProtectedRoute>
               } /> */}
-              <Route path="/clients" element={
+              <Route path="/admin/clients" element={
                 <ProtectedRoute>
                   <AppLayout>
                     <Clients />
                   </AppLayout>
                 </ProtectedRoute>
               } />
-              <Route path="/clients/create" element={
+              <Route path="/admin/clients/create" element={
                 <ProtectedRoute>
                   <AppLayout>
                     <ClientCreate />
                   </AppLayout>
                 </ProtectedRoute>
               } />
-              <Route path="/clients/:id/view" element={
+              <Route path="/admin/clients/:id/view" element={
                 <ProtectedRoute>
                   <AppLayout>
                     <ClientView />
                   </AppLayout>
                 </ProtectedRoute>
               } />
-              <Route path="/clients/:id/edit" element={
+              <Route path="/admin/clients/:id/edit" element={
                 <ProtectedRoute>
                   <AppLayout>
                     <ClientEdit />
                   </AppLayout>
                 </ProtectedRoute>
               } />
-              <Route path="/partners" element={
+              <Route path="/admin/partners" element={
                 <ProtectedRoute>
                   <AppLayout>
                     <Partners />
                   </AppLayout>
                 </ProtectedRoute>
               } />
-              <Route path="/partners/:id" element={
+              <Route path="/admin/partners/:id" element={
                 <ProtectedRoute>
                   <AppLayout>
                     <PartnerView />
                   </AppLayout>
                 </ProtectedRoute>
               } />
-              <Route path="/partners/:id/edit" element={
+              <Route path="/admin/partners/:id/edit" element={
                 <ProtectedRoute>
                   <AppLayout>
                     <Partners />
                   </AppLayout>
                 </ProtectedRoute>
               } />
-              <Route path="/service-objects" element={
+              <Route path="/admin/service-objects" element={
                 <ProtectedRoute>
                   <AppLayout>
                     <ServiceObjects />
                   </AppLayout>
                 </ProtectedRoute>
               } />
-              <Route path="/aircraft" element={
+              <Route path="/admin/aircraft" element={
                 <ProtectedRoute>
                   <AppLayout>
                     <Aircraft />
                   </AppLayout>
                 </ProtectedRoute>
               } />
-              <Route path="/aircraft/:id" element={
+              <Route path="/admin/aircraft/:id" element={
                 <ProtectedRoute>
                   <AppLayout>
                     <AircraftView />
                   </AppLayout>
                 </ProtectedRoute>
               } />
-              <Route path="/products" element={
+              <Route path="/admin/products" element={
                 <ProtectedRoute>
                   <AppLayout>
                     <Products />
                   </AppLayout>
                 </ProtectedRoute>
               } />
-              <Route path="/products/:id" element={
+              <Route path="/admin/products/:id" element={
                 <ProtectedRoute>
                   <AppLayout>
                     <ProductView />
                   </AppLayout>
                 </ProtectedRoute>
               } />
-              <Route path="/services" element={
+              <Route path="/admin/services" element={
                 <ProtectedRoute>
                   <AppLayout>
                     <Services />
                   </AppLayout>
                 </ProtectedRoute>
               } />
-              <Route path="/services/:id" element={
+              <Route path="/admin/services/:id" element={
                 <ProtectedRoute>
                   <AppLayout>
                     <ServiceView />
                   </AppLayout>
                 </ProtectedRoute>
               } />
-              <Route path="/categories" element={
+              <Route path="/admin/categories" element={
                 <ProtectedRoute>
                   <AppLayout>
                     <Categories />
                   </AppLayout>
                 </ProtectedRoute>
               } />
-              <Route path="/settings/permissions" element={
+              <Route path="/admin/settings/permissions" element={
                 <ProtectedRoute>
                   <AppLayout>
                     <PermissionGuard 
                       required="settings.permissions.view" 
-                      menuPath="/settings/permissions"
+                      menuPath="/admin/settings/permissions"
                       requireRemote={false}
                     >
                       <Permissions />
@@ -233,11 +245,11 @@ const App = () => {
                   </AppLayout>
                 </ProtectedRoute>
               } />
-              <Route path="/settings/users" element={
+              <Route path="/admin/settings/users" element={
                 <ProtectedRoute>
                   <AppLayout>
                     <PermissionGuard 
-                      menuPath="/settings/users"
+                      menuPath="/admin/settings/users"
                       requireRemote={false}
                     >
                       <Users />
@@ -245,7 +257,7 @@ const App = () => {
                   </AppLayout>
                 </ProtectedRoute>
               } />
-              <Route path="/settings/metrics" element={
+              <Route path="/admin/settings/metrics" element={
               <ProtectedRoute>
                 <AppLayout>
                   <PermissionGuard required="settings.metrics.view">
@@ -254,7 +266,7 @@ const App = () => {
                 </AppLayout>
               </ProtectedRoute>
             } />
-              <Route path="/metrics-dashboard" element={
+              <Route path="/admin/metrics-dashboard" element={
                 <ProtectedRoute>
                   <AppLayout>
                     <PermissionGuard required="settings.metrics.view">
@@ -263,19 +275,19 @@ const App = () => {
                   </AppLayout>
                 </ProtectedRoute>
               } />
-              <Route path="/settings/user-profiles" element={
+              <Route path="/admin/settings/user-profiles" element={
                 <ProtectedRoute>
                   <AppLayout>
                     <UserProfiles />
                   </AppLayout>
                 </ProtectedRoute>
               } />
-              <Route path="/settings/system" element={
+              <Route path="/admin/settings/system" element={
                 <ProtectedRoute>
                   <AppLayout>
                     <PermissionGuard 
                       required="settings.system.view" 
-                      menuPath="/settings/system"
+                      menuPath="/admin/settings/system"
                       requireRemote={false}
                     >
                       <SystemSettings />
@@ -285,12 +297,12 @@ const App = () => {
               } />
               
               {/* Rotas do Módulo Financeiro */}
-              <Route path="/financial" element={
+              <Route path="/admin/financial" element={
                 <ProtectedRoute>
                   <AppLayout>
                     <PermissionGuard 
                       required="financial.view" 
-                      menuPath="/financial"
+                      menuPath="/admin/financial"
                       requireRemote={false}
                     >
                       <Financial />
@@ -298,12 +310,12 @@ const App = () => {
                   </AppLayout>
                 </ProtectedRoute>
               } />
-              <Route path="/financial/categories" element={
+              <Route path="/admin/financial/categories" element={
                 <ProtectedRoute>
                   <AppLayout>
                     <PermissionGuard 
                       required="financial.categories.view" 
-                      menuPath="/financial/categories"
+                      menuPath="/admin/financial/categories"
                       requireRemote={false}
                     >
                       <FinancialCategories />
@@ -312,36 +324,92 @@ const App = () => {
                 </ProtectedRoute>
               } />
               
+              {/* Rotas de Administração de Pontos */}
+              <Route path="/admin/redemptions" element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <PermissionGuard 
+                      required="points.redemptions.view" 
+                      menuPath="/admin/redemptions"
+                      requireRemote={false}
+                    >
+                      <AdminRedemptions />
+                    </PermissionGuard>
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/points-extracts" element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <PermissionGuard 
+                      required="points.extracts.view" 
+                      menuPath="/admin/points-extracts"
+                      requireRemote={false}
+                    >
+                      <AdminPointsExtracts />
+                    </PermissionGuard>
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              
+              {/* Rotas de Detalhes de Pontos */}
+              <Route path="/admin/redemptions/:id" element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <PermissionGuard 
+                      required="points.redemptions.view" 
+                      menuPath="/admin/redemptions"
+                      requireRemote={false}
+                    >
+                      <AdminRedemptionDetails />
+                    </PermissionGuard>
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/points-extracts/:id" element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <PermissionGuard 
+                      required="points.extracts.view" 
+                      menuPath="/admin/points-extracts"
+                      requireRemote={false}
+                    >
+                      <AdminPointsExtractDetails />
+                    </PermissionGuard>
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              
               {/* Rotas de Ordens de Serviço */}
-              <Route path="/service-orders" element={
+              <Route path="/admin/service-orders" element={
                 <ProtectedRoute>
                   <AppLayout>
                     <ServiceOrders />
                   </AppLayout>
                 </ProtectedRoute>
               } />
-              <Route path="/service-orders/quick-create" element={
+              <Route path="/admin/service-orders/quick-create" element={
                 <ProtectedRoute>
                   <AppLayout>
                     <QuickCreateServiceOrder />
                   </AppLayout>
                 </ProtectedRoute>
               } />
-              <Route path="/service-orders/create" element={
+              <Route path="/admin/service-orders/create" element={
                 <ProtectedRoute>
                   <AppLayout>
                     <CreateServiceOrder />
                   </AppLayout>
                 </ProtectedRoute>
               } />
-              <Route path="/service-orders/update/:id" element={
+              <Route path="/admin/service-orders/update/:id" element={
                 <ProtectedRoute>
                   <AppLayout>
                     <UpdateServiceOrder />
                   </AppLayout>
                 </ProtectedRoute>
               } />
-              <Route path="/service-orders/show/:id" element={
+              <Route path="/admin/service-orders/show/:id" element={
                 <ProtectedRoute>
                   <AppLayout>
                     <ShowServiceOrder />

@@ -297,3 +297,4 @@ export interface ServiceOrderFormData {
 // Export product types
 export * from './products';
 export * from './serviceOrders';
+export * from './redemptions';
