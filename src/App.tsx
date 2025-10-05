@@ -20,6 +20,8 @@ import Aircraft from "./pages/Aircraft";
 import AircraftView from "./pages/AircraftView";
 import Products from "./pages/Products";
 import ProductView from "./pages/ProductView";
+import ProductCreate from "./pages/ProductCreate";
+import ProductEdit from "./pages/ProductEdit";
 import Services from "./pages/Services";
 import ServiceView from "./pages/ServiceView";
 import Categories from "./pages/Categories";
@@ -44,9 +46,9 @@ import QuickCreateServiceOrder from "./pages/QuickCreateServiceOrder";
 import Financial from "./pages/financial/Financial";
 import FinancialCategories from "./pages/FinancialCategories";
 import PublicClientForm from "@/pages/PublicClientForm";
-import PointsStore from "@/pages/PointsStore";
-import ProductDetails from "./pages/ProductDetails";
-import MyRedemptions from "./pages/MyRedemptions";
+import PointsStore from "@/pages/loja/PointsStore";
+import ProductDetails from "./pages/loja/ProductDetails";
+import MyRedemptions from "./pages/loja/MyRedemptions";
 import LandingPage from "./pages/LandingPage";
 import AdminRedemptions from "./pages/AdminRedemptions";
 import AdminPointsExtracts from "./pages/AdminPointsExtracts";
@@ -107,9 +109,23 @@ const App = () => {
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/form-client-active/:cpf" element={<PublicClientForm />} />
-              <Route path="/loja-oi" element={<PointsStore />} />
-              <Route path="/loja-oi/produto/:productId" element={<ProductDetails />} />
-              <Route path="/loja-oi/meus-resgates" element={<MyRedemptions />} />
+              
+              {/* Rotas da loja - protegidas */}
+              <Route path="/loja" element={
+                <ProtectedRoute>
+                  <PointsStore />
+                </ProtectedRoute>
+              } />
+              <Route path="/loja/produto/:productId" element={
+                <ProtectedRoute>
+                  <ProductDetails />
+                </ProtectedRoute>
+              } />
+              <Route path="/loja/meus-resgates" element={
+                <ProtectedRoute>
+                  <MyRedemptions />
+                </ProtectedRoute>
+              } />
               
               {/* Rotas protegidas */}
               <Route path="/admin" element={
@@ -201,6 +217,20 @@ const App = () => {
                 <ProtectedRoute>
                   <AppLayout>
                     <Products />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/products/create" element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <ProductCreate />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/products/:id/edit" element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <ProductEdit />
                   </AppLayout>
                 </ProtectedRoute>
               } />

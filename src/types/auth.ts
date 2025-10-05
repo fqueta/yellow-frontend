@@ -10,6 +10,7 @@ export interface User {
   phone?: string;
   bio?: string;
   role?: string;
+  points?:number | string 
   company?: string;
   permission_id?: string;
   created_at: string;

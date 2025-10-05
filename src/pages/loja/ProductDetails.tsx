@@ -1,80 +1,10 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Star, Gift, CheckCircle, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Star, Gift, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useProductBySlug, useRedeemProduct } from '@/hooks/products';
 
-// Interface para o produto
-interface Product {
-  id: string;
-  name: string;
-  description: string;
-  points: number;
-  category: string;
-  image: string;
-  rating: number;
-  reviews: number;
-  availability: 'available' | 'limited' | 'unavailable';
-  terms: string[];
-  validUntil?: string;
-}
 
-// Dados mockados dos produtos
-const mockProducts: Product[] = [
-  {
-    id: '1',
-    name: 'Smartphone Samsung Galaxy A54',
-    description: 'Smartphone com tela de 6.4 polegadas, câmera tripla de 50MP, 128GB de armazenamento e bateria de 5000mAh. Ideal para quem busca tecnologia e qualidade.',
-    points: 15000,
-    category: 'Eletrônicos',
-    image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400',
-    rating: 4.5,
-    reviews: 234,
-    availability: 'available',
-    terms: [
-      'Produto novo e lacrado',
-      'Garantia de 12 meses',
-      'Entrega em até 15 dias úteis',
-      'Não é possível trocar por dinheiro'
-    ],
-    validUntil: '31/12/2024'
-  },
-  {
-    id: '2',
-    name: 'Fone de Ouvido Bluetooth JBL',
-    description: 'Fone de ouvido sem fio com cancelamento de ruído, bateria de 30 horas e qualidade de som premium. Perfeito para música e chamadas.',
-    points: 8500,
-    category: 'Áudio',
-    image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400',
-    rating: 4.3,
-    reviews: 156,
-    availability: 'available',
-    terms: [
-      'Produto novo e lacrado',
-      'Garantia de 12 meses',
-      'Entrega em até 10 dias úteis',
-      'Inclui cabo USB-C'
-    ],
-    validUntil: '30/11/2024'
-  },
-  {
-    id: '3',
-    name: 'Smartwatch Apple Watch SE',
-    description: 'Relógio inteligente com GPS, monitoramento de saúde, resistente à água e compatível com iPhone. Acompanhe sua rotina com estilo.',
-    points: 25000,
-    category: 'Wearables',
-    image: 'https://images.unsplash.com/photo-1434493789847-2f02dc6ca35d?w=400',
-    rating: 4.7,
-    reviews: 89,
-    availability: 'limited',
-    terms: [
-      'Produto novo e lacrado',
-      'Garantia de 12 meses Apple',
-      'Entrega em até 20 dias úteis',
-      'Compatível apenas com iPhone'
-    ],
-    validUntil: '15/01/2025'
-  }
-];
 
 /**
  * Componente da página de detalhes do produto
@@ -86,52 +16,84 @@ const ProductDetails: React.FC = () => {
   const [isRedeeming, setIsRedeeming] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
 
-  // Dados mockados do usuário
-  const userPoints = 18500;
+  // Buscar produto pela API usando slug
+  const { data: product, isLoading, error } = useProductBySlug(productId || '');
+  const userPoints:number = product?.user?.points_saldo || 0;
 
-  // Buscar produto pelos dados mockados
-  const product = mockProducts.find(p => p.id === productId);
+  // Hook para resgate de produto - deve estar antes dos returns condicionais
+  const redeemMutation = useRedeemProduct({
+    onSuccess: (data: { success: boolean; message: string; redemptionId?: string }) => {
+      setIsRedeeming(false);
+      if (data.success) {
+        setShowConfirmation(true);
+        toast.success(data.message || 'Produto resgatado com sucesso!');
+      } else {
+        toast.error(data.message || 'Erro ao resgatar produto.');
+      }
+    },
+    onError: (error: any) => {
+      setIsRedeeming(false);
+      toast.error(error?.message || 'Erro ao resgatar produto. Tente novamente.');
+    }
+  });
+ 
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-16 h-16 text-green-600 mx-auto mb-4 animate-spin" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Carregando produto...</h2>
+          <p className="text-gray-600">Aguarde enquanto buscamos as informações do produto.</p>
+        </div>
+      </div>
+    );
+  }
 
-  if (!product) {
+  // Error state
+  if (error || !product) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Produto não encontrado</h2>
-          <p className="text-gray-600 mb-4">O produto que você está procurando não existe.</p>
+          <p className="text-gray-600 mb-6">
+            {error ? 'Erro ao carregar o produto. Tente novamente mais tarde.' : 'O produto que você está procurando não existe ou foi removido.'}
+          </p>
           <button
-            onClick={() => navigate('/loja-oi')}
-            className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors"
+            onClick={() => navigate('/loja')}
+            className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"
           >
-            Voltar à loja
+            Voltar à Loja
           </button>
         </div>
       </div>
     );
   }
 
+
+
   /**
    * Função para processar o resgate do produto
    */
   const handleRedeem = async () => {
-    if (userPoints < product.points) {
+    if (userPoints < (product.pointsRequired || 0)) {
       toast.error('Pontos insuficientes para resgatar este produto!');
       return;
     }
 
-    if (product.availability === 'unavailable') {
+    if (!product.isActive) {
       toast.error('Este produto não está disponível no momento.');
       return;
     }
 
     setIsRedeeming(true);
-
-    // Simular processamento do resgate
-    setTimeout(() => {
-      setIsRedeeming(false);
-      setShowConfirmation(true);
-      toast.success('Produto resgatado com sucesso!');
-    }, 2000);
+    
+    // Fazer requisição para a API de resgate
+    redeemMutation.mutate({
+      productId: product.id,
+      quantity: 1
+    });
   };
 
   /**
@@ -195,8 +157,8 @@ const ProductDetails: React.FC = () => {
           </p>
           <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
             <p className="text-sm text-green-800">
-              <strong>Pontos utilizados:</strong> {product.points.toLocaleString()}<br />
-              <strong>Saldo restante:</strong> {(userPoints - product.points).toLocaleString()}
+              <strong>Pontos utilizados:</strong> {(product.pointsRequired || 0).toLocaleString()}<br />
+              <strong>Saldo restante:</strong> {(userPoints - (product.pointsRequired || 0)).toLocaleString()}
             </p>
           </div>
           <p className="text-sm text-gray-500 mb-6">
@@ -204,13 +166,13 @@ const ProductDetails: React.FC = () => {
           </p>
           <div className="space-y-3">
             <button
-              onClick={() => navigate('/loja-oi')}
+              onClick={() => navigate('/loja')}
               className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors font-medium"
             >
               Continuar comprando
             </button>
             <button
-              onClick={() => navigate('/loja-oi/meus-resgates')}
+              onClick={() => navigate('/loja/meus-resgates')}
               className="w-full border border-green-600 text-green-600 py-3 rounded-lg hover:bg-green-50 transition-colors font-medium"
             >
               Ver meus resgates
@@ -228,7 +190,7 @@ const ProductDetails: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <button
-              onClick={() => navigate('/loja-oi')}
+              onClick={() => navigate('/loja')}
               className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
             >
               <ArrowLeft className="w-5 h-5 mr-2" />
@@ -263,17 +225,17 @@ const ProductDetails: React.FC = () => {
             {/* Título e categoria */}
             <div>
               <span className="inline-block bg-green-100 text-green-800 text-sm font-medium px-3 py-1 rounded-full mb-3">
-                {product.category}
+                {product.category?.name || 'Categoria'}
               </span>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">{product.name}</h1>
               
               {/* Avaliação */}
               <div className="flex items-center space-x-2 mb-4">
                 <div className="flex items-center">
-                  {renderStars(product.rating)}
+                  {renderStars(4.5)}
                 </div>
                 <span className="text-sm text-gray-600">
-                  {product.rating} ({product.reviews} avaliações)
+                  4.5 (0 avaliações)
                 </span>
               </div>
             </div>
@@ -283,23 +245,23 @@ const ProductDetails: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-green-700 font-medium">Pontos necessários</p>
-                  <p className="text-3xl font-bold text-green-800">{product.points.toLocaleString()}</p>
+                  <p className="text-3xl font-bold text-green-800">{product.pointsRequired?.toLocaleString() || '0'}</p>
                 </div>
                 <Gift className="w-12 h-12 text-green-600" />
               </div>
             </div>
 
             {/* Status de disponibilidade */}
-            <div className="flex items-center space-x-2">
-              <span className={`px-3 py-1 rounded-full text-sm font-medium ${getAvailabilityColor(product.availability)}`}>
-                {getAvailabilityText(product.availability)}
+            {/* <div className="flex items-center space-x-2">
+              <span className={`px-3 py-1 rounded-full text-sm font-medium ${getAvailabilityColor(product.isActive ? 'available' : 'unavailable')}`}>
+                {getAvailabilityText(product.isActive ? 'available' : 'unavailable')}
               </span>
-              {product.validUntil && (
+              {product.expiresAt && (
                 <span className="text-sm text-gray-500">
-                  Válido até {product.validUntil}
+                  Válido até {new Date(product.expiresAt).toLocaleDateString('pt-BR')}
                 </span>
               )}
-            </div>
+            </div> */}
 
             {/* Descrição */}
             <div>
@@ -311,31 +273,37 @@ const ProductDetails: React.FC = () => {
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-3">Termos e Condições</h3>
               <ul className="space-y-2">
-                {product.terms.map((term, index) => (
-                  <li key={index} className="flex items-start space-x-2">
-                    <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm text-gray-600">{term}</span>
-                  </li>
-                ))}
+                <li className="flex items-start space-x-2">
+                  <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                  <span className="text-sm text-gray-600">Produto sujeito à disponibilidade</span>
+                </li>
+                <li className="flex items-start space-x-2">
+                  <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                  <span className="text-sm text-gray-600">Resgate não pode ser cancelado após confirmação</span>
+                </li>
+                <li className="flex items-start space-x-2">
+                  <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                  <span className="text-sm text-gray-600">Entrega conforme disponibilidade</span>
+                </li>
               </ul>
             </div>
 
             {/* Botão de resgate */}
             <div className="space-y-4">
-              {userPoints < product.points && (
+              {userPoints < (product.pointsRequired || 0) && (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                   <p className="text-sm text-red-800">
                     <strong>Pontos insuficientes!</strong><br />
-                    Você precisa de mais {(product.points - userPoints).toLocaleString()} pontos para resgatar este produto.
+                    Você precisa de mais {((product.pointsRequired || 0) - userPoints).toLocaleString()} pontos para resgatar este produto.
                   </p>
                 </div>
               )}
               
               <button
                 onClick={handleRedeem}
-                disabled={isRedeeming || userPoints < product.points || product.availability === 'unavailable'}
+                disabled={isRedeeming || userPoints < (product.pointsRequired || 0) || !product.isActive}
                 className={`w-full py-4 rounded-xl font-semibold text-lg transition-all duration-200 ${
-                  isRedeeming || userPoints < product.points || product.availability === 'unavailable'
+                  isRedeeming || userPoints < (product.pointsRequired || 0) || !product.isActive
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     : 'bg-green-600 text-white hover:bg-green-700 hover:shadow-lg transform hover:-translate-y-0.5'
                 }`}

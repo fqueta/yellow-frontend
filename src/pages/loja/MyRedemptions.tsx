@@ -151,7 +151,7 @@ const MyRedemptions: React.FC = () => {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-4">
               <button
-                onClick={() => navigate('/loja-oi')}
+                onClick={() => navigate('/loja')}
                 className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
               >
                 <ArrowLeft className="w-5 h-5 mr-2" />
@@ -254,7 +254,7 @@ const MyRedemptions: React.FC = () => {
                 }
               </p>
               <button
-                onClick={() => navigate('/loja-oi')}
+                onClick={() => navigate('/loja')}
                 className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-medium"
               >
                 Ir às compras
@@ -327,7 +327,7 @@ const MyRedemptions: React.FC = () => {
                     {/* Ações */}
                     <div className="mt-6 flex flex-col sm:flex-row gap-3">
                       <button
-                        onClick={() => navigate(`/loja-oi/produto/${redemption.productId}`)}
+                        onClick={() => navigate(`/loja/produto/${redemption.productId}`)}
                         className="flex-1 border border-green-600 text-green-600 py-2 px-4 rounded-lg hover:bg-green-50 transition-colors font-medium"
                       >
                         Ver produto

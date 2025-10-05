@@ -92,19 +92,20 @@ export default function ProductsTable({
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>Imagem</TableHead>
                 <TableHead>Produto</TableHead>
                 <TableHead>Categoria</TableHead>
+                <TableHead>Preço de Venda</TableHead>
                 <TableHead>Pontos</TableHead>
-                <TableHead>Avaliação</TableHead>
-                <TableHead>Reviews</TableHead>
-                <TableHead>Disponibilidade</TableHead>
+                <TableHead>Estoque</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8">
+                  <TableCell colSpan={8} className="text-center py-8">
                     <div className="flex items-center justify-center space-x-2">
                       <Package className="h-4 w-4 animate-spin" />
                       <span>Carregando produtos...</span>
@@ -113,7 +114,7 @@ export default function ProductsTable({
                 </TableRow>
               ) : error ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8">
+                  <TableCell colSpan={8} className="text-center py-8">
                     <div className="flex flex-col items-center space-y-2 text-destructive">
                       <AlertTriangle className="h-8 w-8" />
                       <div>
@@ -135,7 +136,7 @@ export default function ProductsTable({
                 </TableRow>
               ) : !products || products.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8">
+                  <TableCell colSpan={8} className="text-center py-8">
                     <div className="flex flex-col items-center space-y-2 text-muted-foreground">
                       <Package className="h-8 w-8" />
                       <div>
@@ -155,7 +156,7 @@ export default function ProductsTable({
                 </TableRow>
               ) : filteredProducts.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8">
+                  <TableCell colSpan={8} className="text-center py-8">
                     <div className="flex flex-col items-center space-y-2 text-muted-foreground">
                       <Search className="h-8 w-8" />
                       <div>
@@ -169,6 +170,24 @@ export default function ProductsTable({
                 filteredProducts.map((product) => (
                   <TableRow key={product.id}>
                     <TableCell>
+                      <div className="w-16 h-16 rounded-md overflow-hidden bg-muted flex items-center justify-center">
+                        {product.image ? (
+                          <img 
+                            src={product.image} 
+                            alt={product.name}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                              e.currentTarget.nextElementSibling.style.display = 'flex';
+                            }}
+                          />
+                        ) : null}
+                        <div className={`text-xs text-muted-foreground ${product.image ? 'hidden' : 'flex'} items-center justify-center w-full h-full`}>
+                          Sem imagem
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
                       <div>
                         <div className="font-medium">{product.name}</div>
                         <div className="text-sm text-muted-foreground">
@@ -181,27 +200,22 @@ export default function ProductsTable({
                     </TableCell>
                     <TableCell>
                       <div className="text-sm font-medium">
-                        {product.points.toLocaleString('pt-BR')} pts
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-1">
-                        <span className="text-sm font-medium">{product.rating.toFixed(1)}</span>
-                        <span className="text-xs text-muted-foreground">/5</span>
+                        R$ {product.salePrice?.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0,00'}
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="text-sm font-medium">
-                        {product.reviews.toLocaleString('pt-BR')}
+                        {product.points?.toLocaleString('pt-BR') || '0'} Pontos
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={
-                        product.availability === 'available' ? "default" : 
-                        product.availability === 'limited' ? "secondary" : "destructive"
-                      }>
-                        {product.availability === 'available' ? "Disponível" : 
-                         product.availability === 'limited' ? "Limitado" : "Indisponível"}
+                      <div className="text-sm font-medium">
+                        {product.stock?.toLocaleString('pt-BR') || '0'} {product.unit || ''}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={product.active ? "default" : "destructive"}>
+                        {product.active ? "Ativo" : "Inativo"}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">

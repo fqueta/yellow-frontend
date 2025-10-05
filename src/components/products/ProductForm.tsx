@@ -3,6 +3,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import { X } from "lucide-react";
+import { useState } from "react";
 import {
   Form,
   FormControl,
@@ -24,14 +27,21 @@ import * as z from "zod";
 // Form validation schema
 const productSchema = z.object({
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
-  description: z.string().min(1, "Descrição é obrigatória"),
+  description: z.string().optional(),
   category: z.string().min(1, "Categoria é obrigatória"),
-  points: z.number().int().min(1, "Pontos devem ser maior que 0"),
-  image: z.string().url("URL da imagem deve ser válida"),
-  rating: z.number().min(0).max(5, "Avaliação deve estar entre 0 e 5"),
-  reviews: z.number().int().min(0, "Número de avaliações não pode ser negativo"),
-  availability: z.enum(["available", "limited", "unavailable"]),
-  terms: z.array(z.string()).min(1, "Pelo menos um termo é obrigatório"),
+  salePrice: z.number().min(0, "Preço de venda deve ser maior ou igual a 0"),
+  costPrice: z.number().min(0, "Preço de custo deve ser maior ou igual a 0"),
+  stock: z.number().int().min(0, "Estoque deve ser maior ou igual a 0"),
+  unit: z.string().min(1, "Unidade é obrigatória"),
+  active: z.boolean(),
+  image: z.string().url("Deve ser uma URL válida").optional().or(z.literal("")),
+  points: z.number().min(0, "Pontos devem ser maior ou igual a 0"),
+  rating: z.number().min(0).max(5, "Avaliação deve estar entre 0 e 5").optional(),
+  reviews: z.number().int().min(0, "Número de avaliações deve ser maior ou igual a 0").optional(),
+  availability: z.enum(["available", "limited", "unavailable"], {
+    required_error: "Disponibilidade é obrigatória",
+  }),
+  terms: z.array(z.string()).min(1, "Pelo menos um termo deve ser adicionado"),
   validUntil: z.string().optional(),
 });
 
@@ -63,7 +73,7 @@ interface ProductFormProps {
   isEditing: boolean;
 }
 
-export default function ProductForm({
+export function ProductForm({
   form,
   onSubmit,
   isSubmitting,
@@ -134,16 +144,132 @@ export default function ProductForm({
                       <div className="p-2 text-sm text-destructive">
                         Erro ao carregar categorias
                       </div>
-                    ) : categories.length === 0 ? (
+                    ) : !categories || categories.length === 0 ? (
                       <div className="p-2 text-sm text-muted-foreground">
                         Nenhuma categoria disponível
                       </div>
                     ) : (
-                      categories.map((category) => (
+                      categories?.map((category) => (
                         <SelectItem key={category.id} value={String(category.id)}>
                           {category.name}
                         </SelectItem>
-                      ))
+                      )) || []
+                    )}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="image"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Link da Imagem</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="url"
+                    placeholder="https://exemplo.com/imagem.jpg (opcional)" 
+                    {...field} 
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="salePrice"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Preço de Venda</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="number" 
+                    step="0.01"
+                    placeholder="0.00" 
+                    {...field}
+                    onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="costPrice"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Preço de Custo</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="number" 
+                    step="0.01"
+                    placeholder="0.00" 
+                    {...field}
+                    onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="stock"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Estoque</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="number" 
+                    placeholder="0" 
+                    {...field}
+                    onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="unit"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Unidade</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoadingUnits || !!unitsError}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione uma unidade" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {isLoadingUnits ? (
+                      <div className="p-2 text-sm text-muted-foreground">
+                        Carregando unidades...
+                      </div>
+                    ) : unitsError ? (
+                      <div className="p-2 text-sm text-destructive">
+                        Erro ao carregar unidades
+                      </div>
+                    ) : !units || units.length === 0 ? (
+                      <div className="p-2 text-sm text-muted-foreground">
+                        Nenhuma unidade disponível
+                      </div>
+                    ) : (
+                      units?.map((unit) => (
+                        <SelectItem key={unit.value || unit.id} value={String(unit.value || unit.label || unit.name)}>
+                          {unit.label || unit.name}
+                        </SelectItem>
+                      )) || []
                     )}
                   </SelectContent>
                 </Select>
@@ -173,24 +299,6 @@ export default function ProductForm({
 
           <FormField
             control={form.control}
-            name="image"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>URL da Imagem</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="url" 
-                    placeholder="https://exemplo.com/imagem.jpg" 
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
             name="rating"
             render={({ field }) => (
               <FormItem>
@@ -198,10 +306,10 @@ export default function ProductForm({
                 <FormControl>
                   <Input 
                     type="number" 
-                    step="0.1" 
-                    min="0" 
-                    max="5" 
-                    placeholder="4.5" 
+                    step="0.1"
+                    min="0"
+                    max="5"
+                    placeholder="0.0" 
                     {...field}
                     onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                   />
@@ -256,19 +364,63 @@ export default function ProductForm({
           <FormField
             control={form.control}
             name="terms"
+            render={({ field }) => {
+              const [newTerm, setNewTerm] = useState("");
+              
+              const addTerm = () => {
+                if (newTerm.trim() && !field.value?.includes(newTerm.trim())) {
+                  field.onChange([...(field.value || []), newTerm.trim()]);
+                  setNewTerm("");
+                }
+              };
+              
+              const removeTerm = (termToRemove: string) => {
+                field.onChange(field.value?.filter(term => term !== termToRemove) || []);
+              };
+              
+              return (
+                <FormItem>
+                  <FormLabel>Termos e Condições</FormLabel>
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <Input 
+                        placeholder="Adicionar termo"
+                        value={newTerm}
+                        onChange={(e) => setNewTerm(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTerm())}
+                      />
+                      <Button type="button" onClick={addTerm} variant="outline">
+                        Adicionar
+                      </Button>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {field.value?.map((term, index) => (
+                        <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                          {term}
+                          <X 
+                            className="h-3 w-3 cursor-pointer" 
+                            onClick={() => removeTerm(term)}
+                          />
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              );
+            }}
+          />
+
+          <FormField
+            control={form.control}
+            name="validUntil"
             render={({ field }) => (
-              <FormItem className="col-span-2">
-                <FormLabel>Termos e Condições</FormLabel>
+              <FormItem>
+                <FormLabel>Válido Até (opcional)</FormLabel>
                 <FormControl>
-                  <Textarea 
-                    placeholder="Digite os termos separados por vírgula" 
-                    className="resize-none"
+                  <Input 
+                    type="date"
                     {...field}
-                    value={Array.isArray(field.value) ? field.value.join(', ') : field.value || ''}
-                    onChange={(e) => {
-                      const terms = e.target.value.split(',').map(term => term.trim()).filter(term => term.length > 0);
-                      field.onChange(terms);
-                    }}
                   />
                 </FormControl>
                 <FormMessage />
@@ -278,20 +430,26 @@ export default function ProductForm({
 
           <FormField
             control={form.control}
-            name="validUntil"
+            name="active"
             render={({ field }) => (
-              <FormItem className="col-span-2">
-                <FormLabel>Válido Até (Opcional)</FormLabel>
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                <div className="space-y-0.5">
+                  <FormLabel className="text-base">Produto Ativo</FormLabel>
+                  <div className="text-sm text-muted-foreground">
+                    Produto disponível para venda
+                  </div>
+                </div>
                 <FormControl>
-                  <Input 
-                    type="date" 
-                    {...field}
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
                   />
                 </FormControl>
-                <FormMessage />
               </FormItem>
             )}
           />
+
+
         </div>
 
         <div className="flex justify-end space-x-2 pt-4">

@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { useProductsList, useCreateProduct, useUpdateProduct, useDeleteProduct, useProductCategories, useProductUnits } from "@/hooks/products";
 import type { Product, CreateProductInput, UpdateProductInput } from "@/types/products";
-import { Plus } from "lucide-react";
+import { Plus, Edit } from "lucide-react";
 import ProductsStats from "@/components/products/ProductsStats";
 import ProductsTable from "@/components/products/ProductsTable";
 import ProductFormDialog from "@/components/products/ProductFormDialog";
@@ -14,6 +15,7 @@ import { ProductFormData, productSchema } from "@/components/products/ProductFor
 
 
 export default function Products() {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -72,37 +74,22 @@ export default function Products() {
       stock: 0,
       unit: "Unidade",
       active: true,
+      image: "",
+      points: 0,
+      rating: 0,
+      reviews: 0,
+      availability: "available" as const,
+      terms: [],
+      validUntil: "",
     },
   });
 
   const handleNewProduct = () => {
-    setEditingProduct(null);
-    form.reset({
-      name: "",
-      description: "",
-      category: "",
-      salePrice: 0,
-      costPrice: 0,
-      stock: 0,
-      unit: "Unidade",
-      active: true,
-    });
-    setIsDialogOpen(true);
+    navigate('/admin/products/create');
   };
 
   const handleEditProduct = (product: Product) => {
-    setEditingProduct(product);
-    form.reset({
-      name: product.name,
-      description: product.description || "",
-      category: product.category,
-      salePrice: product.salePrice,
-      costPrice: product.costPrice,
-      stock: product.stock,
-      unit: product.unit,
-      active: product.active,
-    });
-    setIsDialogOpen(true);
+    navigate(`/admin/products/${product.id}/edit`);
   };
 
   const handleDeleteProduct = async (product: Product) => {
@@ -124,7 +111,14 @@ export default function Products() {
           costPrice: data.costPrice,
           stock: data.stock,
           unit: data.unit,
-          active: data.active
+          active: data.active,
+          image: data.image || '',
+          points: data.points,
+          rating: data.rating || 0,
+          reviews: data.reviews || 0,
+          availability: data.availability,
+          terms: data.terms,
+          validUntil: data.validUntil || ''
         };
         await updateMutation.mutateAsync({ id: editingProduct.id, data: updateData });
       } else {
@@ -136,7 +130,14 @@ export default function Products() {
           costPrice: data.costPrice,
           stock: data.stock,
           unit: data.unit,
-          active: data.active
+          active: data.active,
+          image: data.image || '',
+          points: data.points,
+          rating: data.rating || 0,
+          reviews: data.reviews || 0,
+          availability: data.availability,
+          terms: data.terms,
+          validUntil: data.validUntil || ''
         };
         await createMutation.mutateAsync(createData);
       }

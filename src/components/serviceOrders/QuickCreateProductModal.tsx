@@ -45,6 +45,7 @@ export function QuickCreateProductModal({
       stock: 0,
       unit: "",
       active: true,
+      image: "",
     },
   });
 
@@ -68,6 +69,13 @@ export function QuickCreateProductModal({
         stock: data.stock,
         unit: data.unit,
         active: data.active,
+        image: data.image,
+        points: 0,
+        rating: 0,
+        reviews: 0,
+        availability: "available" as const,
+        terms: [],
+        validUntil: undefined,
       });
       
       toast.success("Produto criado com sucesso!");

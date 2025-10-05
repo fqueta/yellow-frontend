@@ -70,7 +70,7 @@ export function ClientsTable({ clients, onEdit, onDelete, isLoading }: ClientsTa
         {clientsList.map((client) => (
           <TableRow 
             key={client.id}
-            onDoubleClick={() => navigate(`/clients/${client.id}/view`)}
+            onDoubleClick={() => navigate(`/admin/clients/${client.id}/view`)}
             className="cursor-pointer hover:bg-muted/50"
             title={`Visualizar detalhes do cliente ${client.name} com dois cliques`}
           >
@@ -93,10 +93,10 @@ export function ClientsTable({ clients, onEdit, onDelete, isLoading }: ClientsTa
                   <MoreHorizontal className="h-4 w-4" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => navigate(`/clients/${client.id}/view`)}>
+                  <DropdownMenuItem onClick={() => navigate(`/admin/clients/${client.id}/view`)}>
                     <Eye className="mr-2 h-4 w-4" /> Visualizar
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate(`/clients/${client.id}/edit`)}>
+                  <DropdownMenuItem onClick={() => navigate(`/admin/clients/${client.id}/edit`)}>
                     <Pencil className="mr-2 h-4 w-4" /> Editar
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => onDelete(client)}>

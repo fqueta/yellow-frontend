@@ -1,27 +1,21 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingCart, Star, Gift, User, Search, Menu, X } from 'lucide-react';
+import { ShoppingCart, Star, Gift, User, Search, Menu, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
+import { useProductsList } from '@/hooks/products';
+import { useCategoriesList } from '@/hooks/categories';
+import { useAuth } from '@/contexts/AuthContext';
+import { Product } from '@/types/products';
+import { Category } from '@/types/categories';
 
-interface Product {
-  id: string;
-  name: string;
-  description: string;
-  points: number;
-  category: string;
-  image: string;
-  rating: number;
-  reviews: number;
-  availability: 'available' | 'limited' | 'unavailable';
-  terms: string[];
-  validUntil?: string;
-}
 
-interface User {
+
+// Interface para dados do usuário na loja (estendendo o User do auth)
+interface StoreUser {
   name: string;
   points: number;
   avatar: string;
@@ -38,106 +32,46 @@ const PointsStore: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [cartItems, setCartItems] = useState<number[]>([]);
 
-  // Dados mockados do usuário
-  const user: User = {
-    name: 'João Silva',
-    points: 15420,
-    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face'
+  // Obter dados do usuário autenticado
+  const { user: authUser } = useAuth();
+  
+  // Mapear dados do usuário autenticado para a interface da loja
+  // console.log('authUser:', authUser);
+  
+  const user: StoreUser = {
+    name: authUser?.name || 'Usuário',
+    points: authUser?.points ? Number(authUser?.points) : 0, // TODO: Implementar pontos do usuário quando disponível na API
+    avatar: authUser?.foto_perfil || authUser?.avatar || '' // Usar ícone User quando não há avatar
   };
 
-  // Produtos mockados
-  const products: Product[] = [
-    {
-      id: '1',
-      name: 'Smartphone Samsung Galaxy A54',
-      description: 'Smartphone com tela de 6.4" e câmera de 50MP',
-      points: 12000,
-      image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=300&h=300&fit=crop',
-      category: 'electronics',
-      rating: 4.5,
-      reviews: 234,
-      availability: 'available',
-      terms: ['Produto novo e lacrado', 'Garantia de 12 meses', 'Entrega em até 15 dias úteis'],
-      validUntil: '31/12/2024'
-    },
-    {
-      id: '2',
-      name: 'Fone de Ouvido Bluetooth',
-      description: 'Fone wireless com cancelamento de ruído',
-      points: 3500,
-      image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop',
-      category: 'electronics',
-      rating: 4.8,
-      reviews: 156,
-      availability: 'available',
-      terms: ['Produto novo e lacrado', 'Garantia de 12 meses', 'Entrega em até 10 dias úteis'],
-      validUntil: '30/11/2024'
-    },
-    {
-      id: '3',
-      name: 'Cafeteira Elétrica Premium',
-      description: 'Cafeteira automática com moedor integrado',
-      points: 5500,
-      image: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=300&h=300&fit=crop',
-      category: 'home',
-      rating: 4.3,
-      reviews: 89,
-      availability: 'available',
-      terms: ['Produto novo e lacrado', 'Garantia de 24 meses', 'Entrega em até 12 dias úteis'],
-      validUntil: '15/01/2025'
-    },
-    {
-      id: '4',
-      name: 'Tênis Esportivo Nike',
-      description: 'Tênis para corrida com tecnologia Air Max',
-      points: 4200,
-      image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=300&h=300&fit=crop',
-      category: 'fashion',
-      rating: 4.7,
-      reviews: 67,
-      availability: 'unavailable',
-      terms: ['Produto novo e lacrado', 'Garantia de 6 meses', 'Entrega em até 20 dias úteis'],
-      validUntil: '28/02/2025'
-    },
-    {
-      id: '5',
-      name: 'Voucher Viagem - Hotel 5 Estrelas',
-      description: 'Voucher para 2 diárias em hotel de luxo',
-      points: 8000,
-      image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=300&h=300&fit=crop',
-      category: 'travel',
-      rating: 5.0,
-      reviews: 45,
-      availability: 'limited',
-      terms: ['Válido por 12 meses', 'Sujeito à disponibilidade', 'Não reembolsável'],
-      validUntil: '31/12/2025'
-    },
-    {
-      id: '6',
-      name: 'Smart TV 55" 4K',
-      description: 'Smart TV LED 55 polegadas com resolução 4K',
-      points: 18000,
-      image: 'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=300&h=300&fit=crop',
-      category: 'electronics',
-      rating: 4.6,
-      reviews: 123,
-      availability: 'available',
-      terms: ['Produto novo e lacrado', 'Garantia de 12 meses', 'Entrega em até 25 dias úteis'],
-      validUntil: '30/06/2025'
-    }
-  ];
+  // Buscar produtos da API com limite de 100
+  const { data: productsData, isLoading: productsLoading, error: productsError } = useProductsList({
+    limit: 100,
+    // entidade: 'produtos'
+  });
+  const products = productsData?.data || [];
 
+  // Buscar categorias da API com limite de 5
+  const { data: categoriesData, isLoading: categoriesLoading, error: categoriesError } = useCategoriesList({ 
+    limit: 5,
+    // entidade: 'produtos'
+  });
+  
+  // Mapear categorias da API e adicionar categoria "Todos"
+  const apiCategories = categoriesData?.data || [];
   const categories = [
     { id: 'all', name: 'Todos', icon: '🛍️' },
-    { id: 'electronics', name: 'Eletrônicos', icon: '📱' },
-    { id: 'home', name: 'Casa & Decoração', icon: '🏠' },
-    { id: 'fashion', name: 'Moda', icon: '👕' },
-    { id: 'travel', name: 'Viagens', icon: '✈️' }
+    ...apiCategories.map((category: Category) => ({
+      id: category.id,
+      name: category.name,
+      icon: '📦' // Ícone padrão para categorias da API
+    }))
   ];
 
   // Filtrar produtos
   const filteredProducts = products.filter(product => {
-    const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
+    const categoryId = product.category?.id || product.categoryId || '';
+    const matchesCategory = selectedCategory === 'all' || categoryId === selectedCategory;
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          product.description.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesCategory && matchesSearch;
@@ -145,7 +79,7 @@ const PointsStore: React.FC = () => {
 
   // Função para resgatar produto
   const handleRedeem = (product: Product) => {
-    if (product.availability === 'unavailable') {
+    if (!product.isActive) {
       toast({
         title: "Produto indisponível",
         description: "Este produto está temporariamente fora de estoque.",
@@ -154,10 +88,11 @@ const PointsStore: React.FC = () => {
       return;
     }
 
-    if (user.points < product.points) {
+    const pointsRequired = product.pointsRequired || 0;
+    if (user.points < pointsRequired) {
       toast({
         title: "Pontos insuficientes",
-        description: `Você precisa de ${product.points - user.points} pontos a mais para resgatar este produto.`,
+        description: `Você precisa de ${pointsRequired - user.points} pontos a mais para resgatar este produto.`,
         variant: "destructive"
       });
       return;
@@ -207,7 +142,13 @@ const PointsStore: React.FC = () => {
               </div>
               
               <div className="hidden sm:flex items-center space-x-2">
-                <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full" />
+                {user.avatar ? (
+                  <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full" />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                    <User className="w-4 h-4 text-gray-500" />
+                  </div>
+                )}
                 <span className="text-sm text-gray-700">{user.name}</span>
               </div>
 
@@ -281,18 +222,27 @@ const PointsStore: React.FC = () => {
             </div>
             
             <div className="flex gap-2 overflow-x-auto pb-2">
-              {categories.map((category) => (
-                <Button
-                  key={category.id}
-                  variant={selectedCategory === category.id ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setSelectedCategory(category.id)}
-                  className="whitespace-nowrap"
-                >
-                  <span className="mr-1">{category.icon}</span>
-                  {category.name}
-                </Button>
-              ))}
+              {categoriesLoading ? (
+                <div className="flex items-center space-x-2">
+                  <Loader2 className="w-4 h-4 animate-spin text-green-600" />
+                  <span className="text-sm text-gray-600">Carregando categorias...</span>
+                </div>
+              ) : categoriesError ? (
+                <div className="text-sm text-red-500">Erro ao carregar categorias</div>
+              ) : (
+                categories.map((category) => (
+                  <Button
+                    key={category.id}
+                    variant={selectedCategory === category.id ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedCategory(category.id)}
+                    className="whitespace-nowrap"
+                  >
+                    <span className="mr-1">{category.icon}</span>
+                    {category.name}
+                  </Button>
+                ))
+              )}
             </div>
           </div>
         </div>
@@ -305,80 +255,103 @@ const PointsStore: React.FC = () => {
             Produtos em Destaque
           </h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProducts.map((product) => (
-              <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                <div className="relative">
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="w-full h-48 object-cover"
-                  />
-                  {product.availability === 'unavailable' && (
-                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                      <span className="text-white font-semibold">Indisponível</span>
-                    </div>
-                  )}
-                  {product.availability === 'limited' && (
-                    <Badge variant="outline" className="absolute top-2 right-2">
-                      Limitado
-                    </Badge>
-                  )}
-                </div>
-                
-                <CardHeader>
-                  <CardTitle className="text-lg">{product.name}</CardTitle>
-                  <CardDescription>{product.description}</CardDescription>
-                  
-                  <div className="flex items-center space-x-1">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`w-4 h-4 ${
-                          i < Math.floor(product.rating)
-                          ? 'text-green-400 fill-current'
-                          : 'text-gray-300'
-                        }`}
-                      />
-                    ))}
-                    <span className="text-sm text-gray-600 ml-2">{product.rating}</span>
-                  </div>
-                </CardHeader>
-                
-                <CardContent>
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <div className="text-2xl font-bold text-green-600">
-                      {product.points.toLocaleString()} pts
-                    </div>
-                      <div className="text-sm text-gray-500">
-                        {product.reviews} avaliações
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <Button
-                    onClick={() => navigate(`/loja-oi/produto/${product.id}`)}
-                    disabled={product.availability === 'unavailable' || user.points < product.points}
-                    className="w-full"
-                    variant={user.points >= product.points && product.availability !== 'unavailable' ? "default" : "secondary"}
-                  >
-                    {product.availability === 'unavailable'
-                      ? 'Indisponível'
-                      : user.points < product.points
-                      ? 'Pontos Insuficientes'
-                      : 'Resgatar Agora'
-                    }
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-          
-          {filteredProducts.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-gray-500 text-lg">Nenhum produto encontrado.</p>
+          {/* Loading State */}
+          {productsLoading && (
+            <div className="flex justify-center items-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-green-600" />
+              <span className="ml-2 text-gray-600">Carregando produtos...</span>
             </div>
+          )}
+          
+          {/* Error State */}
+          {productsError && (
+            <div className="text-center py-12">
+              <p className="text-red-500 text-lg">Erro ao carregar produtos. Tente novamente mais tarde.</p>
+            </div>
+          )}
+          
+          {/* Products Grid */}
+          {!productsLoading && !productsError && (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredProducts.map((product) => {
+                  const pointsRequired = product.pointsRequired || 0;
+                  return (
+                    <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                      <div className="relative">
+                        <img
+                          src={product.image || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=300&h=300&fit=crop'}
+                          alt={product.name}
+                          className="w-full h-48 object-cover"
+                        />
+                        {!product.isActive && (
+                          <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                            <span className="text-white font-semibold">Indisponível</span>
+                          </div>
+                        )}
+                        {product.isActive && pointsRequired > 10000 && (
+                          <Badge variant="outline" className="absolute top-2 right-2">
+                            Premium
+                          </Badge>
+                        )}
+                      </div>
+                      
+                      <CardHeader>
+                        <CardTitle className="text-lg">{product.name}</CardTitle>
+                        <CardDescription>{product.description}</CardDescription>
+                        
+                        <div className="flex items-center space-x-1">
+                          {[...Array(5)].map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`w-4 h-4 ${
+                                i < 4 // Rating fixo de 4 estrelas
+                                ? 'text-green-400 fill-current'
+                                : 'text-gray-300'
+                              }`}
+                            />
+                          ))}
+                          <span className="text-sm text-gray-600 ml-2">4.0</span>
+                        </div>
+                      </CardHeader>
+                      
+                      <CardContent>
+                        <div className="flex items-center justify-between mb-4">
+                          <div>
+                            <div className="text-2xl font-bold text-green-600">
+                              {pointsRequired.toLocaleString()} pts
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              0 avaliações
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <Button
+                          onClick={() => navigate(`/loja/produto/${product.slug || product.id}`)}
+                          disabled={!product.isActive || user.points < pointsRequired}
+                          className="w-full"
+                          variant={user.points >= pointsRequired && product.isActive ? "default" : "secondary"}
+                        >
+                          {!product.isActive
+                            ? 'Indisponível'
+                            : user.points < pointsRequired
+                            ? 'Pontos Insuficientes'
+                            : 'Resgatar Agora'
+                          }
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+              
+              {filteredProducts.length === 0 && !productsLoading && (
+                <div className="text-center py-12">
+                  <p className="text-gray-500 text-lg">Nenhum produto encontrado.</p>
+                </div>
+              )}
+            </>
           )}
         </div>
       </section>

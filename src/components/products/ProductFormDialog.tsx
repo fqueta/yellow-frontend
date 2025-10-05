@@ -5,7 +5,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import ProductForm, { ProductFormData, Category, Unit } from "./ProductForm";
+import { ProductForm, ProductFormData, Category, Unit } from "./ProductForm";
 import { UseFormReturn } from "react-hook-form";
 import type { Product } from "@/types/products";
 

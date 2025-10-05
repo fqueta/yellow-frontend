@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Eye, EyeOff } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
+import { useRedirect } from '@/hooks/useRedirect';
 import { AuthLayout } from '@/components/auth/AuthLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,23 +32,15 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
   const { login, isLoading, user, isAuthenticated } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  const from = location.state?.from?.pathname || '/';
+  const { redirectAfterAuth } = useRedirect();
 
   // Efeito para redirecionar após login bem-sucedido
   useEffect(() => {
     if (loginSuccess && isAuthenticated && user) {
-      // Verificar se o usuário tem permission_id < 5 para redirecionar para /admin
-      if (user.permission_id && parseInt(user.permission_id) < 5) {
-        navigate('/admin', { replace: true });
-      } else {
-        navigate(from, { replace: true });
-      }
+      redirectAfterAuth(user);
       setLoginSuccess(false);
     }
-  }, [loginSuccess, isAuthenticated, user, navigate, from]);
+  }, [loginSuccess, isAuthenticated, user, redirectAfterAuth]);
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),

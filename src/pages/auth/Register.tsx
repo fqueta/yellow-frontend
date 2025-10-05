@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Eye, EyeOff } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
+import { useRedirect } from '@/hooks/useRedirect';
 import { AuthLayout } from '@/components/auth/AuthLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,17 +36,12 @@ export default function Register() {
   const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false);
   const [registerSuccess, setRegisterSuccess] = useState(false);
   const { register: registerUser, isLoading, user, isAuthenticated } = useAuth();
-  const navigate = useNavigate();
+  const { redirectAfterAuth } = useRedirect();
 
   // Efeito para redirecionar após registro bem-sucedido
   useEffect(() => {
     if (registerSuccess && isAuthenticated && user) {
-      // Verificar se o usuário tem permission_id < 5 para redirecionar para /admin
-      if (user.permission_id && parseInt(user.permission_id) < 5) {
-        navigate('/admin', { replace: true });
-      } else {
-        navigate('/', { replace: true });
-      }
+      redirectAfterAuth(user);
       setRegisterSuccess(false);
     }
   }, [registerSuccess, isAuthenticated, user, navigate]);

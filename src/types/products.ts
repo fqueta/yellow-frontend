@@ -31,6 +31,13 @@ export interface CreateProductInput {
   stock: number;
   unit: string;
   active: boolean;
+  image?: string;
+  points: number;
+  rating?: number;
+  reviews?: number;
+  availability: 'available' | 'limited' | 'unavailable';
+  terms: string[];
+  validUntil?: string;
 }
 
 /**
@@ -45,6 +52,13 @@ export interface UpdateProductInput {
   stock?: number;
   unit?: string;
   active?: boolean;
+  image?: string;
+  points?: number;
+  rating?: number;
+  reviews?: number;
+  availability?: 'available' | 'limited' | 'unavailable';
+  terms?: string[];
+  validUntil?: string;
 }
 
 /**

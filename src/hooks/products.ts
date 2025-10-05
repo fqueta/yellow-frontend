@@ -1,7 +1,7 @@
 import { Product, CreateProductInput, UpdateProductInput, ProductFilters } from '@/types/products';
 import { productsService, ProductListParams } from '@/services/productsService';
 import { useGenericApi } from './useGenericApi';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 /**
  * Função para obter os hooks de produtos
@@ -40,6 +40,23 @@ export function useProduct(id: string, queryOptions?: any) {
   return api.useGetById(id, queryOptions);
 }
 
+export function useProductBySlug(slug: string, queryOptions?: any) {
+  return useQuery({
+    queryKey: ['product', 'slug', slug],
+    queryFn: () => productsService.getProductBySlug(slug),
+    enabled: !!slug,
+    retry: (failureCount: number, error: any) => {
+      // Não tenta novamente para erros de cliente
+      if (error?.status >= 400 && error?.status < 500) return false;
+      return failureCount < 1;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutos
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    ...queryOptions
+  });
+}
+
 export function useCreateProduct(mutationOptions?: any) {
   const api = getProductsApi();
   return api.useCreate(mutationOptions);
@@ -53,6 +70,23 @@ export function useUpdateProduct(mutationOptions?: any) {
 export function useDeleteProduct(mutationOptions?: any) {
   const api = getProductsApi();
   return api.useDelete(mutationOptions);
+}
+
+/**
+ * Hook para resgatar produto com pontos
+ */
+export function useRedeemProduct(mutationOptions?: any) {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ productId, quantity = 1 }: { productId: string; quantity?: number }) => 
+      productsService.redeemProduct(productId, quantity),
+    onSuccess: () => {
+      // Invalidar cache de produtos para atualizar dados
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+    },
+    ...mutationOptions
+  });
 }
 
 // Hook para categorias de produtos

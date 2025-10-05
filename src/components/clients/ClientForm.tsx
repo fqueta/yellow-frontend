@@ -867,14 +867,14 @@ export function ClientForm({
           </AccordionItem>
         </Accordion>
 
-        {/* <div className="flex justify-end space-x-2">
+        <div className="flex justify-end space-x-2">
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancelar
           </Button>
           <Button type="submit">
             {editingClient ? 'Atualizar' : 'Cadastrar'}
           </Button>
-        </div> */}
+        </div>
     </div>
   );
 }

@@ -9,7 +9,7 @@ interface ProductsStatsProps {
 export function ProductsStats({ products }: ProductsStatsProps) {
   const totalProducts = products.length;
   const availableProducts = products.filter(p => p.availability === 'available').length;
-  const totalPointsValue = products.reduce((sum, product) => sum + product.points, 0);
+  const totalPointsValue = products.reduce((sum, product) => sum + Number(product.points), 0);
   const limitedProducts = products.filter(p => p.availability === 'limited').length;
   
   // Calcula a avaliação média apenas se houver produtos

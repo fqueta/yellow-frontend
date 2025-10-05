@@ -38,6 +38,15 @@ class ProductsService extends BaseApiService {
   }
 
   /**
+   * Obtém um produto por slug
+   * @param slug - Slug do produto
+   */
+  async getProductBySlug(slug: string): Promise<Product> {
+    const response = await this.get<ApiResponse<Product>>(`${this.endpoint}/${slug}`);
+    return response.data;
+  }
+
+  /**
    * Cria um novo produto
    * @param data - Dados do produto
    */
@@ -73,10 +82,23 @@ class ProductsService extends BaseApiService {
   }
 
   /**
-   * Lista unidades de medida
+   * Obtém unidades de medida disponíveis
    */
   async getUnits(): Promise<{ value: string; label: string }[]> {
     const response = await this.get<ApiResponse<{ value: string; label: string }[]>>('/product-units');
+    return response.data;
+  }
+
+  /**
+   * Resgata um produto com pontos
+   * @param productId - ID do produto a ser resgatado
+   * @param quantity - Quantidade a ser resgatada (padrão: 1)
+   */
+  async redeemProduct(productId: string, quantity: number = 1): Promise<{ success: boolean; message: string; redemptionId?: string }> {
+    const response = await this.post<ApiResponse<{ success: boolean; message: string; redemptionId?: string }>>('/redeem', {
+      product_id: productId,
+      quantity
+    });
     return response.data;
   }
 

@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Gift, Star, Users, Zap, ArrowRight, CheckCircle } from "lucide-react";
 import { Link } from "react-router-dom";
+import { LoginRedirectLink } from "@/components/auth/LoginRedirectLink";
 
 /**
  * Landing page component for Yellow Benefits Club
@@ -57,10 +58,10 @@ const LandingPage = () => {
                 </Link>
               </Button>
               <Button size="lg" variant="outline" className="border-yellow-400 text-purple-700 hover:bg-yellow-50" asChild>
-                <Link to="/loja-oi">
+                <LoginRedirectLink to="/loja" requireAuth={true}>
                   Explorar Loja
                   <Gift className="ml-2 h-5 w-5" />
-                </Link>
+                </LoginRedirectLink>
               </Button>
             </div>
           </div>
@@ -186,7 +187,7 @@ const LandingPage = () => {
               </Link>
             </Button>
             <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-purple-800" asChild>
-              <Link to="/loja-oi">Explorar Produtos</Link>
+              <LoginRedirectLink to="/loja" requireAuth={true}>Explorar Produtos</LoginRedirectLink>
             </Button>
           </div>
         </div>
@@ -213,7 +214,7 @@ const LandingPage = () => {
             <div>
               <h4 className="font-semibold mb-4">Produtos</h4>
               <ul className="space-y-2 text-sm text-purple-300">
-                <li><Link to="/loja-oi" className="hover:text-yellow-400">Loja de Pontos</Link></li>
+                <li><LoginRedirectLink to="/loja" requireAuth={true} className="hover:text-yellow-400">Loja de Pontos</LoginRedirectLink></li>
                 <li><Link to="/register" className="hover:text-yellow-400">Cadastro</Link></li>
               </ul>
             </div>
