@@ -1,5 +1,5 @@
 import { BaseApiService } from './BaseApiService';
-import { Product, CreateProductInput, UpdateProductInput, ProductFilters } from '@/types/products';
+import { Product, CreateProductInput, UpdateProductInput, ProductFilters, ProductRedemptionResponse } from '@/types/products';
 import { ApiResponse, PaginatedResponse } from '@/types/index';
 
 /**
@@ -94,8 +94,8 @@ class ProductsService extends BaseApiService {
    * @param productId - ID do produto a ser resgatado
    * @param quantity - Quantidade a ser resgatada (padrão: 1)
    */
-  async redeemProduct(productId: string, quantity: number = 1): Promise<{ success: boolean; message: string; redemptionId?: string }> {
-    const response = await this.post<ApiResponse<{ success: boolean; message: string; redemptionId?: string }>>('/redeem', {
+  async redeemProduct(productId: string, quantity: number = 1): Promise<ProductRedemptionResponse> {
+    const response = await this.post<ApiResponse<ProductRedemptionResponse>>('/products/redeem', {
       product_id: productId,
       quantity
     });

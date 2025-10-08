@@ -202,5 +202,9 @@ export function getBrazilianStates(): { value: string; label: string }[] {
     { value: "TO", label: "Tocantins" },
   ];
 }
+export function zerofill(num: number, width: number): string {
+  const numStr = num.toString();
+  return numStr.padStart(width, '0');
+}
 
 

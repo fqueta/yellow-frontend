@@ -12,8 +12,26 @@ export type RedemptionStatus =
   | 'cancelled'    // Cancelado
   | 'refunded';    // Reembolsado
 
-// Prioridades para processamento
-export type RedemptionPriority = 'low' | 'medium' | 'high' | 'urgent';
+// Interface para endereço de entrega
+export interface ShippingAddress {
+  street: string;
+  neighborhood: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  complement?: string;
+}
+
+// Interface para histórico de status
+export interface StatusHistory {
+  id: string;
+  status: RedemptionStatus;
+  comment: string;
+  createdAt: string;
+  createdBy: string;
+  redeemId: string;
+  createdByName: string;
+}
 
 // Interface para resgate de produto
 export interface Redemption {
@@ -21,6 +39,7 @@ export interface Redemption {
   userId: string;
   userName: string;
   userEmail: string;
+  userPhone?: string;
   productId: string;
   productName: string;
   productImage: string;
@@ -28,7 +47,7 @@ export interface Redemption {
   pointsUsed: number;
   redemptionDate: string;
   status: RedemptionStatus;
-  priority?: RedemptionPriority;
+  shippingAddress?: ShippingAddress;
   trackingCode?: string;
   estimatedDelivery?: string;
   actualDelivery?: string;
@@ -36,16 +55,23 @@ export interface Redemption {
   adminNotes?: string;
   createdAt: string;
   updatedAt: string;
+  priority: 'low' | 'medium' | 'high';
+  statusHistory: StatusHistory[];
 }
 
-// Tipo para movimentação de pontos
+// Tipos de transação de pontos
 export type PointsTransactionType = 
   | 'earned'       // Pontos ganhos
   | 'redeemed'     // Pontos resgatados
   | 'expired'      // Pontos expirados
   | 'bonus'        // Bônus
   | 'refund'       // Reembolso
-  | 'adjustment';  // Ajuste manual
+  | 'adjustment'   // Ajuste manual
+  | 'credito'      // Crédito (da API)
+  | 'debito'       // Débito (da API)
+  | 'ajuste'       // Ajuste (da API)
+  | 'reembolso'    // Reembolso (da API)
+  | 'expiracao';   // Expiração (da API)
 
 // Interface para extrato de pontos
 export interface PointsExtract {
@@ -62,12 +88,28 @@ export interface PointsExtract {
   expirationDate?: string;
   createdAt: string;
   createdBy?: string;  // ID do usuário que criou (para ajustes manuais)
+  // Campos adicionais da API
+  client_id?: string;
+  valor?: string;
+  data?: string;
+  tipo?: string;
+  origem?: string;
+  valor_referencia?: string;
+  data_expiracao?: string;
+  status?: string;
+  usuario_id?: string;
+  pedido_id?: string;
+  config?: any;
+  ativo?: string;
+  updated_at?: string;
+  deleted_at?: string;
+  cliente?: any;
+  usuario?: any;
 }
 
 // Interface para filtros de resgates
 export interface RedemptionFilters {
   status?: RedemptionStatus;
-  priority?: RedemptionPriority;
   category?: string;
   dateFrom?: string;
   dateTo?: string;
@@ -116,20 +158,18 @@ export const REDEMPTION_STATUSES = {
   refunded: { label: 'Reembolsado', color: 'orange' }
 } as const;
 
-// Constantes para tipos de transação
+// Mapeamento de tipos de transação para exibição
 export const POINTS_TRANSACTION_TYPES = {
   earned: { label: 'Ganhos', color: 'green' },
   redeemed: { label: 'Resgatados', color: 'blue' },
   expired: { label: 'Expirados', color: 'red' },
   bonus: { label: 'Bônus', color: 'purple' },
   refund: { label: 'Reembolso', color: 'orange' },
-  adjustment: { label: 'Ajuste', color: 'gray' }
-} as const;
-
-// Constantes para prioridades
-export const REDEMPTION_PRIORITIES = {
-  low: { label: 'Baixa', color: 'gray' },
-  medium: { label: 'Média', color: 'yellow' },
-  high: { label: 'Alta', color: 'orange' },
-  urgent: { label: 'Urgente', color: 'red' }
+  adjustment: { label: 'Ajuste', color: 'gray' },
+  // Tipos da API
+  credito: { label: 'Crédito', color: 'green' },
+  debito: { label: 'Débito', color: 'blue' },
+  ajuste: { label: 'Ajuste', color: 'gray' },
+  reembolso: { label: 'Reembolso', color: 'orange' },
+  expiracao: { label: 'Expiração', color: 'red' }
 } as const;

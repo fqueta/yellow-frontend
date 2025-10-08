@@ -3,14 +3,15 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Star, Gift, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useProductBySlug, useRedeemProduct } from '@/hooks/products';
-
-
+import { ProductRedemptionResponse } from '@/types/products';
+import { zerofill } from '@/lib/qlib';
+import { PointsStoreProps } from '@/types/products';
 
 /**
  * Componente da página de detalhes do produto
  * Exibe informações completas do produto e permite resgate direto
  */
-const ProductDetails: React.FC = () => {
+const ProductDetails: React.FC<PointsStoreProps> = ({ linkLoja }) => {
   const { productId } = useParams<{ productId: string }>();
   const navigate = useNavigate();
   const [isRedeeming, setIsRedeeming] = useState(false);
@@ -22,14 +23,19 @@ const ProductDetails: React.FC = () => {
 
   // Hook para resgate de produto - deve estar antes dos returns condicionais
   const redeemMutation = useRedeemProduct({
-    onSuccess: (data: { success: boolean; message: string; redemptionId?: string }) => {
+    onSuccess: (data: ProductRedemptionResponse) => {
       setIsRedeeming(false);
-      if (data.success) {
-        setShowConfirmation(true);
-        toast.success(data.message || 'Produto resgatado com sucesso!');
-      } else {
-        toast.error(data.message || 'Erro ao resgatar produto.');
-      }
+      setShowConfirmation(true);
+      toast.success(`Resgate processado com sucesso! #R${zerofill(data.redemption_id, 3)}`);
+      console.log('Dados do resgate:', {
+        redemptionId: data.redemption_id,
+        productName: data.product_name,
+        quantity: data.quantity,
+        pointsUsed: data.points_used,
+        remainingPoints: data.remaining_points,
+        status: data.status,
+        estimatedDelivery: data.estimated_delivery
+      });
     },
     onError: (error: any) => {
       setIsRedeeming(false);
@@ -61,7 +67,7 @@ const ProductDetails: React.FC = () => {
             {error ? 'Erro ao carregar o produto. Tente novamente mais tarde.' : 'O produto que você está procurando não existe ou foi removido.'}
           </p>
           <button
-            onClick={() => navigate('/loja')}
+            onClick={() => navigate(linkLoja)}
             className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"
           >
             Voltar à Loja

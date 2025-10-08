@@ -152,6 +152,20 @@ export abstract class BaseApiService {
   }
 
   /**
+   * Executa requisição PATCH
+   * @param endpoint - Endpoint da API
+   * @param data - Dados para enviar no corpo da requisição
+   */
+  protected async patch<T>(endpoint: string, data?: any): Promise<T> {
+    const response = await fetch(`${this.API_BASE_URL}${endpoint}`, {
+      method: 'PATCH',
+      headers: this.getHeaders(),
+      body: data ? JSON.stringify(data) : undefined,
+    });
+    return this.handleResponse<T>(response);
+  }
+
+  /**
    * Executa requisição DELETE
    * @param endpoint - Endpoint da API
    */

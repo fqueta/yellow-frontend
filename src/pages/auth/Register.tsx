@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -44,7 +44,7 @@ export default function Register() {
       redirectAfterAuth(user);
       setRegisterSuccess(false);
     }
-  }, [registerSuccess, isAuthenticated, user, navigate]);
+  }, [registerSuccess, isAuthenticated, user, redirectAfterAuth]);
 
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
@@ -73,7 +73,7 @@ export default function Register() {
       title="Criar Conta" 
       subtitle="Crie sua conta para começar"
     >
-      <Form {...form}>
+      {/* <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <FormField
             control={form.control}
@@ -184,7 +184,11 @@ export default function Register() {
             {isLoading ? 'Criando conta...' : 'Criar Conta'}
           </Button>
         </form>
-      </Form>
+      </Form> */}
+      <div className="mt-4 text-center">
+        <h1>Para obter acesso entre em contato com o nosso suporte</h1>
+        <p></p>
+      </div>
 
       <div className="text-center text-sm">
         <span className="text-muted-foreground">Já tem uma conta? </span>

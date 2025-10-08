@@ -16,7 +16,9 @@ import {
   DollarSign,
   MoreHorizontal,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -51,105 +53,16 @@ import {
   PointsTransactionType,
   POINTS_TRANSACTION_TYPES 
 } from '@/types/redemptions';
+import { 
+  usePointsExtracts, 
+  usePointsExtractStats, 
+  useCreateAdjustment, 
+  useExportPointsExtracts 
+} from '@/hooks/pointsExtracts';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-// Dados mockados para demonstração
-const mockPointsExtracts: PointsExtract[] = [
-  {
-    id: 'PE001',
-    userId: 'U001',
-    userName: 'João Silva',
-    userEmail: 'joao@email.com',
-    type: 'earned',
-    points: 1500,
-    description: 'Compra realizada - Pedido #12345',
-    reference: 'ORDER_12345',
-    balanceBefore: 8500,
-    balanceAfter: 10000,
-    expirationDate: '2025-01-15T00:00:00Z',
-    createdAt: '2024-01-15T10:30:00Z'
-  },
-  {
-    id: 'PE002',
-    userId: 'U001',
-    userName: 'João Silva',
-    userEmail: 'joao@email.com',
-    type: 'redeemed',
-    points: -15000,
-    description: 'Resgate: Smartphone Samsung Galaxy A54',
-    reference: 'R001',
-    balanceBefore: 25000,
-    balanceAfter: 10000,
-    createdAt: '2024-01-15T10:30:00Z'
-  },
-  {
-    id: 'PE003',
-    userId: 'U002',
-    userName: 'Maria Santos',
-    userEmail: 'maria@email.com',
-    type: 'bonus',
-    points: 2000,
-    description: 'Bônus de aniversário',
-    balanceBefore: 5500,
-    balanceAfter: 7500,
-    expirationDate: '2025-01-20T00:00:00Z',
-    createdAt: '2024-01-20T15:45:00Z',
-    createdBy: 'ADMIN_001'
-  },
-  {
-    id: 'PE004',
-    userId: 'U003',
-    userName: 'Pedro Costa',
-    userEmail: 'pedro@email.com',
-    type: 'earned',
-    points: 3200,
-    description: 'Compra realizada - Pedido #12346',
-    reference: 'ORDER_12346',
-    balanceBefore: 12800,
-    balanceAfter: 16000,
-    expirationDate: '2025-01-22T00:00:00Z',
-    createdAt: '2024-01-22T11:20:00Z'
-  },
-  {
-    id: 'PE005',
-    userId: 'U004',
-    userName: 'Ana Oliveira',
-    userEmail: 'ana@email.com',
-    type: 'expired',
-    points: -800,
-    description: 'Pontos expirados - Lote #2023-12',
-    balanceBefore: 3800,
-    balanceAfter: 3000,
-    createdAt: '2024-01-10T00:00:00Z'
-  },
-  {
-    id: 'PE006',
-    userId: 'U005',
-    userName: 'Carlos Ferreira',
-    userEmail: 'carlos@email.com',
-    type: 'refund',
-    points: 5500,
-    description: 'Reembolso: Cafeteira Elétrica Premium',
-    reference: 'R005',
-    balanceBefore: 2000,
-    balanceAfter: 7500,
-    createdAt: '2024-01-19T10:30:00Z'
-  },
-  {
-    id: 'PE007',
-    userId: 'U006',
-    userName: 'Lucia Mendes',
-    userEmail: 'lucia@email.com',
-    type: 'adjustment',
-    points: 1000,
-    description: 'Ajuste manual - Correção de saldo',
-    balanceBefore: 4500,
-    balanceAfter: 5500,
-    createdAt: '2024-01-23T14:15:00Z',
-    createdBy: 'ADMIN_002'
-  }
-];
+// Removido dados mockados - agora usando dados da API
 
 /**
  * Página administrativa para acompanhamento de extratos de pontos
@@ -157,12 +70,38 @@ const mockPointsExtracts: PointsExtract[] = [
  */
 const AdminPointsExtracts: React.FC = () => {
   const navigate = useNavigate();
-  const [extracts] = useState<PointsExtract[]>(mockPointsExtracts);
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [dateFromFilter, setDateFromFilter] = useState('');
   const [dateToFilter, setDateToFilter] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage] = useState(20);
+
+  // Parâmetros para a API
+  const apiParams = {
+    page: currentPage,
+    per_page: perPage,
+    search: searchTerm || undefined,
+    type: typeFilter !== 'all' ? (typeFilter as PointsTransactionType) : undefined,
+    dateFrom: dateFromFilter || undefined,
+    dateTo: dateToFilter || undefined,
+    sort: 'createdAt',
+    order: 'desc' as const
+  };
+
+  // Hooks da API
+  const { data: extractsResponse, isLoading, error, refetch } = usePointsExtracts(apiParams);
+  const { data: stats, isLoading: isLoadingStats } = usePointsExtractStats();
+  const createAdjustmentMutation = useCreateAdjustment();
+  const exportMutation = useExportPointsExtracts();
+  // console.log('extractsResponse',extractsResponse);
+  const extracts = extractsResponse?.data || [];
+  const pagination = {
+    current_page: extractsResponse?.current_page || 1,
+    last_page: extractsResponse?.last_page || 1,
+    per_page: extractsResponse?.per_page || perPage,
+    total: extractsResponse?.total || 0
+  };
 
   // Função para obter o ícone do tipo de transação
   const getTransactionIcon = (type: PointsTransactionType) => {
@@ -203,48 +142,15 @@ const AdminPointsExtracts: React.FC = () => {
     }
   };
 
-  // Filtrar extratos baseado nos filtros aplicados
-  const filteredExtracts = useMemo(() => {
-    return extracts.filter(extract => {
-      const matchesSearch = 
-        extract.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        extract.userEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        extract.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        extract.id.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const matchesType = typeFilter === 'all' || extract.type === typeFilter;
-      
-      let matchesDateRange = true;
-      if (dateFromFilter || dateToFilter) {
-        const extractDate = new Date(extract.createdAt);
-        if (dateFromFilter) {
-          matchesDateRange = matchesDateRange && extractDate >= new Date(dateFromFilter);
-        }
-        if (dateToFilter) {
-          matchesDateRange = matchesDateRange && extractDate <= new Date(dateToFilter + 'T23:59:59');
-        }
-      }
-      
-      return matchesSearch && matchesType && matchesDateRange;
-    });
-  }, [extracts, searchTerm, typeFilter, dateFromFilter, dateToFilter]);
+  // Função para aplicar filtros (resetar página)
+  const applyFilters = () => {
+    setCurrentPage(1);
+  };
 
-  // Calcular estatísticas
-  const stats = useMemo(() => {
-    const totalTransactions = extracts.length;
-    const totalEarned = extracts
-      .filter(e => ['earned', 'bonus', 'refund', 'adjustment'].includes(e.type) && e.points > 0)
-      .reduce((sum, e) => sum + e.points, 0);
-    const totalRedeemed = extracts
-      .filter(e => e.type === 'redeemed')
-      .reduce((sum, e) => sum + Math.abs(e.points), 0);
-    const totalExpired = extracts
-      .filter(e => e.type === 'expired')
-      .reduce((sum, e) => sum + Math.abs(e.points), 0);
-    const activeUsers = new Set(extracts.map(e => e.userId)).size;
-    
-    return { totalTransactions, totalEarned, totalRedeemed, totalExpired, activeUsers };
-  }, [extracts]);
+  // Aplicar filtros quando mudarem
+  React.useEffect(() => {
+    applyFilters();
+  }, [searchTerm, typeFilter, dateFromFilter, dateToFilter]);
 
   // Função para visualizar detalhes do extrato
   const handleViewDetails = (extractId: string) => {
@@ -252,19 +158,43 @@ const AdminPointsExtracts: React.FC = () => {
   };
 
   // Função para exportar dados
-  const handleExport = () => {
-    toast({
-      title: "Exportando dados",
-      description: "Os dados dos extratos estão sendo exportados...",
-    });
+  const handleExport = async () => {
+    try {
+      const blob = await exportMutation.mutateAsync();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `extratos-pontos-${format(new Date(), 'yyyy-MM-dd')}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast({
+        title: "Exportação concluída",
+        description: "Os dados dos extratos foram exportados com sucesso.",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro na exportação",
+        description: "Ocorreu um erro ao exportar os dados.",
+        variant: "destructive"
+      });
+    }
   };
 
   // Função para criar ajuste manual
   const handleCreateAdjustment = () => {
+    // TODO: Implementar modal/formulário para criar ajuste
     toast({
       title: "Criar ajuste",
-      description: "Abrindo formulário para criar ajuste manual de pontos...",
+      description: "Funcionalidade em desenvolvimento...",
     });
+  };
+
+  // Função para atualizar dados
+  const handleRefresh = () => {
+    refetch();
   };
 
   return (
@@ -286,7 +216,7 @@ const AdminPointsExtracts: React.FC = () => {
             <Plus className="w-4 h-4 mr-2" />
             Criar Ajuste
           </Button>
-          <Button onClick={() => setIsLoading(!isLoading)}>
+          <Button onClick={handleRefresh} disabled={isLoading}>
             <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
             Atualizar
           </Button>
@@ -294,48 +224,67 @@ const AdminPointsExtracts: React.FC = () => {
       </div>
 
       {/* Estatísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-center">
-              <p className="text-2xl font-bold text-blue-600">{stats.totalTransactions}</p>
-              <p className="text-sm text-gray-600">Total Transações</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-center">
-              <p className="text-2xl font-bold text-green-600">{stats.totalEarned.toLocaleString()}</p>
-              <p className="text-sm text-gray-600">Pontos Ganhos</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-center">
-              <p className="text-2xl font-bold text-blue-600">{stats.totalRedeemed.toLocaleString()}</p>
-              <p className="text-sm text-gray-600">Pontos Resgatados</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-center">
-              <p className="text-2xl font-bold text-red-600">{stats.totalExpired.toLocaleString()}</p>
-              <p className="text-sm text-gray-600">Pontos Expirados</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-center">
-              <p className="text-2xl font-bold text-purple-600">{stats.activeUsers}</p>
-              <p className="text-sm text-gray-600">Usuários Ativos</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {isLoadingStats ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          {[...Array(5)].map((_, i) => (
+            <Card key={i}>
+              <CardContent className="p-4">
+                <div className="text-center">
+                  <div className="h-8 w-16 bg-gray-200 rounded animate-pulse mx-auto mb-2" />
+                  <div className="h-4 w-24 bg-gray-200 rounded animate-pulse mx-auto" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : stats ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-blue-600">{stats.totalTransactions.toLocaleString()}</p>
+                <p className="text-sm text-gray-600">Total Transações</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-green-600">{stats.totalEarned.toLocaleString()}</p>
+                <p className="text-sm text-gray-600">Pontos Ganhos</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-blue-600">{stats.totalRedeemed.toLocaleString()}</p>
+                <p className="text-sm text-gray-600">Pontos Resgatados</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-red-600">{stats.totalExpired.toLocaleString()}</p>
+                <p className="text-sm text-gray-600">Pontos Expirados</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-purple-600">{stats.activeUsers.toLocaleString()}</p>
+                <p className="text-sm text-gray-600">Usuários Ativos</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
+        <div className="text-center py-4 text-gray-500">
+          Erro ao carregar estatísticas
+        </div>
+      )}
 
       {/* Filtros */}
       <Card>
@@ -403,7 +352,7 @@ const AdminPointsExtracts: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <DollarSign className="w-5 h-5" />
-            Extratos de Pontos ({filteredExtracts.length})
+            Extratos de Pontos ({extracts.length})
           </CardTitle>
           <CardDescription>
             Histórico completo de movimentações de pontos dos clientes
@@ -426,7 +375,21 @@ const AdminPointsExtracts: React.FC = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredExtracts.length === 0 ? (
+                {isLoading ? (
+                  [...Array(5)].map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell><div className="h-4 w-16 bg-gray-200 rounded animate-pulse" /></TableCell>
+                      <TableCell><div className="h-4 w-32 bg-gray-200 rounded animate-pulse" /></TableCell>
+                      <TableCell><div className="h-4 w-20 bg-gray-200 rounded animate-pulse" /></TableCell>
+                      <TableCell><div className="h-4 w-16 bg-gray-200 rounded animate-pulse" /></TableCell>
+                      <TableCell><div className="h-4 w-40 bg-gray-200 rounded animate-pulse" /></TableCell>
+                      <TableCell><div className="h-4 w-16 bg-gray-200 rounded animate-pulse" /></TableCell>
+                      <TableCell><div className="h-4 w-16 bg-gray-200 rounded animate-pulse" /></TableCell>
+                      <TableCell><div className="h-4 w-24 bg-gray-200 rounded animate-pulse" /></TableCell>
+                      <TableCell><div className="h-4 w-8 bg-gray-200 rounded animate-pulse" /></TableCell>
+                    </TableRow>
+                  ))
+                ) : extracts.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={9} className="text-center py-8">
                       <div className="flex flex-col items-center gap-2">
@@ -436,7 +399,7 @@ const AdminPointsExtracts: React.FC = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredExtracts.map((extract) => (
+                  extracts.map((extract) => (
                     <TableRow key={extract.id}>
                       <TableCell className="font-medium">{extract.id}</TableCell>
                       <TableCell>
@@ -448,7 +411,7 @@ const AdminPointsExtracts: React.FC = () => {
                       <TableCell>
                         <Badge variant={getTypeColor(extract.type)} className="flex items-center gap-1 w-fit">
                           {getTransactionIcon(extract.type)}
-                          {POINTS_TRANSACTION_TYPES[extract.type].label}
+                          {POINTS_TRANSACTION_TYPES[extract.type]?.label || extract.type || 'Tipo desconhecido'}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -475,24 +438,24 @@ const AdminPointsExtracts: React.FC = () => {
                       </TableCell>
                       <TableCell>
                         <span className="font-medium">
-                          {extract.balanceBefore.toLocaleString()}
+                          {extract.balanceBefore ? extract.balanceBefore.toLocaleString() : '0'}
                         </span>
                       </TableCell>
                       <TableCell>
                         <span className="font-medium">
-                          {extract.balanceAfter.toLocaleString()}
+                          {extract.balanceAfter ? extract.balanceAfter.toLocaleString() : '0'}
                         </span>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
                           <Calendar className="w-4 h-4 text-gray-400" />
                           <span className="text-sm">
-                            {format(new Date(extract.createdAt), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                            {extract.createdAt ? format(new Date(extract.createdAt), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : 'Data não disponível'}
                           </span>
                         </div>
                         {extract.expirationDate && (
                           <div className="text-xs text-gray-500">
-                            Expira: {format(new Date(extract.expirationDate), 'dd/MM/yyyy', { locale: ptBR })}
+                            Expira: {extract.expirationDate ? format(new Date(extract.expirationDate), 'dd/MM/yyyy', { locale: ptBR }) : 'Data não disponível'}
                           </div>
                         )}
                       </TableCell>
@@ -542,6 +505,56 @@ const AdminPointsExtracts: React.FC = () => {
               </TableBody>
             </Table>
           </div>
+          
+          {/* Paginação */}
+          {pagination && pagination.total > 0 && (
+            <div className="flex items-center justify-between px-6 py-4 border-t">
+              <div className="text-sm text-gray-500">
+                Mostrando {((pagination.current_page - 1) * pagination.per_page) + 1} a {Math.min(pagination.current_page * pagination.per_page, pagination.total)} de {pagination.total} resultados
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                  disabled={currentPage <= 1 || isLoading}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Anterior
+                </Button>
+                
+                <div className="flex items-center space-x-1">
+                  {Array.from({ length: Math.min(5, pagination.total_pages) }, (_, i) => {
+                    const pageNumber = i + 1;
+                    const isCurrentPage = pageNumber === currentPage;
+                    
+                    return (
+                      <Button
+                        key={pageNumber}
+                        variant={isCurrentPage ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCurrentPage(pageNumber)}
+                        disabled={isLoading}
+                        className="w-8 h-8 p-0"
+                      >
+                        {pageNumber}
+                      </Button>
+                    );
+                  })}
+                </div>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  disabled={currentPage >= pagination.total_pages || isLoading}
+                >
+                  Próxima
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

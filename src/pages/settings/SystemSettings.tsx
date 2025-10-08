@@ -7,8 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Settings, Save, Palette } from "lucide-react";
+import { Settings, Save, Palette, Link } from "lucide-react";
 import { systemSettingsService, AdvancedSystemSettings } from "@/services/systemSettingsService";
+import { useApiOptions } from "@/hooks/useApiOptions";
 
 /**
  * Página de configurações do sistema
@@ -21,6 +22,19 @@ export default function SystemSettings() {
   
   // Estado de carregamento
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Hook para gerenciar opções da API
+  const { 
+    options: apiOptions, 
+    isLoading: apiLoading, 
+    error: apiError, 
+    updateOption, 
+    saveMultipleOptions, 
+    getApiConfigOptions 
+  } = useApiOptions();
+  
+  // Estado local para as configurações de API (antes de salvar)
+  const [localApiOptions, setLocalApiOptions] = useState<{[key: number]: string}>({});
 
   // Estados para configurações básicas - Switch
   const [basicSwitchSettings, setBasicSwitchSettings] = useState(() => {
@@ -200,6 +214,59 @@ export default function SystemSettings() {
   };
 
   /**
+   * Manipula mudanças nas configurações de API (apenas localmente)
+   */
+  const handleApiOptionChange = (id: number, value: string) => {
+    setLocalApiOptions(prev => ({
+      ...prev,
+      [id]: value
+    }));
+  };
+
+  /**
+   * Salva todas as configurações de API
+   */
+  const handleSaveApiSettings = async () => {
+    setIsLoading(true);
+    
+    try {
+      // Converte para o formato {name_campo: value} com todos os campos
+      const dataToSave: {[key: string]: string} = {};
+      
+      getApiConfigOptions().forEach((option) => {
+        const currentValue = getCurrentOptionValue(option);
+        dataToSave[option.url] = currentValue || '';
+      });
+      
+      if (Object.keys(dataToSave).length === 0) {
+        toast.info('Nenhuma configuração encontrada para salvar');
+        return;
+      }
+      
+      const success = await saveMultipleOptions(dataToSave);
+      
+      if (success) {
+        toast.success('Configurações de API salvas com sucesso!');
+        // setLocalApiOptions({}); // Limpa as mudanças locais
+      } else {
+        toast.error('Erro ao salvar configurações de API');
+      }
+    } catch (error) {
+      console.error('Erro ao salvar configurações de API:', error);
+      toast.error('Erro ao salvar configurações de API');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  /**
+   * Obtém o valor atual de uma opção (local ou original)
+   */
+  const getCurrentOptionValue = (option: any) => {
+    return localApiOptions[option.id] !== undefined ? localApiOptions[option.id] : option.value;
+  };
+
+  /**
    * Salva configurações gerais
    */
   const handleSaveGeneralSettings = () => {
@@ -270,10 +337,10 @@ export default function SystemSettings() {
       await systemSettingsService.saveAdvancedSettings(advancedSettings);
       
       // Log das outras configurações (não enviadas para API ainda)
-      console.log('Configurações Básicas - Switch:', basicSwitchSettings);
-      console.log('Configurações Básicas - Select:', basicSelectSettings);
-      console.log('Configurações de Aparência:', appearanceSettings);
-      console.log('Configurações Avançadas enviadas para API:', advancedSettings);
+      // console.log('Configurações Básicas - Switch:', basicSwitchSettings);
+      // console.log('Configurações Básicas - Select:', basicSelectSettings);
+      // console.log('Configurações de Aparência:', appearanceSettings);
+      // console.log('Configurações Avançadas enviadas para API:', advancedSettings);
       
       toast.success("Configurações salvas com sucesso!");
     } catch (error) {
@@ -357,9 +424,10 @@ export default function SystemSettings() {
 
       {/* Abas de Configurações */}
       <Tabs defaultValue="basic" className="w-full" onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="basic">Configurações Básicas</TabsTrigger>
           <TabsTrigger value="advanced">Configurações Avançadas</TabsTrigger>
+          <TabsTrigger value="api">Configurações de API</TabsTrigger>
         </TabsList>
 
         {/* Aba de Configurações Básicas */}
@@ -913,6 +981,78 @@ export default function SystemSettings() {
               
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Aba de Configurações de API */}
+        <TabsContent value="api" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Link className="h-5 w-5" />
+                <span>Configurações de API</span>
+              </CardTitle>
+              <CardDescription>
+                Configure as opções de API do sistema, incluindo URLs, tokens e configurações do Alloyal.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {apiLoading ? (
+                <div className="flex items-center justify-center p-8">
+                  <div className="text-muted-foreground">Carregando configurações...</div>
+                </div>
+              ) : apiError ? (
+                <div className="flex items-center justify-center p-8">
+                  <div className="text-red-500">{apiError}</div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-4">
+                  {getApiConfigOptions().map((option) => (
+                    <div key={option.id} className="space-y-2">
+                      <Label htmlFor={`api-option-${option.id}`}>
+                        {option.name}
+                      </Label>
+                      <Input
+                         id={`api-option-${option.id}`}
+                         type="text"
+                         name={option.url}
+                         value={getCurrentOptionValue(option)}
+                         onChange={(e) => handleApiOptionChange(option.id, e.target.value)}
+                         placeholder={`Digite ${option.name.toLowerCase()}`}
+                         className="w-full"
+                       />
+                      {option.obs && (
+                        <p className="text-sm text-muted-foreground">
+                          {option.obs}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                  
+                  {getApiConfigOptions().length === 0 && (
+                     <div className="text-center p-8 text-muted-foreground">
+                       Nenhuma configuração de API encontrada.
+                     </div>
+                   )}
+                 </div>
+               )}
+               
+               {/* Botão de Salvar */}
+               {getApiConfigOptions().length > 0 && (
+                 <div className="flex justify-end pt-4 border-t">
+                   <Button 
+                     onClick={handleSaveApiSettings}
+                     disabled={isLoading || Object.keys(localApiOptions).length === 0}
+                     className="flex items-center space-x-2"
+                   >
+                     <Save className="h-4 w-4" />
+                     <span>
+                       {isLoading ? 'Salvando...' : 'Salvar Configurações'}
+                     </span>
+                   </Button>
+                 </div>
+               )}
+             </CardContent>
+           </Card>
         </TabsContent>
       </Tabs>
     </div>

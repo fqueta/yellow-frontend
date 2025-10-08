@@ -2,11 +2,12 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { UserPrefsProvider } from "./contexts/UserPrefsContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+import { AuthRedirect } from "./components/auth/AuthRedirect";
 import { AppLayout } from "./components/layout/AppLayout";
 // import Dashboard from "./pages/Dashboard";
 import Clients from "./pages/Clients";
@@ -49,6 +50,8 @@ import PublicClientForm from "@/pages/PublicClientForm";
 import PointsStore from "@/pages/loja/PointsStore";
 import ProductDetails from "./pages/loja/ProductDetails";
 import MyRedemptions from "./pages/loja/MyRedemptions";
+import RedemptionDetails from "./pages/loja/RedemptionDetails";
+import ClientArea from "./pages/loja/ClientArea";
 import LandingPage from "./pages/LandingPage";
 import AdminRedemptions from "./pages/AdminRedemptions";
 import AdminPointsExtracts from "./pages/AdminPointsExtracts";
@@ -88,10 +91,11 @@ const queryClient = new QueryClient({
     },
   },
 });
-console.log('QueryClient instance created with security configurations:', queryClient);
+// console.log('QueryClient instance created with security configurations:', queryClient);
 
 const App = () => {
-  console.log('App component rendering');
+  // console.log('App component rendering');
+  const link_loja = "/lojaderesgatesantenamais";
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
@@ -103,27 +107,53 @@ const App = () => {
           <BrowserRouter>
             <Routes>
               {/* Rotas públicas */}
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/" element={<Navigate to={link_loja} replace />} />
+              <Route path="/login" element={
+                <AuthRedirect>
+                  <Login />
+                </AuthRedirect>
+              } />
+              <Route path="/register" element={
+                <AuthRedirect>
+                  <Register />
+                </AuthRedirect>
+              } />
+              <Route path="/forgot-password" element={
+                <AuthRedirect>
+                  <ForgotPassword />
+                </AuthRedirect>
+              } />
+              <Route path="/reset-password" element={
+                <AuthRedirect>
+                  <ResetPassword />
+                </AuthRedirect>
+              } />
               <Route path="/form-client-active/:cpf" element={<PublicClientForm />} />
               
               {/* Rotas da loja - protegidas */}
-              <Route path="/loja" element={
+              <Route path={link_loja} element={
                 <ProtectedRoute>
-                  <PointsStore />
+                  <PointsStore linkLoja={link_loja} />
                 </ProtectedRoute>
               } />
-              <Route path="/loja/produto/:productId" element={
+              <Route path={link_loja + "/produto/:productId"} element={
                 <ProtectedRoute>
-                  <ProductDetails />
+                  <ProductDetails linkLoja={link_loja} />
                 </ProtectedRoute>
               } />
-              <Route path="/loja/meus-resgates" element={
+              <Route path={link_loja + "/meus-resgates"} element={
                 <ProtectedRoute>
-                  <MyRedemptions />
+                  <MyRedemptions linkLoja={link_loja} />
+                </ProtectedRoute>
+              } />
+              <Route path={link_loja + "/resgate/:id"} element={
+                <ProtectedRoute>
+                  <RedemptionDetails linkLoja={link_loja} />
+                </ProtectedRoute>
+              } />
+              <Route path={link_loja + "/area-cliente"} element={ 
+                <ProtectedRoute>
+                  <ClientArea linkLoja={link_loja} />
                 </ProtectedRoute>
               } />
               

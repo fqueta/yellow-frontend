@@ -17,13 +17,15 @@ import {
 import { toast } from 'sonner';
 import { mascaraCpf } from '@/lib/qlib';
 import { Eye, EyeOff } from 'lucide-react';
-import { useGenericApi } from '@/hooks/useGenericApi';
+// import { useGenericApi } from '@/hooks/useGenericApi';
 import { 
   activeClientsService, 
   ActiveClientStep1Data, 
   ActiveClientCompleteData 
 } from '@/services/activeClientsService';
 import { useFormToken } from '@/hooks/useFormToken';
+
+
 
 /**
  * Schema de validação para o formulário completo
@@ -344,7 +346,7 @@ export default function PublicClientForm() {
                           <div className="space-y-1 leading-none">
                             <FormLabel className="text-sm text-gray-600">
                               Ao criar uma conta, você concorda com os{' '}
-                              <span className="text-purple-600 underline cursor-pointer">
+                              <span onClick={() => window.open('https://yellowbc.seuclubedevantagens.com.br/tu/', '_blank')} className="text-purple-600 underline cursor-pointer">
                                 Termos de Uso
                               </span>
                             </FormLabel>
@@ -369,7 +371,7 @@ export default function PublicClientForm() {
                           <div className="space-y-1 leading-none">
                             <FormLabel className="text-sm text-gray-600">
                               Ao criar uma conta, você concorda com a{' '}
-                              <span className="text-purple-600 underline cursor-pointer">
+                              <span onClick={() => window.open('https://yellowyellowbc.clubedefidelidade.com/privacy_policy', '_blank')} className="text-purple-600 underline cursor-pointer">
                                 Política de Privacidade
                               </span>
                             </FormLabel>

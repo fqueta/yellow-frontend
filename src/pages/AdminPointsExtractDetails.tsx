@@ -41,20 +41,15 @@ import {
   PointsTransactionType,
   POINTS_TRANSACTION_TYPES 
 } from '@/types/redemptions';
+import { 
+  usePointsExtract, 
+  useUserPointsExtracts, 
+  useUserPointsBalance 
+} from '@/hooks/pointsExtracts';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-// Interface para transações relacionadas
-interface RelatedTransaction {
-  id: string;
-  type: PointsTransactionType;
-  points: number;
-  description: string;
-  createdAt: string;
-  reference?: string;
-}
-
-// Interface para informações do usuário
+// Interface para informações do usuário (pode ser movida para types se necessário)
 interface UserInfo {
   id: string;
   name: string;
@@ -66,59 +61,6 @@ interface UserInfo {
   memberSince: string;
 }
 
-// Dados mockados para demonstração
-const mockExtract: PointsExtract = {
-  id: 'PE001',
-  userId: 'U001',
-  userName: 'João Silva',
-  userEmail: 'joao@email.com',
-  type: 'earned',
-  points: 1500,
-  description: 'Compra realizada - Pedido #12345',
-  reference: 'ORDER_12345',
-  balanceBefore: 8500,
-  balanceAfter: 10000,
-  expirationDate: '2025-01-15T00:00:00Z',
-  createdAt: '2024-01-15T10:30:00Z'
-};
-
-const mockUserInfo: UserInfo = {
-  id: 'U001',
-  name: 'João Silva',
-  email: 'joao@email.com',
-  phone: '(11) 99999-9999',
-  currentBalance: 10000,
-  totalEarned: 45000,
-  totalRedeemed: 35000,
-  memberSince: '2023-06-15T00:00:00Z'
-};
-
-const mockRelatedTransactions: RelatedTransaction[] = [
-  {
-    id: 'PE002',
-    type: 'earned',
-    points: 800,
-    description: 'Compra realizada - Pedido #12344',
-    createdAt: '2024-01-10T14:20:00Z',
-    reference: 'ORDER_12344'
-  },
-  {
-    id: 'PE003',
-    type: 'bonus',
-    points: 1000,
-    description: 'Bônus de indicação de amigo',
-    createdAt: '2024-01-08T11:15:00Z'
-  },
-  {
-    id: 'PE004',
-    type: 'redeemed',
-    points: -5000,
-    description: 'Resgate: Fone de Ouvido Bluetooth',
-    createdAt: '2024-01-05T16:30:00Z',
-    reference: 'R003'
-  }
-];
-
 /**
  * Página de detalhes de um extrato de pontos específico
  * Exibe informações completas da transação, dados do usuário e histórico relacionado
@@ -126,33 +68,70 @@ const mockRelatedTransactions: RelatedTransaction[] = [
 const AdminPointsExtractDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [extract, setExtract] = useState<PointsExtract | null>(null);
-  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
-  const [relatedTransactions, setRelatedTransactions] = useState<RelatedTransaction[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Simular carregamento dos dados
+  
+  // Adicionar handler para capturar cliques em botões e exibir mensagem
   useEffect(() => {
-    const loadExtractDetails = async () => {
-      setIsLoading(true);
-      // Simular delay de API
-      await new Promise(resolve => setTimeout(resolve, 1000));
+    const handleButtonClick = (event: Event) => {
+      const target = event.target as HTMLElement;
+      const button = target.tagName === 'BUTTON' ? target : target.closest('button');
       
-      if (id === 'PE001') {
-        setExtract(mockExtract);
-        setUserInfo(mockUserInfo);
-        setRelatedTransactions(mockRelatedTransactions);
-      } else {
-        // Simular extrato não encontrado
-        setExtract(null);
+      if (button) {
+        // Permitir que o botão "Voltar" funcione normalmente
+        const buttonText = button.textContent?.toLowerCase() || '';
+        const hasArrowLeft = button.querySelector('svg') || button.innerHTML.includes('ArrowLeft');
+        
+        if (buttonText.includes('voltar') || hasArrowLeft) {
+          return; // Não interceptar o botão voltar
+        }
+        
+        event.preventDefault();
+        event.stopPropagation();
+        toast({
+          title: "Funcionalidade em desenvolvimento",
+          description: "Funcionalidade disponível em uma próxima atualização...",
+          variant: "default"
+        });
       }
-      
-      setIsLoading(false);
     };
 
-    loadExtractDetails();
-  }, [id]);
-
+    document.addEventListener('click', handleButtonClick, true);
+    
+    return () => {
+      document.removeEventListener('click', handleButtonClick, true);
+    };
+  }, []);
+  
+  const { data: extract, isLoading, error } = usePointsExtract(id || '');
+  const { data: userBalance, isLoading: isLoadingBalance } = useUserPointsBalance(
+    extract?.usuario_id || '', 
+    {
+    enabled: !!extract?.usuario_id
+  });
+  const { data: relatedTransactionsResponse, isLoading: isLoadingRelated } = useUserPointsExtracts(
+    extract?.usuario_id || '', 
+    { 
+      page: 1, 
+      per_page: 10, 
+      sort: 'createdAt', 
+      order: 'desc' 
+    },
+    { enabled: !!extract?.usuario_id }
+  );
+  // console.log('relatedTransactionsResponse', relatedTransactionsResponse);
+  
+  const relatedTransactions = relatedTransactionsResponse?.data?.points || [];
+  // Construir informações do usuário a partir dos dados disponíveis
+  const userInfo: UserInfo | null = extract && userBalance ? {
+    id: extract.userId,
+    name: extract.userName,
+    email: extract.userEmail,
+    phone: undefined, // Não disponível nos dados atuais
+    currentBalance: parseFloat(userBalance.stats.active_points || '0'),
+    totalEarned: parseFloat(userBalance.stats.total_earned || '0'),
+    totalRedeemed: Math.abs(parseFloat(userBalance.stats.total_spent || '0')),
+    memberSince: extract.createdAt || new Date().toISOString()
+  } : null;
+  
   // Função para obter o ícone do tipo de transação
   const getTransactionIcon = (type: PointsTransactionType) => {
     switch (type) {
@@ -189,6 +168,26 @@ const AdminPointsExtractDetails: React.FC = () => {
         return 'secondary';
       default:
         return 'secondary';
+    }
+  };
+
+  // Função para obter a cor de fundo do tipo de transação
+  const getTransactionColor = (type: PointsTransactionType) => {
+    switch (type) {
+      case 'earned':
+        return 'bg-green-100';
+      case 'bonus':
+        return 'bg-purple-100';
+      case 'redeemed':
+        return 'bg-blue-100';
+      case 'expired':
+        return 'bg-red-100';
+      case 'refund':
+        return 'bg-orange-100';
+      case 'adjustment':
+        return 'bg-gray-100';
+      default:
+        return 'bg-gray-100';
     }
   };
 
@@ -241,6 +240,29 @@ const AdminPointsExtractDetails: React.FC = () => {
     );
   }
 
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Button variant="outline" onClick={handleGoBack}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Voltar
+          </Button>
+        </div>
+        
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <AlertCircle className="w-12 h-12 text-red-400 mb-4" />
+            <h2 className="text-xl font-semibold mb-2">Erro ao carregar transação</h2>
+            <p className="text-gray-600 text-center">
+              Ocorreu um erro ao carregar os detalhes da transação. Tente novamente.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   if (!extract) {
     return (
       <div className="space-y-6">
@@ -276,7 +298,7 @@ const AdminPointsExtractDetails: React.FC = () => {
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Transação #{extract.id}</h1>
             <p className="text-muted-foreground">
-              {format(new Date(extract.createdAt), 'dd/MM/yyyy \\à\\s HH:mm', { locale: ptBR })}
+              {extract.createdAt ? format(new Date(extract.createdAt), 'dd/MM/yyyy às HH:mm', { locale: ptBR }) : 'Data não disponível'}
             </p>
           </div>
         </div>
@@ -311,7 +333,7 @@ const AdminPointsExtractDetails: React.FC = () => {
                     <div className="flex items-center gap-2 mt-1">
                       {getTransactionIcon(extract.type)}
                       <Badge variant={getTypeColor(extract.type)}>
-                        {POINTS_TRANSACTION_TYPES[extract.type].label}
+                        {POINTS_TRANSACTION_TYPES[extract.type]?.label || extract.type || 'Tipo desconhecido'}
                       </Badge>
                     </div>
                   </div>
@@ -358,14 +380,14 @@ const AdminPointsExtractDetails: React.FC = () => {
                   <div>
                     <label className="text-sm font-medium text-gray-500">Saldo Anterior</label>
                     <p className="mt-1 text-lg font-semibold">
-                      {extract.balanceBefore.toLocaleString()} pontos
+                      {extract.balanceBefore ? extract.balanceBefore.toLocaleString() : '0'} pontos
                     </p>
                   </div>
                   
                   <div>
                     <label className="text-sm font-medium text-gray-500">Saldo Atual</label>
                     <p className="mt-1 text-lg font-semibold text-blue-600">
-                      {extract.balanceAfter.toLocaleString()} pontos
+                      {extract.balanceAfter ? extract.balanceAfter.toLocaleString() : '0'} pontos
                     </p>
                   </div>
                   
@@ -374,7 +396,7 @@ const AdminPointsExtractDetails: React.FC = () => {
                     <div className="flex items-center gap-2 mt-1">
                       <Calendar className="w-4 h-4 text-gray-400" />
                       <span className="text-sm">
-                        {format(new Date(extract.createdAt), 'dd/MM/yyyy HH:mm:ss', { locale: ptBR })}
+                        {extract.createdAt ? format(new Date(extract.createdAt), 'dd/MM/yyyy HH:mm:ss', { locale: ptBR }) : 'Data não disponível'}
                       </span>
                     </div>
                   </div>
@@ -385,8 +407,8 @@ const AdminPointsExtractDetails: React.FC = () => {
                       <div className="flex items-center gap-2 mt-1">
                         <Clock className="w-4 h-4 text-orange-400" />
                         <span className="text-sm">
-                          {format(new Date(extract.expirationDate), 'dd/MM/yyyy', { locale: ptBR })}
-                        </span>
+                        {extract.expirationDate ? format(new Date(extract.expirationDate), 'dd/MM/yyyy', { locale: ptBR }) : 'Não expira'}
+                      </span>
                       </div>
                     </div>
                   )}
@@ -419,38 +441,47 @@ const AdminPointsExtractDetails: React.FC = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {relatedTransactions.length === 0 ? (
+                    {isLoadingRelated ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center py-8">
+                        <TableCell colSpan={4} className="text-center py-8">
+                          <div className="flex items-center justify-center gap-2">
+                            <RefreshCw className="w-4 h-4 animate-spin" />
+                            <span>Carregando transações relacionadas...</span>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ) : relatedTransactions?.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center py-8">
                           <div className="flex flex-col items-center gap-2">
                             <History className="w-8 h-8 text-gray-400" />
-                            <p className="text-gray-500">Nenhuma transação relacionada encontrada</p>
+                            <span className="text-gray-500">Nenhuma transação relacionada encontrada</span>
                           </div>
                         </TableCell>
                       </TableRow>
                     ) : (
-                      relatedTransactions.map((transaction) => (
+                      relatedTransactions?.map((transaction) => (
                         <TableRow key={transaction.id}>
                           <TableCell>
-                            <Badge variant={getTypeColor(transaction.type)} className="flex items-center gap-1 w-fit">
-                              {getTransactionIcon(transaction.type)}
-                              {POINTS_TRANSACTION_TYPES[transaction.type].label}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className={`flex items-center gap-1 font-medium ${
-                              transaction.points > 0 ? 'text-green-600' : 'text-red-600'
-                            }`}>
-                              {transaction.points > 0 ? (
-                                <Plus className="w-4 h-4" />
-                              ) : (
-                                <Minus className="w-4 h-4" />
-                              )}
-                              {Math.abs(transaction.points).toLocaleString()}
+                            <div className="flex items-center gap-3">
+                              <div className={`p-2 rounded-full ${getTransactionColor(transaction.type)}`}>
+                                {getTransactionIcon(transaction.type)}
+                              </div>
+                              <div>
+                                <p className="font-medium">{POINTS_TRANSACTION_TYPES[transaction.type]?.label || transaction.type || 'Tipo desconhecido'}</p>
+                                <div className="flex items-center gap-2">
+                                  <span className={`text-sm font-medium ${
+                                    transaction.points > 0 ? 'text-green-600' : 'text-red-600'
+                                  }`}>
+                                    {transaction.points > 0 ? '+' : ''}{transaction.points.toLocaleString()}
+                                  </span>
+                                  <span className="text-xs text-gray-500">pontos</span>
+                                </div>
+                              </div>
                             </div>
                           </TableCell>
                           <TableCell>
-                            <div className="max-w-xs">
+                            <div>
                               <p className="text-sm truncate" title={transaction.description}>
                                 {transaction.description}
                               </p>
@@ -461,7 +492,7 @@ const AdminPointsExtractDetails: React.FC = () => {
                           </TableCell>
                           <TableCell>
                             <span className="text-sm">
-                              {format(new Date(transaction.createdAt), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                              {transaction.createdAt ? format(new Date(transaction.createdAt), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : 'Data não disponível'}
                             </span>
                           </TableCell>
                           <TableCell className="text-right">
@@ -513,28 +544,28 @@ const AdminPointsExtractDetails: React.FC = () => {
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-medium">Saldo Atual:</span>
                       <span className="font-semibold text-blue-600">
-                        {userInfo.currentBalance.toLocaleString()}
+                        {userInfo.currentBalance ? userInfo.currentBalance.toLocaleString() : '0'}
                       </span>
                     </div>
                     
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-medium">Total Ganho:</span>
                       <span className="font-semibold text-green-600">
-                        {userInfo.totalEarned.toLocaleString()}
+                        {userInfo.totalEarned ? userInfo.totalEarned.toLocaleString() : '0'}
                       </span>
                     </div>
                     
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-medium">Total Resgatado:</span>
                       <span className="font-semibold text-red-600">
-                        {userInfo.totalRedeemed.toLocaleString()}
+                        {userInfo.totalRedeemed ? userInfo.totalRedeemed.toLocaleString() : '0'}
                       </span>
                     </div>
                     
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-medium">Membro desde:</span>
                       <span className="text-sm">
-                        {format(new Date(userInfo.memberSince), 'MM/yyyy', { locale: ptBR })}
+                        {userInfo.memberSince ? format(new Date(userInfo.memberSince), 'MM/yyyy', { locale: ptBR }) : 'Data não disponível'}
                       </span>
                     </div>
                   </div>
@@ -570,14 +601,14 @@ const AdminPointsExtractDetails: React.FC = () => {
                   <span className={`font-semibold ${
                     extract.points > 0 ? 'text-green-600' : 'text-red-600'
                   }`}>
-                    {extract.points > 0 ? '+' : ''}{extract.points.toLocaleString()}
+                    {extract.points > 0 ? '+' : ''}{extract.points ? extract.points.toLocaleString() : '0'}
                   </span>
                 </div>
                 
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium">Variação:</span>
                   <span className="font-semibold">
-                    {extract.balanceBefore.toLocaleString()} → {extract.balanceAfter.toLocaleString()}
+                    {extract.balanceBefore ? extract.balanceBefore.toLocaleString() : '0'} → {extract.balanceAfter ? extract.balanceAfter.toLocaleString() : '0'}
                   </span>
                 </div>
                 
@@ -588,7 +619,7 @@ const AdminPointsExtractDetails: React.FC = () => {
                       <span className="text-sm font-medium">Pontos com Expiração</span>
                     </div>
                     <p className="text-sm text-orange-700 mt-1">
-                      Estes pontos expiram em {format(new Date(extract.expirationDate), 'dd/MM/yyyy', { locale: ptBR })}
+                      {extract.expirationDate ? `Estes pontos expiram em ${format(new Date(extract.expirationDate), 'dd/MM/yyyy', { locale: ptBR })}` : 'Estes pontos não expiram'}
                     </p>
                   </div>
                 )}

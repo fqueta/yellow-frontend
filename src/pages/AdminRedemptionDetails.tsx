@@ -43,81 +43,17 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
+import { useRedemption, useUpdateRedemptionStatus } from '@/hooks/redemptions';
 import { 
   Redemption, 
   RedemptionStatus,
-  RedemptionPriority,
-  REDEMPTION_STATUSES,
-  REDEMPTION_PRIORITIES 
+  StatusHistory,
+  REDEMPTION_STATUSES
 } from '@/types/redemptions';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-// Interface para histórico de status
-interface StatusHistory {
-  id: string;
-  status: RedemptionStatus;
-  comment?: string;
-  createdAt: string;
-  createdBy: string;
-  createdByName: string;
-}
-
-// Dados mockados para demonstração
-const mockRedemption: Redemption = {
-  id: 'R001',
-  userId: 'U001',
-  userName: 'João Silva',
-  userEmail: 'joao@email.com',
-  userPhone: '(11) 99999-9999',
-  productId: 'P001',
-  productName: 'Smartphone Samsung Galaxy A54',
-  productImage: '/placeholder.svg',
-  productCategory: 'Eletrônicos',
-  pointsUsed: 15000,
-  status: 'confirmed',
-  priority: 'medium',
-  shippingAddress: {
-    street: 'Rua das Flores, 123',
-    neighborhood: 'Centro',
-    city: 'São Paulo',
-    state: 'SP',
-    zipCode: '01234-567',
-    complement: 'Apto 45'
-  },
-  trackingCode: 'BR123456789SP',
-  estimatedDelivery: '2024-02-15T00:00:00Z',
-  notes: 'Cliente solicitou entrega no período da manhã',
-  createdAt: '2024-01-15T10:30:00Z',
-  updatedAt: '2024-01-20T14:20:00Z'
-};
-
-const mockStatusHistory: StatusHistory[] = [
-  {
-    id: 'SH001',
-    status: 'processing',
-    comment: 'Pedido recebido e em análise',
-    createdAt: '2024-01-15T10:30:00Z',
-    createdBy: 'SYSTEM',
-    createdByName: 'Sistema'
-  },
-  {
-    id: 'SH002',
-    status: 'confirmed',
-    comment: 'Pedido confirmado. Produto separado para envio.',
-    createdAt: '2024-01-16T09:15:00Z',
-    createdBy: 'ADMIN_001',
-    createdByName: 'Maria Santos'
-  },
-  {
-    id: 'SH003',
-    status: 'shipped',
-    comment: 'Produto enviado via Correios. Código de rastreamento: BR123456789SP',
-    createdAt: '2024-01-18T16:45:00Z',
-    createdBy: 'ADMIN_002',
-    createdByName: 'Carlos Oliveira'
-  }
-];
+// Dados mockados removidos - agora usando dados da API
 
 /**
  * Página de detalhes de um resgate específico
@@ -126,34 +62,43 @@ const mockStatusHistory: StatusHistory[] = [
 const AdminRedemptionDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [redemption, setRedemption] = useState<Redemption | null>(null);
   const [statusHistory, setStatusHistory] = useState<StatusHistory[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [newStatus, setNewStatus] = useState<RedemptionStatus>('processing');
   const [statusComment, setStatusComment] = useState('');
-  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [trackingCode, setTrackingCode] = useState('');
+  
+  // Hook para buscar dados do resgate
+  const { data: redemption, isLoading, error } = useRedemption(id || '', {
+    enabled: !!id
+  }) as { data: Redemption | undefined, isLoading: boolean, error: any };
+  // console.log('redemption',redemption);
+  // Hook para atualizar status do resgate
+  const updateRedemptionStatusMutation = useUpdateRedemptionStatus({
+    onSuccess: () => {
+      toast({
+        title: "Status atualizado",
+        description: "Status do resgate foi atualizado com sucesso.",
+      });
+      setStatusComment('');
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao atualizar status",
+        description: error?.message || "Ocorreu um erro ao atualizar o status do resgate.",
+        variant: "destructive",
+      });
+    }
+  });
 
-  // Simular carregamento dos dados
+  // Atualizar status inicial quando os dados carregarem
   useEffect(() => {
-    const loadRedemptionDetails = async () => {
-      setIsLoading(true);
-      // Simular delay de API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      if (id === 'R001') {
-        setRedemption(mockRedemption);
-        setStatusHistory(mockStatusHistory);
-        setNewStatus(mockRedemption.status);
-      } else {
-        // Simular resgate não encontrado
-        setRedemption(null);
-      }
-      
-      setIsLoading(false);
-    };
-
-    loadRedemptionDetails();
-  }, [id]);
+    if (redemption) {
+      setNewStatus(redemption.status);
+      setTrackingCode(redemption.trackingCode || '');
+      // Usar histórico de status da API
+      setStatusHistory(redemption.statusHistory || []);
+    }
+  }, [redemption]);
 
   // Função para obter o ícone do status
   const getStatusIcon = (status: RedemptionStatus) => {
@@ -191,19 +136,7 @@ const AdminRedemptionDetails: React.FC = () => {
     }
   };
 
-  // Função para obter a cor da prioridade
-  const getPriorityColor = (priority: RedemptionPriority) => {
-    switch (priority) {
-      case 'high':
-        return 'destructive';
-      case 'medium':
-        return 'default';
-      case 'low':
-        return 'secondary';
-      default:
-        return 'outline';
-    }
-  };
+
 
   // Função para atualizar status
   const handleUpdateStatus = async () => {
@@ -215,42 +148,30 @@ const AdminRedemptionDetails: React.FC = () => {
       });
       return;
     }
-
-    setIsUpdatingStatus(true);
     
     try {
-      // Simular delay de API
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await updateRedemptionStatusMutation.mutateAsync({
+        id: redemption.id,
+        status: newStatus,
+        notes: statusComment,
+        trackingCode: trackingCode.trim() || undefined
+      });
       
-      // Atualizar o status do resgate
-      const updatedRedemption = { ...redemption, status: newStatus, updatedAt: new Date().toISOString() };
-      setRedemption(updatedRedemption);
-      
-      // Adicionar ao histórico
+      // Adicionar ao histórico local (será atualizado na próxima busca da API)
       const newHistoryEntry: StatusHistory = {
         id: `SH${Date.now()}`,
         status: newStatus,
         comment: statusComment,
         createdAt: new Date().toISOString(),
         createdBy: 'ADMIN_CURRENT',
+        redeemId: redemption.id,
         createdByName: 'Administrador Atual'
       };
       
       setStatusHistory(prev => [...prev, newHistoryEntry]);
-      setStatusComment('');
-      
-      toast({
-        title: "Status atualizado",
-        description: `Status alterado para ${REDEMPTION_STATUSES[newStatus].label} com sucesso.`
-      });
     } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível atualizar o status. Tente novamente.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsUpdatingStatus(false);
+      // Erro já tratado no onError da mutation
+      console.error('Erro ao atualizar status:', error);
     }
   };
 
@@ -274,6 +195,22 @@ const AdminRedemptionDetails: React.FC = () => {
           <RefreshCw className="w-6 h-6 animate-spin" />
           <span>Carregando detalhes do resgate...</span>
         </div>
+      </div>
+    );
+  }
+  
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+        <AlertCircle className="w-12 h-12 text-red-500" />
+        <div className="text-center">
+          <h3 className="text-lg font-semibold">Erro ao carregar resgate</h3>
+          <p className="text-gray-600">Não foi possível carregar os detalhes do resgate.</p>
+        </div>
+        <Button onClick={() => navigate('/admin/redemptions')} variant="outline">
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Voltar à lista
+        </Button>
       </div>
     );
   }
@@ -391,21 +328,23 @@ const AdminRedemptionDetails: React.FC = () => {
                   </div>
                 </div>
                 
-                <div>
-                  <h4 className="font-medium mb-2">Endereço de Entrega</h4>
-                  <div className="flex items-start gap-2">
-                    <MapPin className="w-4 h-4 text-gray-400 mt-1" />
-                    <div className="text-sm">
-                      <p>{redemption.shippingAddress.street}</p>
-                      {redemption.shippingAddress.complement && (
-                        <p>{redemption.shippingAddress.complement}</p>
-                      )}
-                      <p>{redemption.shippingAddress.neighborhood}</p>
-                      <p>{redemption.shippingAddress.city} - {redemption.shippingAddress.state}</p>
-                      <p>CEP: {redemption.shippingAddress.zipCode}</p>
+                {redemption.shippingAddress && (
+                  <div>
+                    <h4 className="font-medium mb-2">Endereço de Entrega</h4>
+                    <div className="flex items-start gap-2">
+                      <MapPin className="w-4 h-4 text-gray-400 mt-1" />
+                      <div className="text-sm">
+                        <p>{redemption.shippingAddress.street}</p>
+                        {redemption.shippingAddress.complement && (
+                          <p>{redemption.shippingAddress.complement}</p>
+                        )}
+                        <p>{redemption.shippingAddress.neighborhood}</p>
+                        <p>{redemption.shippingAddress.city} - {redemption.shippingAddress.state}</p>
+                        <p>CEP: {redemption.shippingAddress.zipCode}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -469,13 +408,7 @@ const AdminRedemptionDetails: React.FC = () => {
                   </Badge>
                 </div>
                 
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Prioridade:</span>
-                  <Badge variant={getPriorityColor(redemption.priority)}>
-                    <Star className="w-3 h-3 mr-1" />
-                    {REDEMPTION_PRIORITIES[redemption.priority].label}
-                  </Badge>
-                </div>
+
                 
                 {redemption.trackingCode && (
                   <div className="space-y-2">
@@ -533,6 +466,17 @@ const AdminRedemptionDetails: React.FC = () => {
                 </div>
                 
                 <div className="space-y-2">
+                  <label className="text-sm font-medium">Código de Rastreamento</label>
+                  <input
+                    type="text"
+                    placeholder="Digite o código de rastreamento..."
+                    value={trackingCode}
+                    onChange={(e) => setTrackingCode(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+                
+                <div className="space-y-2">
                   <label className="text-sm font-medium">Comentário *</label>
                   <Textarea
                     placeholder="Descreva a atualização do status..."
@@ -544,15 +488,15 @@ const AdminRedemptionDetails: React.FC = () => {
                 
                 <Button 
                   onClick={handleUpdateStatus} 
-                  disabled={isUpdatingStatus || !statusComment.trim()}
+                  disabled={updateRedemptionStatusMutation.isPending || !statusComment.trim()}
                   className="w-full"
                 >
-                  {isUpdatingStatus ? (
+                  {updateRedemptionStatusMutation.isPending ? (
                     <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
                   ) : (
                     <CheckCircle className="w-4 h-4 mr-2" />
                   )}
-                  {isUpdatingStatus ? 'Atualizando...' : 'Atualizar Status'}
+                  {updateRedemptionStatusMutation.isPending ? 'Atualizando...' : 'Atualizar Status'}
                 </Button>
               </div>
             </CardContent>

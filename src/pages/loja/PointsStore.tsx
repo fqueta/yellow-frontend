@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingCart, Star, Gift, User, Search, Menu, X, Loader2 } from 'lucide-react';
+import { ShoppingCart, Star, Gift, User, Search, Menu, X, Loader2, UserCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,7 +9,7 @@ import { toast } from '@/hooks/use-toast';
 import { useProductsList } from '@/hooks/products';
 import { useCategoriesList } from '@/hooks/categories';
 import { useAuth } from '@/contexts/AuthContext';
-import { Product } from '@/types/products';
+import { Product, PointsStoreProps } from '@/types/products';
 import { Category } from '@/types/categories';
 
 
@@ -21,13 +21,29 @@ interface StoreUser {
   avatar: string;
 }
 
+// Interface para as props do componente
+
+
 /**
  * Componente da loja virtual de clube de pontos Yellow
  * Interface pública para resgate de produtos com pontos
  */
-const PointsStore: React.FC = () => {
+const PointsStore: React.FC<PointsStoreProps> = ({ linkLoja }) => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  /**
+   * Função para rolar suavemente até a seção de produtos
+   */
+  const scrollToProducts = () => {
+    const productsSection = document.getElementById('products');
+    if (productsSection) {
+      productsSection.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  };
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [cartItems, setCartItems] = useState<number[]>([]);
@@ -129,9 +145,9 @@ const PointsStore: React.FC = () => {
             {/* Desktop Navigation */}
             <nav className="hidden md:flex space-x-8">
               <a href="#home" className="text-gray-700 hover:text-green-600 transition-colors">Início</a>
-              <a href="#products" className="text-gray-700 hover:text-green-600 transition-colors">Produtos</a>
-              <a href="#categories" className="text-gray-700 hover:text-green-600 transition-colors">Categorias</a>
-              <a href="#about" className="text-gray-700 hover:text-green-600 transition-colors">Sobre</a>
+              <a href="javascript:void(0)" onClick={scrollToProducts} className="text-gray-700 hover:text-green-600 transition-colors">Produtos</a>
+              {/* <a href="#categories" className="text-gray-700 hover:text-green-600 transition-colors">Categorias</a>
+              <a href="#about" className="text-gray-700 hover:text-green-600 transition-colors">Sobre</a> */}
             </nav>
 
             {/* User Info & Cart */}
@@ -151,6 +167,17 @@ const PointsStore: React.FC = () => {
                 )}
                 <span className="text-sm text-gray-700">{user.name}</span>
               </div>
+
+              {/* Área do Cliente */}
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => navigate(`${linkLoja}/area-cliente`)}
+                className="hidden sm:flex items-center space-x-1"
+              >
+                <UserCircle className="w-4 h-4" />
+                <span>Minha Área</span>
+              </Button>
 
               <Button variant="outline" size="sm" className="relative">
                 <ShoppingCart className="w-4 h-4" />
@@ -183,9 +210,19 @@ const PointsStore: React.FC = () => {
                 <span className="text-sm font-semibold text-green-800">{user.points.toLocaleString()} pontos</span>
               </div>
               <a href="#home" className="block py-2 text-gray-700">Início</a>
-              <a href="#products" className="block py-2 text-gray-700">Produtos</a>
-              <a href="#categories" className="block py-2 text-gray-700">Categorias</a>
-              <a href="#about" className="block py-2 text-gray-700">Sobre</a>
+              <a href="javascript:void(0)" onClick={scrollToProducts} className="block py-2 text-gray-700">Produtos</a>
+              {/* <a href="#categories" className="block py-2 text-gray-700">Categorias</a> */}
+              {/* <a href="#about" className="block py-2 text-gray-700">Sobre</a> */}
+              <button 
+                onClick={() => {
+                  navigate(`${linkLoja}/area-cliente`);
+                  setIsMenuOpen(false);
+                }}
+                className="flex items-center space-x-2 py-2 text-gray-700 w-full text-left"
+              >
+                <UserCircle className="w-4 h-4" />
+                <span>Minha Área</span>
+              </button>
             </div>
           </div>
         )}
@@ -200,7 +237,11 @@ const PointsStore: React.FC = () => {
           <p className="text-xl text-gray-600 mb-8">
             Descubra milhares de produtos incríveis e resgate com seus pontos oi
           </p>
-          <Button size="lg" className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700">
+          <Button 
+            size="lg" 
+            className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
+            onClick={scrollToProducts}
+          >
             Explorar Produtos
           </Button>
         </div>
@@ -221,7 +262,7 @@ const PointsStore: React.FC = () => {
               />
             </div>
             
-            <div className="flex gap-2 overflow-x-auto pb-2">
+            {/* <div className="flex gap-2 overflow-x-auto pb-2">
               {categoriesLoading ? (
                 <div className="flex items-center space-x-2">
                   <Loader2 className="w-4 h-4 animate-spin text-green-600" />
@@ -243,7 +284,7 @@ const PointsStore: React.FC = () => {
                   </Button>
                 ))
               )}
-            </div>
+            </div> */}
           </div>
         </div>
       </section>
@@ -328,7 +369,7 @@ const PointsStore: React.FC = () => {
                         </div>
                         
                         <Button
-                          onClick={() => navigate(`/loja/produto/${product.slug || product.id}`)}
+                          onClick={() => navigate(`${linkLoja}/produto/${product.slug || product.id}`)}
                           disabled={!product.isActive || user.points < pointsRequired}
                           className="w-full"
                           variant={user.points >= pointsRequired && product.isActive ? "default" : "secondary"}
@@ -359,7 +400,7 @@ const PointsStore: React.FC = () => {
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-12 px-4">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
               <div className="flex items-center space-x-3 mb-4">
                 <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center">
@@ -372,11 +413,11 @@ const PointsStore: React.FC = () => {
                 <span className="text-xl font-bold">Oi Tv</span>
               </div>
               <p className="text-gray-400">
-                Transformando pontos em experiências incríveis desde 2024.
+                Transformando pontos em experiências incríveis.
               </p>
             </div>
             
-            <div>
+            {/* <div>
               <h4 className="font-semibold mb-4">Produtos</h4>
               <ul className="space-y-2 text-gray-400">
                 <li><a href="#" className="hover:text-white transition-colors">Eletrônicos</a></li>
@@ -384,12 +425,12 @@ const PointsStore: React.FC = () => {
                 <li><a href="#" className="hover:text-white transition-colors">Moda</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">Viagens</a></li>
               </ul>
-            </div>
+            </div> */}
             
             <div>
               <h4 className="font-semibold mb-4">Suporte</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Central de Ajuda</a></li>
+                {/* <li><a href="#" className="hover:text-white transition-colors">Central de Ajuda</a></li> */}
                 <li><a href="#" className="hover:text-white transition-colors">Como Funciona</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">Termos de Uso</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">Privacidade</a></li>
@@ -399,15 +440,15 @@ const PointsStore: React.FC = () => {
             <div>
               <h4 className="font-semibold mb-4">Contato</h4>
               <ul className="space-y-2 text-gray-400">
-                <li>contato@oi.com.br</li>
-                <li>(11) 9999-9999</li>
-                <li>São Paulo, SP</li>
+                <li>contato@yellowbc.com.br</li>
+                <li>0800 000 4338</li>
+                {/* <li>São Paulo, SP</li> */}
               </ul>
             </div>
           </div>
           
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 oi TV Clube de Pontos. Todos os direitos reservados.</p>
+            <p>&copy; {new Date().getFullYear()} Oi TV Loja do antenista Clube de Pontos. Todos os direitos reservados.</p>
           </div>
         </div>
       </footer>

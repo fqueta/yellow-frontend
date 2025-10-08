@@ -1,7 +1,6 @@
 /**
  * Tipos relacionados a produtos
  */
-
 /**
  * Produto base
  */
@@ -92,4 +91,23 @@ export interface ProductCategory {
 export interface ProductUnit {
   value: string;
   label: string;
+}
+
+/**
+ * Resposta do resgate de produto
+ */
+export interface ProductRedemptionResponse {
+  redemption_id: number;
+  product_name: string;
+  quantity: number;
+  points_used: number;
+  remaining_points: number;
+  status: string;
+  estimated_delivery: string;
+}
+/**
+ * Propriedades do componente PointsStore
+ */
+export interface PointsStoreProps {
+  linkLoja: string;
 }

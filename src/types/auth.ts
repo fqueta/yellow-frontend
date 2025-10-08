@@ -12,6 +12,13 @@ export interface User {
   role?: string;
   points?:number | string 
   company?: string;
+  cpf?: string;
+  birth_date?: string;
+  gender?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip_code?: string;
   permission_id?: string;
   created_at: string;
   updated_at: string;

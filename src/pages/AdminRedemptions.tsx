@@ -45,112 +45,16 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { toast } from '@/hooks/use-toast';
+import { useAllRedemptions, useUpdateRedemptionStatus } from '@/hooks/redemptions';
 import { 
   Redemption, 
   RedemptionStatus, 
-  RedemptionPriority,
-  REDEMPTION_STATUSES,
-  REDEMPTION_PRIORITIES 
+  REDEMPTION_STATUSES
 } from '@/types/redemptions';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-// Dados mockados para demonstração
-const mockRedemptions: Redemption[] = [
-  {
-    id: 'R001',
-    userId: 'U001',
-    userName: 'João Silva',
-    userEmail: 'joao@email.com',
-    productId: 'P001',
-    productName: 'Smartphone Samsung Galaxy A54',
-    productImage: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400',
-    productCategory: 'Eletrônicos',
-    pointsUsed: 15000,
-    redemptionDate: '2024-01-15T10:30:00Z',
-    status: 'delivered',
-    priority: 'medium',
-    trackingCode: 'BR123456789',
-    estimatedDelivery: '2024-01-25T00:00:00Z',
-    actualDelivery: '2024-01-24T14:30:00Z',
-    notes: 'Entrega realizada com sucesso',
-    createdAt: '2024-01-15T10:30:00Z',
-    updatedAt: '2024-01-24T14:30:00Z'
-  },
-  {
-    id: 'R002',
-    userId: 'U002',
-    userName: 'Maria Santos',
-    userEmail: 'maria@email.com',
-    productId: 'P002',
-    productName: 'Fone de Ouvido Bluetooth JBL',
-    productImage: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400',
-    productCategory: 'Áudio',
-    pointsUsed: 8500,
-    redemptionDate: '2024-01-20T15:45:00Z',
-    status: 'shipped',
-    priority: 'high',
-    trackingCode: 'BR987654321',
-    estimatedDelivery: '2024-01-30T00:00:00Z',
-    notes: 'Produto em trânsito',
-    createdAt: '2024-01-20T15:45:00Z',
-    updatedAt: '2024-01-22T09:15:00Z'
-  },
-  {
-    id: 'R003',
-    userId: 'U003',
-    userName: 'Pedro Costa',
-    userEmail: 'pedro@email.com',
-    productId: 'P003',
-    productName: 'Smartwatch Apple Watch SE',
-    productImage: 'https://images.unsplash.com/photo-1434493789847-2f02dc6ca35d?w=400',
-    productCategory: 'Wearables',
-    pointsUsed: 25000,
-    redemptionDate: '2024-01-22T11:20:00Z',
-    status: 'confirmed',
-    priority: 'medium',
-    estimatedDelivery: '2024-02-05T00:00:00Z',
-    notes: 'Aguardando separação no estoque',
-    createdAt: '2024-01-22T11:20:00Z',
-    updatedAt: '2024-01-22T16:30:00Z'
-  },
-  {
-    id: 'R004',
-    userId: 'U004',
-    userName: 'Ana Oliveira',
-    userEmail: 'ana@email.com',
-    productId: 'P004',
-    productName: 'Tablet Samsung Galaxy Tab A8',
-    productImage: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=400',
-    productCategory: 'Eletrônicos',
-    pointsUsed: 12000,
-    redemptionDate: '2024-01-10T09:15:00Z',
-    status: 'processing',
-    priority: 'urgent',
-    notes: 'Cliente solicitou urgência na entrega',
-    adminNotes: 'Verificar disponibilidade no estoque principal',
-    createdAt: '2024-01-10T09:15:00Z',
-    updatedAt: '2024-01-23T08:45:00Z'
-  },
-  {
-    id: 'R005',
-    userId: 'U005',
-    userName: 'Carlos Ferreira',
-    userEmail: 'carlos@email.com',
-    productId: 'P005',
-    productName: 'Cafeteira Elétrica Premium',
-    productImage: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400',
-    productCategory: 'Casa & Decoração',
-    pointsUsed: 5500,
-    redemptionDate: '2024-01-18T14:00:00Z',
-    status: 'cancelled',
-    priority: 'low',
-    notes: 'Produto fora de estoque - cancelado pelo sistema',
-    adminNotes: 'Pontos reembolsados automaticamente',
-    createdAt: '2024-01-18T14:00:00Z',
-    updatedAt: '2024-01-19T10:30:00Z'
-  }
-];
+
 
 /**
  * Página administrativa para acompanhamento de resgates da loja de pontos
@@ -158,12 +62,30 @@ const mockRedemptions: Redemption[] = [
  */
 const AdminRedemptions: React.FC = () => {
   const navigate = useNavigate();
-  const [redemptions] = useState<Redemption[]>(mockRedemptions);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [priorityFilter, setPriorityFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<RedemptionStatus | 'all'>('all');
+
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
-  const [isLoading, setIsLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+
+  const {
+    data: redemptionsData,
+    isLoading,
+    error,
+    refetch
+  } = useAllRedemptions({
+    page: currentPage,
+    per_page: itemsPerPage,
+    status: statusFilter !== 'all' ? statusFilter : undefined,
+
+    category: categoryFilter !== 'all' ? categoryFilter : undefined,
+    search: searchTerm || undefined
+  });
+
+  const redemptions = (redemptionsData as any)?.data || [];
+  const totalPages = (redemptionsData as any)?.last_page || 1;
+  const totalItems = (redemptionsData as any)?.total || 0;
 
   // Função para obter o ícone do status
   const getStatusIcon = (status: RedemptionStatus) => {
@@ -184,17 +106,29 @@ const AdminRedemptions: React.FC = () => {
     }
   };
 
-  // Função para obter a cor do badge de prioridade
-  const getPriorityColor = (priority?: RedemptionPriority) => {
-    if (!priority) return 'secondary';
-    switch (priority) {
-      case 'urgent': return 'destructive';
-      case 'high': return 'destructive';
-      case 'medium': return 'default';
-      case 'low': return 'secondary';
-      default: return 'secondary';
+  // Função para obter a cor do badge de status
+  const getStatusColor = (status: RedemptionStatus) => {
+    switch (status) {
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'processing':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'confirmed':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'shipped':
+        return 'bg-purple-100 text-purple-800 border-purple-200';
+      case 'delivered':
+        return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'refunded':
+        return 'bg-orange-100 text-orange-800 border-orange-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
+
+
 
   // Filtrar resgates baseado nos filtros aplicados
   const filteredRedemptions = useMemo(() => {
@@ -206,12 +140,12 @@ const AdminRedemptions: React.FC = () => {
         redemption.id.toLowerCase().includes(searchTerm.toLowerCase());
       
       const matchesStatus = statusFilter === 'all' || redemption.status === statusFilter;
-      const matchesPriority = priorityFilter === 'all' || redemption.priority === priorityFilter;
+
       const matchesCategory = categoryFilter === 'all' || redemption.productCategory === categoryFilter;
       
-      return matchesSearch && matchesStatus && matchesPriority && matchesCategory;
+      return matchesSearch && matchesStatus && matchesCategory;
     });
-  }, [redemptions, searchTerm, statusFilter, priorityFilter, categoryFilter]);
+  }, [redemptions, searchTerm, statusFilter, categoryFilter]);
 
   // Calcular estatísticas
   const stats = useMemo(() => {
@@ -227,13 +161,34 @@ const AdminRedemptions: React.FC = () => {
     return { total, pending, processing, confirmed, shipped, delivered, cancelled, totalPoints };
   }, [redemptions]);
 
+  // Hook para atualizar status do resgate
+  const updateRedemptionStatusMutation = useUpdateRedemptionStatus({
+    onSuccess: () => {
+      toast({
+        title: "Status atualizado",
+        description: "Status do resgate foi atualizado com sucesso.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao atualizar status",
+        description: error?.message || "Ocorreu um erro ao atualizar o status do resgate.",
+        variant: "destructive",
+      });
+    }
+  });
+
   // Função para atualizar status do resgate
-  const handleStatusUpdate = (redemptionId: string, newStatus: RedemptionStatus) => {
-    // Aqui seria feita a chamada para a API
-    toast({
-      title: "Status atualizado",
-      description: `Status do resgate ${redemptionId} foi atualizado para ${REDEMPTION_STATUSES[newStatus].label}.`,
-    });
+  const handleStatusUpdate = async (redemptionId: string, newStatus: RedemptionStatus) => {
+    try {
+      await updateRedemptionStatusMutation.mutateAsync({
+        id: redemptionId,
+        status: newStatus as string
+      });
+    } catch (error) {
+      // Erro já tratado no onError da mutation
+      console.error('Erro ao atualizar status:', error);
+    }
   };
 
   // Função para visualizar detalhes do resgate
@@ -250,7 +205,7 @@ const AdminRedemptions: React.FC = () => {
   };
 
   // Obter categorias únicas para o filtro
-  const categories = Array.from(new Set(redemptions.map(r => r.productCategory)));
+  const categories = Array.from(new Set(redemptions.map((r: any) => r.productCategory)));
 
   return (
     <div className="space-y-6">
@@ -267,7 +222,7 @@ const AdminRedemptions: React.FC = () => {
             <Download className="w-4 h-4 mr-2" />
             Exportar
           </Button>
-          <Button onClick={() => setIsLoading(!isLoading)}>
+          <Button onClick={() => refetch()}>
             <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
             Atualizar
           </Button>
@@ -382,22 +337,7 @@ const AdminRedemptions: React.FC = () => {
               </Select>
             </div>
             
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Prioridade</label>
-              <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todas as prioridades" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas as prioridades</SelectItem>
-                  {Object.entries(REDEMPTION_PRIORITIES).map(([key, value]) => (
-                    <SelectItem key={key} value={key}>
-                      {value.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+
             
             <div className="space-y-2">
               <label className="text-sm font-medium">Categoria</label>
@@ -441,7 +381,7 @@ const AdminRedemptions: React.FC = () => {
                   <TableHead>Pontos</TableHead>
                   <TableHead>Data</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Prioridade</TableHead>
+
                   <TableHead>Entrega</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
@@ -495,21 +435,14 @@ const AdminRedemptions: React.FC = () => {
                       </TableCell>
                       <TableCell>
                         <Badge 
-                          variant={redemption.status === 'delivered' ? 'default' : 
-                                  redemption.status === 'cancelled' ? 'destructive' : 'secondary'}
-                          className="flex items-center gap-1 w-fit"
+                          variant="outline"
+                          className={`flex items-center gap-1 w-fit ${getStatusColor(redemption.status)}`}
                         >
                           {getStatusIcon(redemption.status)}
                           {REDEMPTION_STATUSES[redemption.status].label}
                         </Badge>
                       </TableCell>
-                      <TableCell>
-                        {redemption.priority && (
-                          <Badge variant={getPriorityColor(redemption.priority)}>
-                            {REDEMPTION_PRIORITIES[redemption.priority].label}
-                          </Badge>
-                        )}
-                      </TableCell>
+
                       <TableCell>
                         {redemption.estimatedDelivery && (
                           <span className="text-sm">
@@ -531,21 +464,31 @@ const AdminRedemptions: React.FC = () => {
                               Ver detalhes
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => handleStatusUpdate(redemption.id, 'confirmed')}>
+                            <DropdownMenuItem 
+                              onClick={() => handleStatusUpdate(redemption.id, 'confirmed')}
+                              disabled={updateRedemptionStatusMutation.isPending}
+                            >
                               <CheckCircle className="mr-2 h-4 w-4" />
                               Confirmar
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleStatusUpdate(redemption.id, 'shipped')}>
+                            <DropdownMenuItem 
+                              onClick={() => handleStatusUpdate(redemption.id, 'shipped')}
+                              disabled={updateRedemptionStatusMutation.isPending}
+                            >
                               <Truck className="mr-2 h-4 w-4" />
                               Marcar como enviado
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleStatusUpdate(redemption.id, 'delivered')}>
+                            <DropdownMenuItem 
+                              onClick={() => handleStatusUpdate(redemption.id, 'delivered')}
+                              disabled={updateRedemptionStatusMutation.isPending}
+                            >
                               <CheckCircle className="mr-2 h-4 w-4" />
                               Marcar como entregue
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem 
                               onClick={() => handleStatusUpdate(redemption.id, 'cancelled')}
+                              disabled={updateRedemptionStatusMutation.isPending}
                               className="text-red-600"
                             >
                               <XCircle className="mr-2 h-4 w-4" />

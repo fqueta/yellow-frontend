@@ -1,4 +1,4 @@
-import { Product, CreateProductInput, UpdateProductInput, ProductFilters } from '@/types/products';
+import { Product, CreateProductInput, UpdateProductInput, ProductFilters, ProductRedemptionResponse } from '@/types/products';
 import { productsService, ProductListParams } from '@/services/productsService';
 import { useGenericApi } from './useGenericApi';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -78,12 +78,13 @@ export function useDeleteProduct(mutationOptions?: any) {
 export function useRedeemProduct(mutationOptions?: any) {
   const queryClient = useQueryClient();
   
-  return useMutation({
+  return useMutation<ProductRedemptionResponse, Error, { productId: string; quantity?: number }>({
     mutationFn: ({ productId, quantity = 1 }: { productId: string; quantity?: number }) => 
       productsService.redeemProduct(productId, quantity),
-    onSuccess: () => {
+    onSuccess: (data) => {
       // Invalidar cache de produtos para atualizar dados
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      // Dados da resposta disponíveis: data.redemption_id, data.product_name, etc.
     },
     ...mutationOptions
   });
