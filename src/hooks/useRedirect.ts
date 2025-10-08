@@ -23,6 +23,7 @@ export function useRedirect() {
     // Segundo, verifica se há um parâmetro 'redirect' na URL atual
     const urlParams = new URLSearchParams(location.search);
     const redirectParam = urlParams.get('redirect');
+    
     if (redirectParam) {
       try {
         // Decodifica a URL para garantir que caracteres especiais sejam tratados corretamente
@@ -44,17 +45,20 @@ export function useRedirect() {
   const redirectAfterAuth = useCallback((user: any) => {
     const redirectUrl = getRedirectUrl();
     
-    // Lógica específica: usuários com permission_id < 5 vão para /admin
+    // Se há uma URL específica para redirecionamento (diferente de '/'), sempre prioriza ela
+    if (redirectUrl !== '/') {
+      navigate(redirectUrl, { replace: true });
+      return;
+    }
+    
+    // Lógica específica: usuários com permission_id < 5 vão para /admin apenas se não há redirecionamento específico
     if (user?.permission_id && parseInt(user.permission_id) < 5) {
-      // Se a URL de redirecionamento não é uma rota admin, redireciona para /admin
-      if (!redirectUrl.startsWith('/admin')) {
-        navigate('/admin', { replace: true });
-        return;
-      }
+      navigate('/admin', { replace: true });
+      return;
     }
 
-    // Redireciona para a URL determinada
-    navigate(redirectUrl, { replace: true });
+    // Fallback para a página inicial
+    navigate('/', { replace: true });
   }, [navigate, getRedirectUrl]);
 
   /**

@@ -1,26 +1,25 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRedirect } from '@/hooks/useRedirect';
 
 interface AuthRedirectProps {
   children: React.ReactNode;
-  redirectTo?: string;
 }
 
 /**
- * Componente que redireciona usuários autenticados para uma página específica
+ * Componente que redireciona usuários autenticados usando a lógica do useRedirect
  * Usado para proteger páginas de login/registro de usuários já logados
  */
-export function AuthRedirect({ children, redirectTo = '/admin' }: AuthRedirectProps) {
-  const { isAuthenticated, isLoading } = useAuth();
-  const navigate = useNavigate();
+export function AuthRedirect({ children }: AuthRedirectProps) {
+  const { isAuthenticated, isLoading, user } = useAuth();
+  const { redirectAfterAuth } = useRedirect();
 
   useEffect(() => {
-    // Se o usuário está autenticado e não está carregando, redireciona
-    if (isAuthenticated && !isLoading) {
-      navigate(redirectTo, { replace: true });
+    // Se o usuário está autenticado e não está carregando, redireciona usando a lógica do useRedirect
+    if (isAuthenticated && !isLoading && user) {
+      redirectAfterAuth(user);
     }
-  }, [isAuthenticated, isLoading, navigate, redirectTo]);
+  }, [isAuthenticated, isLoading, user, redirectAfterAuth]);
 
   // Se está carregando, não renderiza nada (ou pode mostrar um loading)
   if (isLoading) {

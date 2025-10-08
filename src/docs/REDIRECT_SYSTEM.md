@@ -27,8 +27,9 @@ Também adiciona um parâmetro `redirect` na URL:
 Se nenhuma das opções acima estiver disponível, redireciona para `/`
 
 ### 3. Lógica de Negócio Específica
-- Usuários com `permission_id < 5` são redirecionados para `/admin` por padrão
-- Esta lógica só é aplicada se a URL de destino não for uma rota admin
+- **Prioridade 1**: Se há uma URL específica para redirecionamento (diferente de '/'), o usuário é redirecionado para essa URL, independentemente de suas permissões
+- **Prioridade 2**: Se não há redirecionamento específico e o usuário tem `permission_id < 5`, ele é redirecionado para `/admin`
+- **Prioridade 3**: Fallback para a página inicial ('/')
 
 ## Componentes e Hooks
 

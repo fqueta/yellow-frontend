@@ -59,6 +59,7 @@ function formatDate(dateString: string): string {
  * Exibe todas as informações do cadastro do parceiro de forma organizada
  */
 export default function PartnerView() {
+  const link_admin:string = 'admin';
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data: partner, isLoading, error } = usePartner(id!);
@@ -67,14 +68,14 @@ export default function PartnerView() {
    * Navega de volta para a listagem de parceiros
    */
   const handleBack = () => {
-    navigate('/admin/partners');
+    navigate(`/${link_admin}/partners`);
   };
 
   /**
    * Navega para a página de edição do parceiro
    */
   const handleEdit = () => {
-    navigate(`/partners/${id}/edit`);
+    navigate(`/${link_admin}/partners/${id}/edit`);
   };
 
   if (isLoading) {

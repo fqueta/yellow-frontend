@@ -21,6 +21,7 @@ export default function ClientView() {
   const { data: clientResponse, isLoading: isLoadingClient, error, isError, isSuccess } = useClientById(id!);
   const client0: ClientRecord | null = clientResponse && !Array.isArray(clientResponse) ? clientResponse : null;
   const client: ClientRecord | null = client0?.data || null;
+  const link_admin:string = 'admin';
   // Log para debug em desenvolvimento
   if (process.env.NODE_ENV === 'development') {
     console.log('Client data:', client);
@@ -29,14 +30,14 @@ export default function ClientView() {
    * Navega de volta para a listagem de clientes
    */
   const handleBack = () => {
-    navigate('/admin/clients');
+    navigate(`/${link_admin}/clients`);
   };
 
   /**
    * Navega para a página de edição do cliente
    */
   const handleEdit = () => {
-    navigate(`/clients/${id}/edit`);
+    navigate(`/${link_admin}/clients/${id}/edit`);
   };
 
   /**

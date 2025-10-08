@@ -145,7 +145,7 @@ const PointsStore: React.FC<PointsStoreProps> = ({ linkLoja }) => {
             {/* Desktop Navigation */}
             <nav className="hidden md:flex space-x-8">
               <a href="#home" className="text-gray-700 hover:text-green-600 transition-colors">Início</a>
-              <a href="javascript:void(0)" onClick={scrollToProducts} className="text-gray-700 hover:text-green-600 transition-colors">Produtos</a>
+              <button onClick={scrollToProducts} className="text-gray-700 hover:text-green-600 transition-colors bg-transparent border-none cursor-pointer">Produtos</button>
               {/* <a href="#categories" className="text-gray-700 hover:text-green-600 transition-colors">Categorias</a>
               <a href="#about" className="text-gray-700 hover:text-green-600 transition-colors">Sobre</a> */}
             </nav>
@@ -210,7 +210,7 @@ const PointsStore: React.FC<PointsStoreProps> = ({ linkLoja }) => {
                 <span className="text-sm font-semibold text-green-800">{user.points.toLocaleString()} pontos</span>
               </div>
               <a href="#home" className="block py-2 text-gray-700">Início</a>
-              <a href="javascript:void(0)" onClick={scrollToProducts} className="block py-2 text-gray-700">Produtos</a>
+              <button onClick={scrollToProducts} className="block py-2 text-gray-700 bg-transparent border-none cursor-pointer text-left w-full">Produtos</button>
               {/* <a href="#categories" className="block py-2 text-gray-700">Categorias</a> */}
               {/* <a href="#about" className="block py-2 text-gray-700">Sobre</a> */}
               <button 

@@ -135,7 +135,7 @@ export default function Partners() {
       },
     },
   });
-
+  const link_admin:string = 'admin';
   /**
    * Abre diálogo para criação de novo parceiro
    */
@@ -449,7 +449,7 @@ export default function Partners() {
               partners={filteredPartners}
               onEdit={handleEditPartner}
               onDelete={handleDeletePartner}
-              onView={(partner) => navigate(`/partners/${partner.id}`)}
+              onView={(partner) => navigate(`/${link_admin}/partners/${partner.id}`)}
               isLoading={partnersQuery.isLoading}
             />
           )}

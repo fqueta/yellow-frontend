@@ -40,7 +40,7 @@ export default function Login() {
       redirectAfterAuth(user);
       setLoginSuccess(false);
     }
-  }, [loginSuccess, isAuthenticated, user, redirectAfterAuth]);
+  }, [loginSuccess, redirectAfterAuth]);
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -50,7 +50,7 @@ export default function Login() {
       remember: false,
     },
   });
-
+  // console.log('redirectAfterAuth', redirectAfterAuth);
   const onSubmit = async (data: LoginFormData) => {
     const success = await login({
       email: data.email,
