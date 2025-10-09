@@ -20,7 +20,7 @@ export default function ProductView() {
   const { data: productData, isLoading, error } = useProduct(id!);
   const product = productData as any;
   const [copied, setCopied] = useState(false);
-  
+  // console.log('product', product);
   /**
    * Navega de volta para a listagem de produtos
    */
@@ -176,13 +176,20 @@ export default function ProductView() {
             </p>
           </div>
         </div>
-        <Badge variant={
-          product.availability === 'available' ? "default" : 
-          product.availability === 'limited' ? "secondary" : "destructive"
-        } className="text-sm">
-          {product.availability === 'available' ? "Disponível" : 
-           product.availability === 'limited' ? "Limitado" : "Indisponível"}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant={
+            product.inStock === true ? "default" : 
+            product.inStock === false ? "destructive" : "secondary"
+          } className="text-sm">
+            {product.inStock === true ? "Disponível" : 
+             product.inStock === false ? "Indisponível" : "Limitado"}
+          </Badge>
+          {product.stock !== undefined && (
+            <Badge variant="outline" className="text-sm">
+              Estoque: {product.stock}
+            </Badge>
+          )}
+        </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -222,13 +229,18 @@ export default function ProductView() {
                 <label className="text-sm font-medium text-muted-foreground">Unidade</label>
                 <p className="text-sm font-medium">{product.unitData?.name || product.unit || 'Não informado'}</p>
               </div>
+              
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Quantidade em Estoque</label>
+                <p className="text-sm font-medium">{product.stock !== undefined ? product.stock : 'Não informado'}</p>
+              </div>
             </div>
             
             <Separator />
             
             <div>
               <label className="text-sm font-medium text-muted-foreground">Pontos Necessários</label>
-              <p className="text-2xl font-bold text-primary">{product.points || 0}</p>
+              <p className="text-2xl font-bold text-primary">{product.pointsRequired || 0}</p>
             </div>
             
             <Separator />
@@ -315,13 +327,16 @@ export default function ProductView() {
               <label className="text-sm font-medium text-muted-foreground">Disponibilidade</label>
               <div className="flex items-center gap-2 mt-1">
                 <div className={`w-2 h-2 rounded-full ${
-                  product.availability === 'available' ? 'bg-green-500' : 
-                  product.availability === 'limited' ? 'bg-yellow-500' : 'bg-red-500'
+                  product.inStock === true ? 'bg-green-500' : 
+                  product.inStock === false ? 'bg-red-500' : 'bg-yellow-500'
                 }`} />
                 <p className="text-lg font-medium">
-                  {product.availability === 'available' ? 'Disponível' : 
-                   product.availability === 'limited' ? 'Limitado' : 'Indisponível'}
+                  {product.inStock === true ? 'Disponível' : 
+                  product.inStock === false ? 'Indisponível' : 'Limitado'}
                 </p>
+                {product.stock !== undefined && (
+                  <span className="text-sm text-muted-foreground">({product.stock} unidades)</span>
+                )}
               </div>
               {isLimitedAvailability && (
                 <div className="flex items-center gap-1 mt-2">

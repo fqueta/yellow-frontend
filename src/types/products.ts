@@ -16,6 +16,7 @@ export interface Product {
   availability: 'available' | 'limited' | 'unavailable';
   terms: string[];
   validUntil?: string;
+  stock: number;
 }
 
 /**
