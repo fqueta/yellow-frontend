@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, User, History, Settings, Gift, Mail, Phone, MapPin, Calendar, Lock, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,7 +21,16 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
   const { user, updateProfile, changePassword } = useAuth();
   
   // Estados para controle das abas e edição
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('profile');
+  
+  // Verificar se deve abrir uma aba específica baseada nos parâmetros da URL
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab && ['profile', 'history', 'settings'].includes(tab)) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);

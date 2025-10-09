@@ -156,6 +156,11 @@ const App = () => {
                   <ClientArea linkLoja={link_loja} />
                 </ProtectedRoute>
               } />
+              <Route path={link_loja + "/configuracoes"} element={ 
+                <ProtectedRoute>
+                  <Navigate to={`${link_loja}/area-cliente?tab=settings`} replace />
+                </ProtectedRoute>
+              } />
               
               {/* Rotas protegidas */}
               <Route path="/admin" element={
@@ -221,28 +226,7 @@ const App = () => {
                     <Partners />
                   </AppLayout>
                 </ProtectedRoute>
-              } />
-              <Route path="/admin/service-objects" element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <ServiceObjects />
-                  </AppLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/admin/aircraft" element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <Aircraft />
-                  </AppLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/admin/aircraft/:id" element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <AircraftView />
-                  </AppLayout>
-                </ProtectedRoute>
-              } />
+              } />              
               <Route path="/admin/products" element={
                 <ProtectedRoute>
                   <AppLayout>
