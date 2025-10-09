@@ -273,7 +273,10 @@ const ProductDetails: React.FC<PointsStoreProps> = ({ linkLoja }) => {
             {/* Descrição */}
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-3">Descrição</h3>
-              <p className="text-gray-600 leading-relaxed">{product.description}</p>
+              <div 
+                className="text-gray-600 leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: product.description }}
+              />
             </div>
 
             {/* Termos e condições */}

@@ -190,9 +190,10 @@ export default function ProductsTable({
                     <TableCell>
                       <div>
                         <div className="font-medium">{product.name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {product.description}
-                        </div>
+                        <div 
+                          className="text-sm text-muted-foreground"
+                          dangerouslySetInnerHTML={{ __html: product.description || '' }}
+                        />
                       </div>
                     </TableCell>
                     <TableCell>

@@ -210,7 +210,10 @@ export default function ProductView() {
             {product.description && (
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Descrição</label>
-                <p className="text-sm">{product.description}</p>
+                <div 
+                  className="text-sm"
+                  dangerouslySetInnerHTML={{ __html: product.description }}
+                />
               </div>
             )}
             

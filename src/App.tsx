@@ -7,6 +7,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { UserPrefsProvider } from "./contexts/UserPrefsContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+import { AdminProtectedRoute } from "./components/auth/AdminProtectedRoute";
 import { AuthRedirect } from "./components/auth/AuthRedirect";
 import { AppLayout } from "./components/layout/AppLayout";
 // import Dashboard from "./pages/Dashboard";
@@ -164,12 +165,12 @@ const App = () => {
               
               {/* Rotas protegidas */}
               <Route path="/admin" element={
-                <ProtectedRoute>
+                <AdminProtectedRoute>
                   <AppLayout>
                     {/* <Dashboard2 /> */}
                     <Dashboard />
                   </AppLayout>
-                </ProtectedRoute>
+                </AdminProtectedRoute>
               } />
               {/* <Route path="/painel2" element={
                 <ProtectedRoute>
@@ -179,105 +180,105 @@ const App = () => {
                 </ProtectedRoute>
               } /> */}
               <Route path="/admin/clients" element={
-                <ProtectedRoute>
+                <AdminProtectedRoute>
                   <AppLayout>
                     <Clients />
                   </AppLayout>
-                </ProtectedRoute>
+                </AdminProtectedRoute>
               } />
               <Route path="/admin/clients/create" element={
-                <ProtectedRoute>
+                <AdminProtectedRoute>
                   <AppLayout>
                     <ClientCreate />
                   </AppLayout>
-                </ProtectedRoute>
+                </AdminProtectedRoute>
               } />
               <Route path="/admin/clients/:id/view" element={
-                <ProtectedRoute>
+                <AdminProtectedRoute>
                   <AppLayout>
                     <ClientView />
                   </AppLayout>
-                </ProtectedRoute>
+                </AdminProtectedRoute>
               } />
               <Route path="/admin/clients/:id/edit" element={
-                <ProtectedRoute>
+                <AdminProtectedRoute>
                   <AppLayout>
                     <ClientEdit />
                   </AppLayout>
-                </ProtectedRoute>
+                </AdminProtectedRoute>
               } />
               <Route path="/admin/partners" element={
-                <ProtectedRoute>
+                <AdminProtectedRoute>
                   <AppLayout>
                     <Partners />
                   </AppLayout>
-                </ProtectedRoute>
+                </AdminProtectedRoute>
               } />
               <Route path="/admin/partners/:id" element={
-                <ProtectedRoute>
+                <AdminProtectedRoute>
                   <AppLayout>
                     <PartnerView />
                   </AppLayout>
-                </ProtectedRoute>
+                </AdminProtectedRoute>
               } />
               <Route path="/admin/partners/:id/edit" element={
-                <ProtectedRoute>
+                <AdminProtectedRoute>
                   <AppLayout>
                     <Partners />
                   </AppLayout>
-                </ProtectedRoute>
+                </AdminProtectedRoute>
               } />              
               <Route path="/admin/products" element={
-                <ProtectedRoute>
+                <AdminProtectedRoute>
                   <AppLayout>
                     <Products />
                   </AppLayout>
-                </ProtectedRoute>
+                </AdminProtectedRoute>
               } />
               <Route path="/admin/products/create" element={
-                <ProtectedRoute>
+                <AdminProtectedRoute>
                   <AppLayout>
                     <ProductCreate />
                   </AppLayout>
-                </ProtectedRoute>
+                </AdminProtectedRoute>
               } />
               <Route path="/admin/products/:id/edit" element={
-                <ProtectedRoute>
+                <AdminProtectedRoute>
                   <AppLayout>
                     <ProductEdit />
                   </AppLayout>
-                </ProtectedRoute>
+                </AdminProtectedRoute>
               } />
               <Route path="/admin/products/:id" element={
-                <ProtectedRoute>
+                <AdminProtectedRoute>
                   <AppLayout>
                     <ProductView />
                   </AppLayout>
-                </ProtectedRoute>
+                </AdminProtectedRoute>
               } />
               <Route path="/admin/services" element={
-                <ProtectedRoute>
+                <AdminProtectedRoute>
                   <AppLayout>
                     <Services />
                   </AppLayout>
-                </ProtectedRoute>
+                </AdminProtectedRoute>
               } />
               <Route path="/admin/services/:id" element={
-                <ProtectedRoute>
+                <AdminProtectedRoute>
                   <AppLayout>
                     <ServiceView />
                   </AppLayout>
-                </ProtectedRoute>
+                </AdminProtectedRoute>
               } />
               <Route path="/admin/categories" element={
-                <ProtectedRoute>
+                <AdminProtectedRoute>
                   <AppLayout>
                     <Categories />
                   </AppLayout>
-                </ProtectedRoute>
+                </AdminProtectedRoute>
               } />
               <Route path="/admin/settings/permissions" element={
-                <ProtectedRoute>
+                <AdminProtectedRoute>
                   <AppLayout>
                     <PermissionGuard 
                       required="settings.permissions.view" 
@@ -287,10 +288,10 @@ const App = () => {
                       <Permissions />
                     </PermissionGuard>
                   </AppLayout>
-                </ProtectedRoute>
+                </AdminProtectedRoute>
               } />
               <Route path="/admin/settings/users" element={
-                <ProtectedRoute>
+                <AdminProtectedRoute>
                   <AppLayout>
                     <PermissionGuard 
                       menuPath="/admin/settings/users"
@@ -299,35 +300,35 @@ const App = () => {
                       <Users />
                     </PermissionGuard>
                   </AppLayout>
-                </ProtectedRoute>
+                </AdminProtectedRoute>
               } />
               <Route path="/admin/settings/metrics" element={
-              <ProtectedRoute>
+              <AdminProtectedRoute>
                 <AppLayout>
                   <PermissionGuard required="settings.metrics.view">
                     <Metrics />
                   </PermissionGuard>
                 </AppLayout>
-              </ProtectedRoute>
+              </AdminProtectedRoute>
             } />
               <Route path="/admin/metrics-dashboard" element={
-                <ProtectedRoute>
+                <AdminProtectedRoute>
                   <AppLayout>
                     <PermissionGuard required="settings.metrics.view">
                       <MetricsDashboard />
                     </PermissionGuard>
                   </AppLayout>
-                </ProtectedRoute>
+                </AdminProtectedRoute>
               } />
               <Route path="/admin/settings/user-profiles" element={
-                <ProtectedRoute>
+                <AdminProtectedRoute>
                   <AppLayout>
                     <UserProfiles />
                   </AppLayout>
-                </ProtectedRoute>
+                </AdminProtectedRoute>
               } />
               <Route path="/admin/settings/system" element={
-                <ProtectedRoute>
+                <AdminProtectedRoute>
                   <AppLayout>
                     <PermissionGuard 
                       required="settings.system.view" 
@@ -337,12 +338,12 @@ const App = () => {
                       <SystemSettings />
                     </PermissionGuard>
                   </AppLayout>
-                </ProtectedRoute>
+                </AdminProtectedRoute>
               } />
               
               {/* Rotas do Módulo Financeiro */}
               <Route path="/admin/financial" element={
-                <ProtectedRoute>
+                <AdminProtectedRoute>
                   <AppLayout>
                     <PermissionGuard 
                       required="financial.view" 
@@ -352,10 +353,10 @@ const App = () => {
                       <Financial />
                     </PermissionGuard>
                   </AppLayout>
-                </ProtectedRoute>
+                </AdminProtectedRoute>
               } />
               <Route path="/admin/financial/categories" element={
-                <ProtectedRoute>
+                <AdminProtectedRoute>
                   <AppLayout>
                     <PermissionGuard 
                       required="financial.categories.view" 
@@ -365,12 +366,12 @@ const App = () => {
                       <FinancialCategories />
                     </PermissionGuard>
                   </AppLayout>
-                </ProtectedRoute>
+                </AdminProtectedRoute>
               } />
               
               {/* Rotas de Administração de Pontos */}
               <Route path="/admin/redemptions" element={
-                <ProtectedRoute>
+                <AdminProtectedRoute>
                   <AppLayout>
                     <PermissionGuard 
                       required="points.redemptions.view" 
@@ -380,10 +381,10 @@ const App = () => {
                       <AdminRedemptions />
                     </PermissionGuard>
                   </AppLayout>
-                </ProtectedRoute>
+                </AdminProtectedRoute>
               } />
               <Route path="/admin/points-extracts" element={
-                <ProtectedRoute>
+                <AdminProtectedRoute>
                   <AppLayout>
                     <PermissionGuard 
                       required="points.extracts.view" 
@@ -393,12 +394,12 @@ const App = () => {
                       <AdminPointsExtracts />
                     </PermissionGuard>
                   </AppLayout>
-                </ProtectedRoute>
+                </AdminProtectedRoute>
               } />
               
               {/* Rotas de Detalhes de Pontos */}
               <Route path="/admin/redemptions/:id" element={
-                <ProtectedRoute>
+                <AdminProtectedRoute>
                   <AppLayout>
                     <PermissionGuard 
                       required="points.redemptions.view" 
@@ -408,10 +409,10 @@ const App = () => {
                       <AdminRedemptionDetails />
                     </PermissionGuard>
                   </AppLayout>
-                </ProtectedRoute>
+                </AdminProtectedRoute>
               } />
               <Route path="/admin/points-extracts/:id" element={
-                <ProtectedRoute>
+                <AdminProtectedRoute>
                   <AppLayout>
                     <PermissionGuard 
                       required="points.extracts.view" 
@@ -421,44 +422,44 @@ const App = () => {
                       <AdminPointsExtractDetails />
                     </PermissionGuard>
                   </AppLayout>
-                </ProtectedRoute>
+                </AdminProtectedRoute>
               } />
               
               {/* Rotas de Ordens de Serviço */}
               <Route path="/admin/service-orders" element={
-                <ProtectedRoute>
+                <AdminProtectedRoute>
                   <AppLayout>
                     <ServiceOrders />
                   </AppLayout>
-                </ProtectedRoute>
+                </AdminProtectedRoute>
               } />
               <Route path="/admin/service-orders/quick-create" element={
-                <ProtectedRoute>
+                <AdminProtectedRoute>
                   <AppLayout>
                     <QuickCreateServiceOrder />
                   </AppLayout>
-                </ProtectedRoute>
+                </AdminProtectedRoute>
               } />
               <Route path="/admin/service-orders/create" element={
-                <ProtectedRoute>
+                <AdminProtectedRoute>
                   <AppLayout>
                     <CreateServiceOrder />
                   </AppLayout>
-                </ProtectedRoute>
+                </AdminProtectedRoute>
               } />
               <Route path="/admin/service-orders/update/:id" element={
-                <ProtectedRoute>
+                <AdminProtectedRoute>
                   <AppLayout>
                     <UpdateServiceOrder />
                   </AppLayout>
-                </ProtectedRoute>
+                </AdminProtectedRoute>
               } />
               <Route path="/admin/service-orders/show/:id" element={
-                <ProtectedRoute>
+                <AdminProtectedRoute>
                   <AppLayout>
                     <ShowServiceOrder />
                   </AppLayout>
-                </ProtectedRoute>
+                </AdminProtectedRoute>
               } />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
