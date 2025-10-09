@@ -9,12 +9,18 @@ interface ProductsStatsProps {
 export function ProductsStats({ products }: ProductsStatsProps) {
   const totalProducts = products.length;
   const availableProducts = products.filter(p => p.availability === 'available').length;
-  const totalPointsValue = products.reduce((sum, product) => sum + Number(product.points), 0);
+  const totalPointsValue = products.reduce((sum, product) => {
+    const points = Number(product.points);
+    return sum + (isNaN(points) ? 0 : points);
+  }, 0);
   const limitedProducts = products.filter(p => p.availability === 'limited').length;
   
   // Calcula a avaliação média apenas se houver produtos
   const averageRating = products.length > 0 
-    ? Math.round((products.reduce((sum, p) => sum + p.rating, 0) / products.length) * 10) / 10
+    ? Math.round((products.reduce((sum, p) => {
+        const rating = Number(p.rating);
+        return sum + (isNaN(rating) ? 0 : rating);
+      }, 0) / products.length) * 10) / 10
     : 0;
 
   return (
@@ -39,7 +45,7 @@ export function ProductsStats({ products }: ProductsStatsProps) {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">
-            {totalPointsValue.toLocaleString('pt-BR')} pts
+            {isNaN(totalPointsValue) ? '0' : totalPointsValue.toLocaleString('pt-BR')} pts
           </div>
           <p className="text-xs text-muted-foreground">
             Valor total em pontos

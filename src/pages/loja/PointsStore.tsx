@@ -1,10 +1,18 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingCart, Star, Gift, User, Search, Menu, X, Loader2, UserCircle } from 'lucide-react';
+import { ShoppingCart, Star, Gift, User, Search, Menu, X, Loader2, UserCircle, LogOut, Settings, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { toast } from '@/hooks/use-toast';
 import { useProductsList } from '@/hooks/products';
 import { useCategoriesList } from '@/hooks/categories';
@@ -49,7 +57,7 @@ const PointsStore: React.FC<PointsStoreProps> = ({ linkLoja }) => {
   const [cartItems, setCartItems] = useState<number[]>([]);
 
   // Obter dados do usuário autenticado
-  const { user: authUser } = useAuth();
+  const { user: authUser, logout } = useAuth();
   
   // Mapear dados do usuário autenticado para a interface da loja
   // console.log('authUser:', authUser);
@@ -168,16 +176,43 @@ const PointsStore: React.FC<PointsStoreProps> = ({ linkLoja }) => {
                 <span className="text-sm text-gray-700">{user.name}</span>
               </div>
 
-              {/* Área do Cliente */}
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => navigate(`${linkLoja}/area-cliente`)}
-                className="hidden sm:flex items-center space-x-1"
-              >
-                <UserCircle className="w-4 h-4" />
-                <span>Minha Área</span>
-              </Button>
+              {/* Dropdown de Administração da Conta */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="hidden sm:flex items-center space-x-1"
+                  >
+                    <UserCircle className="w-4 h-4" />
+                    <span>Minha Conta</span>
+                    <ChevronDown className="w-3 h-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>Administração da Conta</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate(`${linkLoja}/area-cliente`)}>
+                    <UserCircle className="mr-2 h-4 w-4" />
+                    <span>Minha Área</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate(`${linkLoja}/configuracoes`)}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Configurações</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    onClick={async () => {
+                      await logout();
+                      navigate('/login');
+                    }}
+                    className="text-red-600 focus:text-red-600"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Sair</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
               <Button variant="outline" size="sm" className="relative">
                 <ShoppingCart className="w-4 h-4" />
@@ -213,16 +248,42 @@ const PointsStore: React.FC<PointsStoreProps> = ({ linkLoja }) => {
               <button onClick={scrollToProducts} className="block py-2 text-gray-700 bg-transparent border-none cursor-pointer text-left w-full">Produtos</button>
               {/* <a href="#categories" className="block py-2 text-gray-700">Categorias</a> */}
               {/* <a href="#about" className="block py-2 text-gray-700">Sobre</a> */}
-              <button 
-                onClick={() => {
-                  navigate(`${linkLoja}/area-cliente`);
-                  setIsMenuOpen(false);
-                }}
-                className="flex items-center space-x-2 py-2 text-gray-700 w-full text-left"
-              >
-                <UserCircle className="w-4 h-4" />
-                <span>Minha Área</span>
-              </button>
+              
+              {/* Seção de Administração da Conta - Mobile */}
+              <div className="border-t pt-2 mt-2">
+                <p className="text-xs text-gray-500 mb-2 px-2">Administração da Conta</p>
+                <button 
+                  onClick={() => {
+                    navigate(`${linkLoja}/area-cliente`);
+                    setIsMenuOpen(false);
+                  }}
+                  className="flex items-center space-x-2 py-2 text-gray-700 w-full text-left"
+                >
+                  <UserCircle className="w-4 h-4" />
+                  <span>Minha Área</span>
+                </button>
+                <button 
+                  onClick={() => {
+                    navigate(`${linkLoja}/configuracoes`);
+                    setIsMenuOpen(false);
+                  }}
+                  className="flex items-center space-x-2 py-2 text-gray-700 w-full text-left"
+                >
+                  <Settings className="w-4 h-4" />
+                  <span>Configurações</span>
+                </button>
+                <button 
+                  onClick={async () => {
+                    await logout();
+                    navigate('/login');
+                    setIsMenuOpen(false);
+                  }}
+                  className="flex items-center space-x-2 py-2 text-red-600 w-full text-left"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Sair</span>
+                </button>
+              </div>
             </div>
           </div>
         )}

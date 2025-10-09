@@ -53,12 +53,12 @@ export default function ProductsTable({
 }: ProductsTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
-
+  const link_admin = '/admin';
   /**
    * Navega para a página de visualização do produto
    */
   const handleViewProduct = (product: Product) => {
-    navigate(`/products/${product.id}`);
+    navigate(link_admin + `/products/${product.id}`);
   };
 
   const filteredProducts = products.filter(product =>

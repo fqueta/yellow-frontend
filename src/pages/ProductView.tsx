@@ -1,27 +1,68 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Package, Tag, Star, MessageSquare, Calendar, AlertTriangle, Clock } from 'lucide-react';
+import { ArrowLeft, Package, Tag, Star, MessageSquare, Calendar, AlertTriangle, Clock, ExternalLink, Copy, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useProduct } from '@/hooks/products';
-import type { Product } from '@/types/products';
+// import type { Product } from '@/types/products';
+import { useState } from 'react';
 
 /**
  * Página de visualização detalhada de um produto específico
  * Exibe todas as informações do produto de forma organizada
  */
 export default function ProductView() {
+  const link_admin = '/admin';
+  const link_loja = '/lojaderesgatesantenamais'; // URL base da loja
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data: productData, isLoading, error } = useProduct(id!);
   const product = productData as any;
+  const [copied, setCopied] = useState(false);
   
   /**
    * Navega de volta para a listagem de produtos
    */
   const handleBack = () => {
-    navigate('/admin/products');
+    navigate(link_admin + '/products');
+  };
+
+  /**
+   * Gera um slug baseado no nome do produto
+   * @param name - Nome do produto
+   */
+  const generateSlug = (name: string): string => {
+    return name
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // Remove acentos
+      .replace(/[^a-z0-9\s-]/g, '') // Remove caracteres especiais
+      .trim()
+      .replace(/\s+/g, '-') // Substitui espaços por hífens
+      .replace(/-+/g, '-'); // Remove hífens duplicados
+  };
+
+  /**
+   * Gera o link para visualização do produto na loja
+   */
+  const getStoreProductLink = (): string => {
+    if (!product) return '';
+    const slug = product.slug || generateSlug(product.name);
+    return `${window.location.origin}${link_loja}/produto/${slug}`;
+  };
+
+  /**
+   * Copia o link do produto para a área de transferência
+   */
+  const copyLinkToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(getStoreProductLink());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Erro ao copiar link:', err);
+    }
   };
 
   /**
@@ -174,12 +215,12 @@ export default function ProductView() {
                   <Tag className="h-4 w-4" />
                   Categoria
                 </label>
-                <Badge variant="outline" className="mt-1">{product.categoryData.name}</Badge>
+                <Badge variant="outline" className="mt-1">{product.categoryData?.name || product.category || 'Não informado'}</Badge>
               </div>
               
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Unidade</label>
-                <p className="text-sm font-medium">{product.unitData.name}</p>
+                <p className="text-sm font-medium">{product.unitData?.name || product.unit || 'Não informado'}</p>
               </div>
             </div>
             
@@ -187,7 +228,48 @@ export default function ProductView() {
             
             <div>
               <label className="text-sm font-medium text-muted-foreground">Pontos Necessários</label>
-              <p className="text-2xl font-bold text-primary">{product.points}</p>
+              <p className="text-2xl font-bold text-primary">{product.points || 0}</p>
+            </div>
+            
+            <Separator />
+            
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Visualizar na Loja</label>
+              <div className="mt-2 space-y-3">
+                <div className="p-3 bg-muted rounded-md">
+                  <p className="text-xs text-muted-foreground mb-1">Link do produto na loja:</p>
+                  <p className="text-sm font-mono break-all">{getStoreProductLink()}</p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.open(getStoreProductLink(), '_blank')}
+                    className="flex items-center gap-2"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    Abrir na Loja
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={copyLinkToClipboard}
+                    className="flex items-center gap-2"
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="h-4 w-4 text-green-600" />
+                        Copiado!
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-4 w-4" />
+                        Copiar Link
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -206,14 +288,14 @@ export default function ProductView() {
                 <label className="text-sm font-medium text-muted-foreground">Avaliação</label>
                 <div className="flex items-center gap-2">
                   <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                  <p className="text-lg font-medium">{product.rating.toFixed(1)}</p>
+                  <p className="text-lg font-medium">{(product.rating || 0).toFixed(1)}</p>
                 </div>
               </div>
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Total de Reviews</label>
                 <div className="flex items-center gap-2">
                   <MessageSquare className="h-4 w-4" />
-                  <p className="text-lg font-medium">{product.reviews}</p>
+                  <p className="text-lg font-medium">{product.reviews || 0}</p>
                 </div>
               </div>
             </div>
