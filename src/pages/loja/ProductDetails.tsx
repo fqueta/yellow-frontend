@@ -173,13 +173,13 @@ const ProductDetails: React.FC<PointsStoreProps> = ({ linkLoja }) => {
           </p>
           <div className="space-y-3">
             <button
-              onClick={() => navigate('/loja')}
+              onClick={() => navigate(linkLoja)}
               className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors font-medium"
             >
               Continuar comprando
             </button>
             <button
-              onClick={() => navigate('/loja/meus-resgates')}
+              onClick={() => navigate(linkLoja+'/meus-resgates')}
               className="w-full border border-green-600 text-green-600 py-3 rounded-lg hover:bg-green-50 transition-colors font-medium"
             >
               Ver meus resgates

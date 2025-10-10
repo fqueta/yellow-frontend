@@ -143,10 +143,21 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
           variant: 'default'
         });
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Erro ao alterar senha:', error);
+      
+      // Tratamento específico para erro 422 da API
+      let errorMessage = 'Erro ao alterar senha. Verifique a senha atual.';
+      
+      if (error?.response?.status === 422 && error?.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: 'Erro',
-        description: 'Erro ao alterar senha. Verifique a senha atual.',
+        description: errorMessage,
         variant: 'destructive'
       });
     } finally {

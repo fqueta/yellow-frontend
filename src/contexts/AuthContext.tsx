@@ -175,10 +175,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
       });
       
       return true;
-    } catch (error) {
+    } catch (error: any) {
+      // Tratamento específico para erros da API
+      let errorMessage = "Erro ao alterar senha";
+      
+      if (error?.status === 422 && error?.body?.error) {
+        // Erro de validação da API (ex: senha atual incorreta)
+        errorMessage = error.body.error;
+      } else if (error?.status) {
+        // Outros erros HTTP
+        errorMessage = "Erro na requisição";
+      } else if (error?.message) {
+        // Erros de rede ou outros
+        errorMessage = "Erro na requisição";
+      }
+      
       toast({
         title: "Erro ao alterar senha",
-        description: error instanceof Error ? error.message : "Erro desconhecido",
+        description: errorMessage,
         variant: "destructive",
       });
       
