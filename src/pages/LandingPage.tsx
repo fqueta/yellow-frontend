@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Gift, Star, Users, Zap, ArrowRight, CheckCircle, User, LogOut, Settings, ChevronDown } from "lucide-react";
+import { Gift, Star, Users, Zap, ArrowRight, CheckCircle, User, LogOut, Settings, ChevronDown, Monitor } from "lucide-react";
 import { Link } from "react-router-dom";
 import { LoginRedirectLink } from "@/components/auth/LoginRedirectLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -83,6 +83,9 @@ const LandingPage = ({ linkLoja }: PointsStoreProps) => {
       setIsLoadingSmartlink(false);
     }
   };
+  const permission_id:any = user?.permission_id;
+  console.log('permission_id:', permission_id);
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-purple-50">
       {/* Header */}
@@ -108,6 +111,18 @@ const LandingPage = ({ linkLoja }: PointsStoreProps) => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
+                  {permission_id <= 2 && (
+                    <>
+                      <DropdownMenuLabel>Painel Administrativo</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin" className="flex items-center">
+                          <Monitor className="mr-2 h-4 w-4" />
+                          Acessar painel
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
                   <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>

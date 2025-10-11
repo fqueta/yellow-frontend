@@ -244,7 +244,7 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
                   <User className="w-5 h-5" />
                   <span>Informações Pessoais</span>
                 </CardTitle>
-                {!isEditingProfile && (
+                {/* {!isEditingProfile && (
                   <Button
                     variant="outline"
                     size="sm"
@@ -252,7 +252,7 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
                   >
                     Editar Perfil
                   </Button>
-                )}
+                )} */}
               </CardHeader>
               <CardContent className="space-y-6">
                 {!isEditingProfile ? (
