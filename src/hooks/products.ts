@@ -78,9 +78,9 @@ export function useDeleteProduct(mutationOptions?: any) {
 export function useRedeemProduct(mutationOptions?: any) {
   const queryClient = useQueryClient();
   
-  return useMutation<ProductRedemptionResponse, Error, { productId: string; quantity?: number }>({
-    mutationFn: ({ productId, quantity = 1 }: { productId: string; quantity?: number }) => 
-      productsService.redeemProduct(productId, quantity),
+  return useMutation<ProductRedemptionResponse, Error, { productId: string; quantity?: number; config?: any }>({
+    mutationFn: ({ productId, quantity = 1, config }: { productId: string; quantity?: number; config?: any }) => 
+      productsService.redeemProduct(productId, quantity, config),
     onSuccess: (data) => {
       // Invalidar cache de produtos para atualizar dados
       queryClient.invalidateQueries({ queryKey: ['products'] });

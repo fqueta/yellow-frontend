@@ -91,14 +91,21 @@ class ProductsService extends BaseApiService {
 
   /**
    * Resgata um produto com pontos
-   * @param productId - ID do produto a ser resgatado
+   * @param productId - ID do produto
    * @param quantity - Quantidade a ser resgatada (padrão: 1)
+   * @param config - Dados de configuração do resgate (formulário)
    */
-  async redeemProduct(productId: string, quantity: number = 1): Promise<ProductRedemptionResponse> {
-    const response = await this.post<ApiResponse<ProductRedemptionResponse>>('/products/redeem', {
+  async redeemProduct(productId: string, quantity: number = 1, config?: any): Promise<ProductRedemptionResponse> {
+    const payload: any = {
       product_id: productId,
       quantity
-    });
+    };
+    
+    if (config) {
+      payload.config = config;
+    }
+    
+    const response = await this.post<ApiResponse<ProductRedemptionResponse>>('/products/redeem', payload);
     return response.data;
   }
 

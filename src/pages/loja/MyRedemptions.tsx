@@ -34,7 +34,7 @@ const MyRedemptions: React.FC<PointsStoreProps> = ({ linkLoja }) => {
 
       {/* Conteúdo principal */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <MyRedemptionsContent showHeader={false} showStats={true} />
+        <MyRedemptionsContent showHeader={false} linkLoja={linkLoja} showStats={true} />
       </main>
     </div>
   );
