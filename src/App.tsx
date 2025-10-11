@@ -108,7 +108,7 @@ const App = () => {
           <BrowserRouter>
             <Routes>
               {/* Rotas públicas */}
-              <Route path="/" element={<Navigate to={link_loja} replace />} />
+              <Route path="/"  element={<LandingPage linkLoja={link_loja} />} />
               <Route path="/login" element={
                 <AuthRedirect>
                   <Login />
@@ -130,6 +130,7 @@ const App = () => {
                 </AuthRedirect>
               } />
               <Route path="/form-client-active/:cpf" element={<PublicClientForm />} />
+              <Route path="/public-client-form" element={<PublicClientForm />} />
               
               {/* Rotas da loja - protegidas */}
               <Route path={link_loja} element={

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/form';
 import { toast } from 'sonner';
 import { mascaraCpf } from '@/lib/qlib';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
 // import { useGenericApi } from '@/hooks/useGenericApi';
 import { 
   activeClientsService, 
@@ -178,16 +178,28 @@ export default function PublicClientForm() {
         {/* Lado direito - Formulário */}
         <div className="w-full lg:w-1/2 flex items-center justify-center">
           <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8">
-            {/* Logo */}
-            <div className="text-center mb-8">
-              <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-black font-bold text-lg">Y</span>
+            {/* Header com botão voltar */}
+            <div className="flex items-center mb-6">
+              <Button
+                variant="ghost"
+                size="sm"
+                asChild
+                className="text-purple-700 hover:bg-purple-50 p-2"
+              >
+                <Link to="/">
+                  <ArrowLeft className="h-4 w-4" />
+                </Link>
+              </Button>
+              <div className="flex-1 text-center">
+                <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center mx-auto mb-2">
+                  <span className="text-black font-bold text-lg">Y</span>
+                </div>
+                <h1 className="text-xl font-bold text-purple-700">Yellow Club</h1>
               </div>
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">Criar conta</h1>
             </div>
 
-            <p className="text-gray-600 text-sm mb-6">
-              Preencha os dados abaixo para criar sua conta
+            <p className="text-purple-600 text-sm mb-6 text-center">
+              Cadastre-se e aproveite nossos benefícios
             </p>
 
             <Form {...form}>
@@ -197,11 +209,11 @@ export default function PublicClientForm() {
                   name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-gray-700">Nome completo*</FormLabel>
+                        <FormLabel className="text-purple-700 font-medium">Nome completo*</FormLabel>
                         <FormControl>
                           <Input
                             placeholder="Nome completo"
-                            className="border-gray-300 focus:border-purple-500 focus:ring-purple-500"
+                            className="border-purple-200 focus:border-purple-500 focus:ring-purple-500"
                             {...field}
                           />
                         </FormControl>
@@ -215,7 +227,7 @@ export default function PublicClientForm() {
                   name="cpf"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-gray-700">CPF*</FormLabel>
+                        <FormLabel className="text-purple-700 font-medium">CPF*</FormLabel>
                         <FormControl>
                           <Input
                             placeholder="CPF"
@@ -233,7 +245,7 @@ export default function PublicClientForm() {
                   name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-gray-700">E-mail*</FormLabel>
+                        <FormLabel className="text-purple-700 font-medium">E-mail*</FormLabel>
                         <FormControl>
                           <Input
                             type="email"
@@ -252,7 +264,7 @@ export default function PublicClientForm() {
                   name="phone"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-gray-700">Número de telefone*</FormLabel>
+                        <FormLabel className="text-purple-700 font-medium">Número de telefone*</FormLabel>
                         <FormControl>
                           <Input
                             placeholder="Número de telefone"
@@ -270,13 +282,13 @@ export default function PublicClientForm() {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-gray-700">Senha*</FormLabel>
+                      <FormLabel className="text-purple-700 font-medium">Senha*</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Input
                             type={showPassword ? 'text' : 'password'}
                             placeholder="Digite sua senha"
-                            className="border-gray-300 focus:border-purple-500 focus:ring-purple-500 pr-10"
+                            className="border-purple-200 focus:border-purple-500 focus:ring-purple-500 pr-10"
                             {...field}
                           />
                           <button
@@ -285,9 +297,9 @@ export default function PublicClientForm() {
                             onClick={() => setShowPassword(!showPassword)}
                           >
                             {showPassword ? (
-                              <EyeOff className="h-4 w-4 text-gray-400" />
+                              <EyeOff className="h-4 w-4 text-purple-400" />
                             ) : (
-                              <Eye className="h-4 w-4 text-gray-400" />
+                              <Eye className="h-4 w-4 text-purple-400" />
                             )}
                           </button>
                         </div>
@@ -302,7 +314,7 @@ export default function PublicClientForm() {
                   name="confirmPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-gray-700">Confirmar senha*</FormLabel>
+                      <FormLabel className="text-purple-700 font-medium">Confirmar senha*</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Input
@@ -340,11 +352,11 @@ export default function PublicClientForm() {
                             <Checkbox
                               checked={field.value}
                               onCheckedChange={field.onChange}
-                              className="border-gray-300 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
+                              className="border-purple-300 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
                             />
                           </FormControl>
                           <div className="space-y-1 leading-none">
-                            <FormLabel className="text-sm text-gray-600">
+                            <FormLabel className="text-sm text-purple-600">
                               Ao criar uma conta, você concorda com os{' '}
                               <span onClick={() => window.open('https://yellowbc.seuclubedevantagens.com.br/tu/', '_blank')} className="text-purple-600 underline cursor-pointer">
                                 Termos de Uso
@@ -385,18 +397,15 @@ export default function PublicClientForm() {
                 <Button
                   type="submit"
                   disabled={isSubmitting || tokenLoading || !isTokenValid()}
-                  className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 rounded-lg mt-6"
+                  className="w-full bg-purple-700 hover:bg-purple-800 text-white font-medium py-3 rounded-lg mt-6"
                 >
                   {tokenLoading ? 'Carregando...' : isSubmitting ? 'Criando conta...' : 'Criar Conta'}
                 </Button>
 
                 <div className="text-center mt-4">
-                  <button
-                    type="button"
-                    className="text-purple-600 text-sm underline"
-                  >
-                    Fazer Login
-                  </button>
+                  <Link to="/login" className="text-purple-600 text-sm underline hover:text-purple-800 font-medium">
+                    Já tem uma conta? Fazer Login
+                  </Link>
                 </div>
               </form>
             </Form>
