@@ -32,7 +32,7 @@ import { useFormToken } from '@/hooks/useFormToken';
  */
 const formSchema = z.object({
   name: z.string().min(2, 'Nome é obrigatório'),
-  cpf: z.string().min(11, 'CPF deve ter 11 dígitos'),
+  cpf: z.string().min(14, 'CPF deve estar completo').max(14, 'CPF inválido'),
   email: z.string().email('E-mail inválido'),
   phone: z.string().min(10, 'Número de telefone é obrigatório'),
   password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
@@ -72,6 +72,7 @@ export default function PublicClientForm() {
 
   // Estado de loading das operações
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -101,7 +102,7 @@ export default function PublicClientForm() {
       // Preparar dados completos incluindo password
       const completeData: ActiveClientCompleteData = {
         name: data.name,
-        cpf: data.cpf,
+        cpf: data.cpf.replace(/\D/g, ''), // Remove máscara do CPF
         email: data.email,
         phone: data.phone,
         termsAccepted: data.termsAccepted,
@@ -122,6 +123,7 @@ export default function PublicClientForm() {
         
         // Aguardar 2 segundos para que o usuário veja a mensagem de sucesso antes do redirect
         if(redirect){
+          setIsRedirecting(true);
           setTimeout(() => {
             window.location.href = redirect;
           }, 3000);
@@ -230,9 +232,14 @@ export default function PublicClientForm() {
                         <FormLabel className="text-purple-700 font-medium">CPF*</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="CPF"
+                            placeholder="000.000.000-00"
                             className="border-gray-300 focus:border-purple-500 focus:ring-purple-500"
                             {...field}
+                            onChange={(e) => {
+                              const maskedValue = mascaraCpf(e.target.value);
+                              field.onChange(maskedValue);
+                            }}
+                            maxLength={14}
                           />
                         </FormControl>
                         <FormMessage className="text-red-500 text-xs" />
@@ -396,10 +403,10 @@ export default function PublicClientForm() {
 
                 <Button
                   type="submit"
-                  disabled={isSubmitting || tokenLoading || !isTokenValid()}
+                  disabled={isSubmitting || tokenLoading || isRedirecting || !isTokenValid()}
                   className="w-full bg-purple-700 hover:bg-purple-800 text-white font-medium py-3 rounded-lg mt-6"
                 >
-                  {tokenLoading ? 'Carregando...' : isSubmitting ? 'Criando conta...' : 'Criar Conta'}
+                  {tokenLoading ? 'Carregando...' : isSubmitting ? 'Criando conta...' : isRedirecting ? 'Redirecionando...' : 'Criar Conta'}
                 </Button>
 
                 <div className="text-center mt-4">

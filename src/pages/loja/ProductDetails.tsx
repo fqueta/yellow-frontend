@@ -4,9 +4,10 @@ import { ArrowLeft, Star, Gift, CheckCircle, AlertCircle, Loader2, X } from 'luc
 import { toast } from 'sonner';
 import { useProductBySlug, useRedeemProduct } from '@/hooks/products';
 import { ProductRedemptionResponse } from '@/types/products';
-import { zerofill } from '@/lib/qlib';
+import { zerofill, mascaraCpf } from '@/lib/qlib';
 import { PointsStoreProps } from '@/types/products';
 import { useCep } from '@/hooks/useCep';
+import { useAuth } from '@/contexts/AuthContext';
 
 /**
  * Componente da página de detalhes do produto
@@ -15,6 +16,7 @@ import { useCep } from '@/hooks/useCep';
 const ProductDetails: React.FC<PointsStoreProps> = ({ linkLoja }) => {
   const { productId } = useParams<{ productId: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [isRedeeming, setIsRedeeming] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showRedemptionForm, setShowRedemptionForm] = useState(false);
@@ -494,6 +496,18 @@ const ProductDetails: React.FC<PointsStoreProps> = ({ linkLoja }) => {
               ) : (
                 // Formulário de endereço
                 <div className="space-y-4">
+                  {/* Informações do usuário */}
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">Dados do usuário</h4>
+                    <div className="space-y-1">
+                      <p className="text-sm">
+                        <span className="font-medium text-gray-600">Nome completo:</span> {user?.name || 'Não informado'}
+                      </p>
+                      <p className="text-sm">
+                        <span className="font-medium text-gray-600">CPF:</span> {user?.cpf ? mascaraCpf(user.cpf) : 'Não informado'}
+                      </p>
+                    </div>
+                  </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="col-span-2">
                       <label className="block text-sm font-medium text-gray-700 mb-2">

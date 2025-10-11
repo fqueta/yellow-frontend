@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -22,20 +23,26 @@ import { toast } from "@/hooks/use-toast";
  */
 const LandingPage = ({ linkLoja }: PointsStoreProps) => {
   const { user, isAuthenticated, logout } = useAuth();
+  const [isLoadingSmartlink, setIsLoadingSmartlink] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   console.log('user:', user);
 
   /**
    * Handle user logout
    */
   const handleLogout = async () => {
+    setIsLoggingOut(true);
     try {
       await logout();
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
+    } finally {
+      setIsLoggingOut(false);
     }
   };
   // Fazer requisição na API para solicitar um smartlink do clube de pontos
   const hadleStartAlloyal = async () => {
+    setIsLoadingSmartlink(true);
     try {
       // Verificar se o usuário está logado e possui CPF
       if (!user?.cpf) {
@@ -72,6 +79,8 @@ const LandingPage = ({ linkLoja }: PointsStoreProps) => {
         description: "Clube indisponível entre em contato com o suporte!",
         variant: "destructive",
       });
+    } finally {
+      setIsLoadingSmartlink(false);
     }
   };
   return (
@@ -120,9 +129,9 @@ const LandingPage = ({ linkLoja }: PointsStoreProps) => {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout} className="text-red-600">
+                  <DropdownMenuItem onClick={handleLogout} disabled={isLoggingOut} className="text-red-600">
                     <LogOut className="mr-2 h-4 w-4" />
-                    Sair
+                    {isLoggingOut ? 'Saindo...' : 'Sair'}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -164,9 +173,14 @@ const LandingPage = ({ linkLoja }: PointsStoreProps) => {
                   </Link>
                 </Button>
               ) : (
-                <Button size="lg" onClick={hadleStartAlloyal} className="bg-purple-700 hover:bg-purple-800 text-white">
-                  Clube de Vantagens
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                <Button 
+                  size="lg" 
+                  onClick={hadleStartAlloyal} 
+                  disabled={isLoadingSmartlink}
+                  className="bg-purple-700 hover:bg-purple-800 text-white"
+                >
+                  {isLoadingSmartlink ? 'Carregando...' : 'Clube de Vantagens'}
+                  {!isLoadingSmartlink && <ArrowRight className="ml-2 h-5 w-5" />}
                 </Button>
               )}
               {isAuthenticated && (
