@@ -238,13 +238,13 @@ export default function ProductsTable({
                             Editar
                           </DropdownMenuItem> */}
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem 
+                          {/* <DropdownMenuItem 
                             className="text-destructive"
                             onClick={() => onDeleteProduct(product)}
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
                             Excluir
-                          </DropdownMenuItem>
+                          </DropdownMenuItem> */}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
