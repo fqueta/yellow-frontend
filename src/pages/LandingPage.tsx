@@ -20,9 +20,9 @@ import { toast } from "@/hooks/use-toast";
  * Landing page component for Yellow Benefits Club
  * Features modern design with Yellow brand colors (yellow and purple)
  */
-console.log('user:', user);
 const LandingPage = ({ linkLoja }: PointsStoreProps) => {
   const { user, isAuthenticated, logout } = useAuth();
+  console.log('user:', user);
 
   /**
    * Handle user logout
@@ -48,7 +48,7 @@ const LandingPage = ({ linkLoja }: PointsStoreProps) => {
       }
 
       // Criar instância do GenericApiService para smartlink
-      const smartlinkService = new GenericApiService('/api/v1/smartlink');
+      const smartlinkService = new GenericApiService('/smartlink');
       
       // Fazer requisição GET para /api/v1/smartlink/{cpf_user}
       const response = await smartlinkService.customGet(`/${user.cpf}`);
