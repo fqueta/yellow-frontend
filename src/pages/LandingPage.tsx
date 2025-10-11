@@ -84,7 +84,7 @@ const LandingPage = ({ linkLoja }: PointsStoreProps) => {
     }
   };
   const permission_id:any = user?.permission_id;
-  console.log('permission_id:', permission_id);
+  // console.log('permission_id:', permission_id);
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-purple-50">
