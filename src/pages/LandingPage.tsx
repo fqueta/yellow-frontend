@@ -192,7 +192,7 @@ const LandingPage = ({ linkLoja }: PointsStoreProps) => {
                   size="lg" 
                   onClick={hadleStartAlloyal} 
                   disabled={isLoadingSmartlink}
-                  className="bg-purple-700 hover:bg-purple-800 text-white"
+                  className="bg-purple-700 hover:bg-purple-800 text-white px-8 py-4 text-lg font-semibold"
                 >
                   {isLoadingSmartlink ? 'Carregando...' : 'Clube de Vantagens'}
                   {!isLoadingSmartlink && <ArrowRight className="ml-2 h-5 w-5" />}
