@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShoppingCart, Star, Gift, User, Search, Menu, X, Loader2, UserCircle, LogOut, Settings, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -57,7 +57,7 @@ const PointsStore: React.FC<PointsStoreProps> = ({ linkLoja }) => {
   const [cartItems, setCartItems] = useState<number[]>([]);
 
   // Obter dados do usuário autenticado
-  const { user: authUser, logout } = useAuth();
+  const { user: authUser, logout, refreshUser } = useAuth();
   
   // Mapear dados do usuário autenticado para a interface da loja
   // console.log('authUser:', authUser);
@@ -69,18 +69,38 @@ const PointsStore: React.FC<PointsStoreProps> = ({ linkLoja }) => {
   };
 
   // Buscar produtos da API com limite de 100
-  const { data: productsData, isLoading: productsLoading, error: productsError } = useProductsList({
+  const { data: productsData, isLoading: productsLoading, error: productsError, refetch: refetchProducts } = useProductsList({
     limit: 100,
     // entidade: 'produtos'
   });
   const products = productsData?.data || [];
 
   // Buscar categorias da API com limite de 5
-  const { data: categoriesData, isLoading: categoriesLoading, error: categoriesError } = useCategoriesList({ 
+  const { data: categoriesData, isLoading: categoriesLoading, error: categoriesError, refetch: refetchCategories } = useCategoriesList({ 
     limit: 5,
     // entidade: 'produtos'
   });
   
+  // Sincronizar dados com a API sempre que a loja for aberta
+  useEffect(() => {
+    const syncData = async () => {
+      try {
+        // Sincronizar dados do usuário
+        await refreshUser();
+        
+        // Refetch dos produtos e categorias
+        await Promise.all([
+          refetchProducts(),
+          refetchCategories()
+        ]);
+      } catch (error) {
+        console.error('Erro ao sincronizar dados da loja:', error);
+      }
+    };
+
+    syncData();
+  }, []); // Executa apenas na montagem do componente
+
   // Mapear categorias da API e adicionar categoria "Todos"
   const apiCategories = categoriesData?.data || [];
   const categories = [

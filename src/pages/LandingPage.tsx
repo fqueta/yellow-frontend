@@ -77,19 +77,19 @@ const LandingPage = ({ linkLoja }: PointsStoreProps) => {
                   <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link to="/loja" className="flex items-center">
+                    <Link to={linkLoja} className="flex items-center">
                       <Gift className="mr-2 h-4 w-4" />
                       Loja de Pontos
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link to="/loja/area-cliente" className="flex items-center">
+                    <Link to={linkLoja + '/area-cliente'} className="flex items-center">
                       <User className="mr-2 h-4 w-4" />
                       Área do Cliente
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link to="/loja/meus-resgates" className="flex items-center">
+                    <Link to={linkLoja + '/meus-resgates'} className="flex items-center">
                       <Settings className="mr-2 h-4 w-4" />
                       Meus Resgates
                     </Link>
@@ -140,7 +140,7 @@ const LandingPage = ({ linkLoja }: PointsStoreProps) => {
                 </Button>
               ) : (
                 <Button size="lg" onClick={hadleStartAlloyal} className="bg-purple-700 hover:bg-purple-800 text-white">
-                  Começar Agora
+                  Clube de Vantagens
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               )}
@@ -346,7 +346,7 @@ const LandingPage = ({ linkLoja }: PointsStoreProps) => {
             <div>
               <h4 className="font-semibold mb-4">Produtos</h4>
               <ul className="space-y-2 text-sm text-purple-300">
-                <li><LoginRedirectLink to="/loja" requireAuth={true} className="hover:text-yellow-400">Loja de Pontos</LoginRedirectLink></li>
+                <li><LoginRedirectLink to={linkLoja} requireAuth={true} className="hover:text-yellow-400">Loja de Pontos</LoginRedirectLink></li>
                 <li><Link to="/public-client-form" className="hover:text-yellow-400">Cadastro</Link></li>
               </ul>
             </div>
