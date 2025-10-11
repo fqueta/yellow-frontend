@@ -14,10 +14,13 @@ import { Link } from "react-router-dom";
 import { LoginRedirectLink } from "@/components/auth/LoginRedirectLink";
 import { useAuth } from "@/contexts/AuthContext";
 import { PointsStoreProps } from "@/types/products";
+import { GenericApiService } from "@/services/GenericApiService";
+import { toast } from "@/hooks/use-toast";
 /**
  * Landing page component for Yellow Benefits Club
  * Features modern design with Yellow brand colors (yellow and purple)
  */
+console.log('user:', user);
 const LandingPage = ({ linkLoja }: PointsStoreProps) => {
   const { user, isAuthenticated, logout } = useAuth();
 
@@ -31,22 +34,44 @@ const LandingPage = ({ linkLoja }: PointsStoreProps) => {
       console.error('Erro ao fazer logout:', error);
     }
   };
-  // fazer requisição na api para solicitar um smartlink do clube de pontos rota GET /smartlink
+  // Fazer requisição na API para solicitar um smartlink do clube de pontos
   const hadleStartAlloyal = async () => {
     try {
-      const response = await fetch('/api/smartlink', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user?.token}`
-        },
-      });
-      const data = await response.json();
-      if (data.smartlink) {
-        window.location.href = data.smartlink;
+      // Verificar se o usuário está logado e possui CPF
+      if (!user?.cpf) {
+        toast({
+          title: "Erro",
+          description: "CPF não encontrado. Faça login novamente.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Criar instância do GenericApiService para smartlink
+      const smartlinkService = new GenericApiService('/api/v1/smartlink');
+      
+      // Fazer requisição GET para /api/v1/smartlink/{cpf_user}
+      const response = await smartlinkService.customGet(`/${user.cpf}`);
+      
+      // Verificar se a resposta contém exec e web_smart_link válidos
+      if (response.exec && response.data?.web_smart_link && response.data.web_smart_link.trim() !== '') {
+        // Redirecionar para o link do smartlink
+        window.location.href = response.data.web_smart_link;
+      } else {
+        // Exibir erro se o smartlink não estiver disponível
+        toast({
+          title: "Erro",
+          description: "Clube indisponível entre em contato com o suporte!",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error('Erro ao solicitar smartlink:', error);
+      toast({
+        title: "Erro",
+        description: "Clube indisponível entre em contato com o suporte!",
+        variant: "destructive",
+      });
     }
   };
   return (
