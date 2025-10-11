@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { User, AuthState, LoginCredentials, RegisterData } from '@/types/auth';
 import { MenuItemDTO } from '@/types/menu';
 import { authService } from '@/services/authService';
+import { userPointsService, UserPointsBalance } from '@/services/userPointsService';
 import { toast } from '@/hooks/use-toast';
 
 interface AuthContextType extends AuthState {
@@ -9,12 +10,14 @@ interface AuthContextType extends AuthState {
   register: (data: RegisterData) => Promise<boolean>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  syncUserData: () => Promise<void>;
   updateProfile: (data: Partial<User> | FormData) => Promise<boolean>;
   changePassword: (passwordData: {
     current_password: string;
     new_password: string;
     new_password_confirmation: string;
   }) => Promise<boolean>;
+  userPointsBalance: UserPointsBalance | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -32,6 +35,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     isLoading: true,
     isAuthenticated: false,
   });
+
+  const [userPointsBalance, setUserPointsBalance] = useState<UserPointsBalance | null>(null);
 
   const updateAuthState = (
     user: User | null, 
@@ -61,6 +66,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         response.menu || []
       );
       
+      // Sincronizar dados após login bem-sucedido
+      await syncUserData();
+      
       toast({
         title: "Login realizado com sucesso!",
         description: `Bem-vindo, ${response.user.name}!`,
@@ -75,6 +83,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       });
       
       updateAuthState(null, null, [], []);
+      setUserPointsBalance(null);
       return false;
     }
   };
@@ -91,6 +100,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         response.menu || []
       );
       
+      // Sincronizar dados após registro bem-sucedido
+      await syncUserData();
+      
       toast({
         title: "Conta criada com sucesso!",
         description: `Bem-vindo, ${response.user.name}!`,
@@ -105,6 +117,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       });
       
       updateAuthState(null, null, [], []);
+      setUserPointsBalance(null);
       return false;
     }
   };
@@ -116,6 +129,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.error('Erro no logout:', error);
     } finally {
       updateAuthState(null, null, [], []);
+      setUserPointsBalance(null);
       toast({
         title: "Logout realizado",
         description: "Você foi desconectado com sucesso.",
@@ -136,6 +150,36 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // mantém a sessão em caso de erro temporário
         setState((prev) => ({ ...prev, isLoading: false }));
       }
+    }
+  };
+
+  /**
+   * Sincroniza todos os dados do usuário com a API
+   * Inclui dados do perfil, pontos e outras informações relevantes
+   */
+  const syncUserData = async (): Promise<void> => {
+    try {
+      // Buscar dados atualizados do usuário
+      const [user, pointsBalance] = await Promise.allSettled([
+        authService.getCurrentUser(),
+        userPointsService.getCurrentUserPointsBalance()
+      ]);
+
+      // Atualizar dados do usuário se a requisição foi bem-sucedida
+      if (user.status === 'fulfilled') {
+        setState((prev) => ({ ...prev, user: user.value }));
+      } else {
+        console.warn('Erro ao sincronizar dados do usuário:', user.reason);
+      }
+
+      // Atualizar saldo de pontos se a requisição foi bem-sucedida
+      if (pointsBalance.status === 'fulfilled') {
+        setUserPointsBalance(pointsBalance.value);
+      } else {
+        console.warn('Erro ao sincronizar saldo de pontos:', pointsBalance.reason);
+      }
+    } catch (error) {
+      console.error('Erro geral na sincronização de dados:', error);
     }
   };
 
@@ -212,16 +256,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // Hidratação otimista: considera autenticado imediatamente
         updateAuthState(storedUser, storedToken, storedPermissions, storedMenu);
 
-        // Validação em segundo plano
+        // Validação e sincronização em segundo plano
         try {
           const freshUser = await authService.getCurrentUser();
           updateAuthState(freshUser, storedToken, storedPermissions, storedMenu);
+          
+          // Sincronizar dados após validação bem-sucedida da sessão
+          await syncUserData();
         } catch (error) {
           const status = (error as any)?.status;
           console.warn('Falha ao validar sessão ao iniciar:', error);
           if (status === 401 || status === 419) {
             authService.clearStorage();
             updateAuthState(null, null, [], []);
+            setUserPointsBalance(null);
           } else {
             // Mantém a sessão em caso de erro temporário/servidor
             setState((prev) => ({ ...prev, isLoading: false }));
@@ -241,8 +289,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     register,
     logout,
     refreshUser,
+    syncUserData,
     updateProfile,
     changePassword,
+    userPointsBalance,
   };
 
   return (
