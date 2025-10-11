@@ -254,15 +254,15 @@ const AdminRedemptionDetails: React.FC = () => {
             </p>
           </div>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={handleDownloadReceipt}>
+        <div className="flex gap-2"> 
+          {/* <Button variant="outline" onClick={handleDownloadReceipt}>
             <Download className="w-4 h-4 mr-2" />
             Comprovante
           </Button>
           <Button variant="outline">
             <MessageSquare className="w-4 h-4 mr-2" />
             Contatar Cliente
-          </Button>
+          </Button> */}
         </div>
       </div>
 

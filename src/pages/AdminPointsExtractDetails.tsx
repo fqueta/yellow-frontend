@@ -303,14 +303,14 @@ const AdminPointsExtractDetails: React.FC = () => {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={handleDownloadReceipt}>
+          {/* <Button variant="outline" onClick={handleDownloadReceipt}>
             <Download className="w-4 h-4 mr-2" />
             Comprovante
           </Button>
           <Button variant="outline" onClick={handleViewUser}>
             <User className="w-4 h-4 mr-2" />
             Ver Usuário
-          </Button>
+          </Button> */}
         </div>
       </div>
 

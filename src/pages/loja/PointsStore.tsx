@@ -234,14 +234,14 @@ const PointsStore: React.FC<PointsStoreProps> = ({ linkLoja }) => {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <Button variant="outline" size="sm" className="relative">
+              {/* <Button variant="outline" size="sm" className="relative">
                 <ShoppingCart className="w-4 h-4" />
                 {cartItems.length > 0 && (
                   <Badge className="absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center p-0 text-xs">
                     {cartItems.length}
                   </Badge>
                 )}
-              </Button>
+              </Button> */}
 
               {/* Mobile menu button */}
               <Button
