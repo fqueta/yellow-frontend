@@ -50,13 +50,13 @@ export function AppLayout({ children }: AppLayoutProps) {
             <div className="flex items-center gap-4">
               <SidebarTrigger data-lov-name="SidebarTrigger" />
               <div className="hidden md:flex items-center gap-2 max-w-sm w-full">
-                <div className="relative w-full">
+                {/* <div className="relative w-full">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Buscar clientes, OS, orçamentos..."
                     className="pl-8"
                   />
-                </div>
+                </div> */}
               </div>
             </div>
 

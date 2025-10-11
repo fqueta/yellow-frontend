@@ -1,5 +1,5 @@
 import { ChevronUp, User, Wrench } from "lucide-react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
 import {
@@ -28,7 +28,7 @@ import { buildMenuFromDTO, filterMenuByViewAccess, defaultMenu } from "@/lib/men
 
 export function AppSidebar() {
   const { state } = useSidebar();
-  const { menu: apiMenu } = useAuth();
+  const { menu: apiMenu, logout } = useAuth();
   const location = useLocation();
   const currentPath = location.pathname;
   const collapsed = state === "collapsed";
@@ -134,13 +134,20 @@ export function AppSidebar() {
                 side="top" 
                 className="w-[--radix-popper-anchor-width]"
               >
-                <DropdownMenuItem>
-                  <span>Perfil</span>
+                <DropdownMenuItem asChild>
+                  <Link to="/admin/settings/user-profiles" className="flex items-center">
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Perfil</span>
+                  </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <span>Configurações</span>
+                <DropdownMenuItem asChild>
+                  <Link to="/admin/settings/system" className="flex items-center">
+                    <Wrench className="mr-2 h-4 w-4" />
+                    <span>Configurações</span>
+                  </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={logout} className="text-red-600 cursor-pointer">
+                  <ChevronUp className="mr-2 h-4 w-4" />
                   <span>Sair</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
