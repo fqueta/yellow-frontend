@@ -198,14 +198,14 @@ const LandingPage = ({ linkLoja }: PointsStoreProps) => {
                   {!isLoadingSmartlink && <ArrowRight className="ml-2 h-5 w-5" />}
                 </Button>
               )}
-              {isAuthenticated && (
+              {/* {isAuthenticated && (
                 <Button size="lg" variant="outline" className="border-yellow-400 text-purple-700 hover:bg-yellow-50" asChild>
                   <LoginRedirectLink to={linkLoja} requireAuth={true}>
                     Explorar Loja 
                     <Gift className="ml-2 h-5 w-5" />
                   </LoginRedirectLink>
                 </Button>
-              )}
+              )} */}
             </div>
           </div>
         </div>

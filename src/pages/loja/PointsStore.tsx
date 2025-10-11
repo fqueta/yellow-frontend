@@ -172,7 +172,7 @@ const PointsStore: React.FC<PointsStoreProps> = ({ linkLoja }) => {
 
             {/* Desktop Navigation */}
             <nav className="hidden md:flex space-x-8">
-              <a href="#home" className="text-gray-700 hover:text-green-600 transition-colors">Início</a>
+              <a href="/" className="text-gray-700 hover:text-green-600 transition-colors">Início</a>
               <button onClick={scrollToProducts} className="text-gray-700 hover:text-green-600 transition-colors bg-transparent border-none cursor-pointer">Produtos</button>
               {/* <a href="#categories" className="text-gray-700 hover:text-green-600 transition-colors">Categorias</a>
               <a href="#about" className="text-gray-700 hover:text-green-600 transition-colors">Sobre</a> */}
