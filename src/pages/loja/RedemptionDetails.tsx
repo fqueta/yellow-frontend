@@ -9,6 +9,7 @@ import { useRedemption } from '@/hooks/redemptions';
 import { Redemption } from '@/types/redemptions';
 import { formatDate } from '@/lib/utils';
 import { PointsStoreProps } from '@/types/products';
+import { zerofill } from '@/lib/qlib';
 /**
  * Página de detalhes do resgate na área do cliente
  * Exibe informações completas sobre um resgate específico
@@ -102,7 +103,7 @@ const RedemptionDetails: React.FC<PointsStoreProps> = ({ linkLoja }) => {
                 Voltar
               </Button>
               <h1 className="text-xl font-semibold text-gray-900">
-                Detalhes do Resgate #{redemption.id}
+                Detalhes do Resgate #R{zerofill(redemption.id,3)}
               </h1>
             </div>
             {/* <Badge className={getStatusColor(redemption.status)}>
