@@ -343,13 +343,13 @@ const RedemptionDetails: React.FC<PointsStoreProps> = ({ linkLoja }) => {
 
             {/* Ações */}
             <div className="space-y-3">
-              <Button
+              {/* <Button
                 onClick={() => navigate(linkLoja + `/produto/${redemption.productId}`)}
                 variant="outline"
                 className="w-full"
               >
                 Ver Produto na Loja
-              </Button>
+              </Button> */}
               {redemption.trackingCode && (
                 <Button
                   onClick={() => {
