@@ -380,9 +380,9 @@ const AdminRedemptions: React.FC = () => {
                   <TableHead>Produto</TableHead>
                   <TableHead>Pontos</TableHead>
                   <TableHead>Data</TableHead>
-                  <TableHead>Status</TableHead>
+                  {/* <TableHead>Status</TableHead>
 
-                  <TableHead>Entrega</TableHead>
+                  <TableHead>Entrega</TableHead> */}
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -433,7 +433,7 @@ const AdminRedemptions: React.FC = () => {
                           </span>
                         </div>
                       </TableCell>
-                      <TableCell>
+                      {/* <TableCell>
                         <Badge 
                           variant="outline"
                           className={`flex items-center gap-1 w-fit ${getStatusColor(redemption.status)}`}
@@ -449,7 +449,7 @@ const AdminRedemptions: React.FC = () => {
                             {format(new Date(redemption.estimatedDelivery), 'dd/MM/yyyy', { locale: ptBR })}
                           </span>
                         )}
-                      </TableCell>
+                      </TableCell> */}
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>

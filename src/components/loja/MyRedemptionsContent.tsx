@@ -238,7 +238,7 @@ const MyRedemptionsContent: React.FC<MyRedemptionsContentProps & PointsStoreProp
               {/* Filtro de status */}
               <div className="relative">
                 <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <select
+                {/* <select
                   value={statusFilter}
                   onChange={(e) => {
                     setStatusFilter(e.target.value);
@@ -250,7 +250,7 @@ const MyRedemptionsContent: React.FC<MyRedemptionsContentProps & PointsStoreProp
                   {Object.entries(REDEMPTION_STATUSES).map(([key, status]) => (
                     <option key={key} value={key}>{status.label}</option>
                   ))}
-                </select>
+                </select> */}
               </div>
               
               {/* Ordenação */}
@@ -262,7 +262,7 @@ const MyRedemptionsContent: React.FC<MyRedemptionsContentProps & PointsStoreProp
                 >
                   <option value="date">Data</option>
                   <option value="points">Pontos</option>
-                  <option value="status">Status</option>
+                  {/* <option value="status">Status</option> */}
                 </select>
                 <button
                   onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
@@ -319,12 +319,12 @@ const MyRedemptionsContent: React.FC<MyRedemptionsContentProps & PointsStoreProp
                           <h3 className="text-lg font-semibold text-gray-900">{redemption.productName || 'Produto não encontrado'}</h3>
                           <p className="text-sm text-gray-600">Categoria: {redemption.category}</p>
                         </div>
-                        <div className="flex items-center space-x-2">
+                        {/* <div className="flex items-center space-x-2">
                           <span className={`px-3 py-1 rounded-full text-sm font-medium flex items-center space-x-1 ${statusInfo.color}`}>
                             <StatusIcon className="w-4 h-4" />
                             <span>{statusInfo.label}</span>
                           </span>
-                        </div>
+                        </div> */}
                       </div>
                       
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
