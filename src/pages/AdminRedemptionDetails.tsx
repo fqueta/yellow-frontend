@@ -394,7 +394,7 @@ const AdminRedemptionDetails: React.FC = () => {
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Status Atual */}
-          <Card>
+          {/* <Card>
             <CardHeader>
               <CardTitle className="text-lg">Status Atual</CardTitle>
             </CardHeader>
@@ -434,10 +434,10 @@ const AdminRedemptionDetails: React.FC = () => {
                 )}
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
 
           {/* Atualizar Status */}
-          <Card>
+          {/* <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Edit className="w-4 h-4" />
@@ -500,7 +500,7 @@ const AdminRedemptionDetails: React.FC = () => {
                 </Button>
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
 
           {/* Observações */}
           {redemption.notes && (

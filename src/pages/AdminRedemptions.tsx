@@ -464,7 +464,7 @@ const AdminRedemptions: React.FC = () => {
                               Ver detalhes
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem 
+                            {/* <DropdownMenuItem 
                               onClick={() => handleStatusUpdate(redemption.id, 'confirmed')}
                               disabled={updateRedemptionStatusMutation.isPending}
                             >
@@ -484,7 +484,7 @@ const AdminRedemptions: React.FC = () => {
                             >
                               <CheckCircle className="mr-2 h-4 w-4" />
                               Marcar como entregue
-                            </DropdownMenuItem>
+                            </DropdownMenuItem> */}
                             <DropdownMenuSeparator />
                             <DropdownMenuItem 
                               onClick={() => handleStatusUpdate(redemption.id, 'cancelled')}
