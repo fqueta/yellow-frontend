@@ -105,9 +105,9 @@ const RedemptionDetails: React.FC<PointsStoreProps> = ({ linkLoja }) => {
                 Detalhes do Resgate #{redemption.id}
               </h1>
             </div>
-            <Badge className={getStatusColor(redemption.status)}>
+            {/* <Badge className={getStatusColor(redemption.status)}>
               {formatStatus(redemption.status)}
-            </Badge>
+            </Badge> */}
           </div>
         </div>
       </div>
