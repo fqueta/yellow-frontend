@@ -268,12 +268,12 @@ const RedemptionDetails: React.FC<PointsStoreProps> = ({ linkLoja }) => {
                   </p>
                 </div>
                 <Separator />
-                <div>
+                {/* <div>
                   <label className="text-sm font-medium text-gray-500">Status Atual</label>
                   <Badge className={getStatusColor(redemption.status)}>
                     {formatStatus(redemption.status)}
                   </Badge>
-                </div>
+                </div> */}
               </CardContent>
             </Card>
 
