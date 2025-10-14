@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Gift, Star, Users, Zap, ArrowRight, CheckCircle, User, LogOut, Settings, ChevronDown, Monitor } from "lucide-react";
+import { Gift, Plus, Star, Users, Zap, ArrowRight, CheckCircle, User, LogOut, Settings, ChevronDown, Monitor } from "lucide-react";
 import { Link } from "react-router-dom";
 import { LoginRedirectLink } from "@/components/auth/LoginRedirectLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -165,21 +165,36 @@ const LandingPage = ({ linkLoja }: PointsStoreProps) => {
       </header>
 
       {/* Hero Section */}
-      <section className="py-20 px-4">
+      <section className="py-16 px-4">
         <div className="container mx-auto text-center">
           <div className="mb-8">
-            <Badge className="bg-yellow-400 text-purple-700 hover:bg-yellow-500 mb-4">
+            {/* <Badge className="bg-yellow-400 text-purple-700 hover:bg-yellow-500 mb-4">
               🎉 Clube de Vantagens Exclusivo
-            </Badge>
-            <h1 className="text-5xl md:text-7xl font-bold text-purple-800 mb-6">
+            </Badge> */}
+            <h1 className="text-5xl md:text-5xl font-bold text-purple-800 mb-6">
               Bem-vindo ao
-              <span className="text-yellow-500 block">Yellow Club</span>
+              <span className="text-yellow-500 block">Club de Vantagens Yellow</span>
             </h1>
             <p className="text-xl text-purple-600 mb-8 max-w-2xl mx-auto">
-              Descubra um mundo de vantagens exclusivas, recompensas incríveis e benefícios únicos. 
-              Junte-se à nossa comunidade e transforme cada compra em uma oportunidade.
+              Aqui você tem acesso ao programa de pontos Antena+  —  a Rede Credenciada Oi TV. Suas conquistas valem pontos que podem ser trocados por prêmios incríveis. 🎁
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <p className="text-xl text-purple-600 mb-8 max-w-2xl mx-auto">
+              E tem mais: por fazer parte da Rede Antena+, você também aproveita as vantagens do Yellow Club, com cashback e descontos nas melhores lojas do país. 
+            </p>            
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-20 px-4 bg-white/50">
+        <div className="container mx-auto">
+          {/* <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-purple-800 mb-4">Por que escolher o Yellow Club?</h2>
+            <p className="text-xl text-purple-600 max-w-2xl mx-auto">
+              Oferecemos uma experiência única de benefícios e recompensas pensada especialmente para você.
+            </p>
+          </div> */}
+          {/* <div className="flex flex-col sm:flex-row gap-4 justify-center">
               {!isAuthenticated ? (
                 <Button size="lg" className="bg-purple-700 hover:bg-purple-800 text-white" asChild>
                   <Link to="/public-client-form">
@@ -198,40 +213,34 @@ const LandingPage = ({ linkLoja }: PointsStoreProps) => {
                   {!isLoadingSmartlink && <ArrowRight className="ml-2 h-5 w-5" />}
                 </Button>
               )}
-              {/* {isAuthenticated && (
+              {isAuthenticated && (
                 <Button size="lg" variant="outline" className="border-yellow-400 text-purple-700 hover:bg-yellow-50" asChild>
                   <LoginRedirectLink to={linkLoja} requireAuth={true}>
                     Explorar Loja 
                     <Gift className="ml-2 h-5 w-5" />
                   </LoginRedirectLink>
                 </Button>
-              )} */}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="py-20 px-4 bg-white/50">
-        <div className="container mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-purple-800 mb-4">Por que escolher o Yellow Club?</h2>
-            <p className="text-xl text-purple-600 max-w-2xl mx-auto">
-              Oferecemos uma experiência única de benefícios e recompensas pensada especialmente para você.
-            </p>
-          </div>
+              )}
+          </div> */}
           
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-2 gap-8">
             <Card className="border-yellow-200 hover:shadow-lg transition-shadow">
               <CardHeader className="text-center">
-                <div className="w-16 h-16 bg-yellow-400 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Star className="h-8 w-8 text-purple-700" />
+                <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Plus className="h-8 w-8 text-white" />
                 </div>
-                <CardTitle className="text-purple-800">Recompensas Exclusivas</CardTitle>
+                <CardTitle className="text-purple-800">Trocar pontos no Antena+ Oi TV</CardTitle>
               </CardHeader>
               <CardContent>
                 <CardDescription className="text-center text-purple-600">
-                  Acumule pontos a cada compra e troque por produtos incríveis, descontos especiais e experiências únicas.
+                  {isAuthenticated && (
+                    <Button size="lg" variant="outline" className="bg-green-700 text-white border-green-400 hover:bg-green-50" asChild>
+                      <LoginRedirectLink to={linkLoja} requireAuth={true}>
+                        Acessar
+                        <Gift className="ml-2 h-5 w-5" />
+                      </LoginRedirectLink>
+                    </Button>
+                  )}
                 </CardDescription>
               </CardContent>
             </Card>
@@ -241,16 +250,33 @@ const LandingPage = ({ linkLoja }: PointsStoreProps) => {
                 <div className="w-16 h-16 bg-yellow-400 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Users className="h-8 w-8 text-purple-700" />
                 </div>
-                <CardTitle className="text-purple-800">Comunidade VIP</CardTitle>
+                <CardTitle className="text-purple-800">Explorar Cashback e Descontos</CardTitle>
               </CardHeader>
               <CardContent>
                 <CardDescription className="text-center text-purple-600">
-                  Faça parte de uma comunidade exclusiva com acesso antecipado a lançamentos e eventos especiais.
+                  {!isAuthenticated ? (
+                      <Button size="lg" className="bg-purple-700 hover:bg-purple-800 text-white" asChild>
+                        <Link to="/public-client-form">
+                          Começar Agora
+                          <ArrowRight className="ml-2 h-5 w-5" />
+                        </Link>
+                      </Button>
+                    ) : (
+                      <Button 
+                        size="lg" 
+                        onClick={hadleStartAlloyal} 
+                        disabled={isLoadingSmartlink}
+                        className="bg-purple-700 hover:bg-purple-800 text-white px-8 py-4 text-sm font-semibold"
+                      >
+                        {isLoadingSmartlink ? 'Carregando...' : 'Acessar'}
+                        {!isLoadingSmartlink && <ArrowRight className="ml-2 h-5 w-5" />}
+                      </Button>
+                    )}
                 </CardDescription>
               </CardContent>
             </Card>
 
-            <Card className="border-yellow-200 hover:shadow-lg transition-shadow">
+            {/* <Card className="border-yellow-200 hover:shadow-lg transition-shadow">
               <CardHeader className="text-center">
                 <div className="w-16 h-16 bg-yellow-400 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Zap className="h-8 w-8 text-purple-700" />
@@ -262,98 +288,11 @@ const LandingPage = ({ linkLoja }: PointsStoreProps) => {
                   Aproveite descontos imediatos, frete grátis e condições especiais desde o primeiro dia como membro.
                 </CardDescription>
               </CardContent>
-            </Card>
+            </Card> */}
           </div>
         </div>
       </section>
 
-      {/* Benefits Section */}
-      <section className="py-20 px-4">
-        <div className="container mx-auto">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-4xl font-bold text-purple-800 mb-6">Vantagens que fazem a diferença</h2>
-              <div className="space-y-4">
-                <div className="flex items-center space-x-3">
-                  <CheckCircle className="h-6 w-6 text-yellow-500" />
-                  <span className="text-purple-700">Cashback em todas as compras</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <CheckCircle className="h-6 w-6 text-yellow-500" />
-                  <span className="text-purple-700">Descontos exclusivos em parceiros</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <CheckCircle className="h-6 w-6 text-yellow-500" />
-                  <span className="text-purple-700">Acesso antecipado a promoções</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <CheckCircle className="h-6 w-6 text-yellow-500" />
-                  <span className="text-purple-700">Suporte prioritário 24/7</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <CheckCircle className="h-6 w-6 text-yellow-500" />
-                  <span className="text-purple-700">Programa de indicação com bônus</span>
-                </div>
-              </div>
-              {!isAuthenticated && (
-                <Button className="mt-8 bg-yellow-500 hover:bg-yellow-600 text-purple-800" asChild>
-                  <Link to="/public-client-form">Quero fazer parte!</Link>
-                </Button>
-              )}
-            </div>
-            <div className="relative">
-              <div className="w-full h-96 bg-gradient-to-br from-yellow-400 to-purple-600 rounded-3xl flex items-center justify-center relative overflow-hidden">
-                {/* Background Image */}
-                <div className="absolute inset-0 opacity-20">
-                  <svg className="w-full h-full object-cover" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    {/* Shopping bags */}
-                    <path d="M80 120h40v20h-40z" fill="white" opacity="0.3"/>
-                    <path d="M85 100c0-8 6-15 15-15s15 7 15 15" stroke="white" strokeWidth="3" fill="none" opacity="0.4"/>
-                    
-                    {/* Gift box */}
-                    <rect x="280" y="80" width="60" height="60" fill="white" opacity="0.3" rx="5"/>
-                    <path d="M280 110h60M310 80v60" stroke="white" strokeWidth="4" opacity="0.4"/>
-                    <circle cx="310" cy="70" r="8" fill="white" opacity="0.4"/>
-                    
-                    {/* Credit card */}
-                    <rect x="150" y="280" width="80" height="50" fill="white" opacity="0.3" rx="8"/>
-                    <rect x="160" y="295" width="60" height="4" fill="white" opacity="0.5"/>
-                    <rect x="160" y="305" width="30" height="3" fill="white" opacity="0.4"/>
-                    
-                    {/* Coins */}
-                    <circle cx="320" cy="280" r="15" fill="white" opacity="0.3"/>
-                    <circle cx="340" cy="270" r="12" fill="white" opacity="0.25"/>
-                    <circle cx="305" cy="300" r="10" fill="white" opacity="0.2"/>
-                    
-                    {/* Stars */}
-                    <path d="M60 200l4 8 8 0-6 6 2 8-8-4-8 4 2-8-6-6 8 0z" fill="white" opacity="0.3"/>
-                    <path d="M350 180l3 6 6 0-5 4 1 6-5-3-5 3 1-6-5-4 6 0z" fill="white" opacity="0.25"/>
-                    <path d="M120 320l2 4 4 0-3 3 1 4-4-2-4 2 1-4-3-3 4 0z" fill="white" opacity="0.2"/>
-                    
-                    {/* Percentage symbols */}
-                    <text x="50" y="300" fontSize="24" fill="white" opacity="0.3" fontWeight="bold">%</text>
-                    <text x="360" y="120" fontSize="20" fill="white" opacity="0.25" fontWeight="bold">%</text>
-                    
-                    {/* Trophy */}
-                    <path d="M200 50h20v30h-20z" fill="white" opacity="0.3"/>
-                    <path d="M195 80h30v10h-30z" fill="white" opacity="0.4"/>
-                    <circle cx="210" cy="45" r="8" fill="white" opacity="0.3"/>
-                  </svg>
-                </div>
-                
-                {/* Content overlay */}
-                <div className="text-center text-white relative z-10">
-                  <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                    <span className="text-4xl font-bold text-purple-700">Y</span>
-                  </div>
-                  <h3 className="text-2xl font-bold mb-2 drop-shadow-lg">Yellow</h3>
-                  <p className="text-lg opacity-90 drop-shadow-md">Benefits Company</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* CTA Section */}
       <section className="py-20 px-4 bg-gradient-to-r from-purple-700 to-purple-800">
