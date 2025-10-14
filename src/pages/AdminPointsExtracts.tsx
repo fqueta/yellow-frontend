@@ -208,18 +208,18 @@ const AdminPointsExtracts: React.FC = () => {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={handleExport}>
+          {/* <Button variant="outline" onClick={handleExport}>
             <Download className="w-4 h-4 mr-2" />
             Exportar
-          </Button>
+          </Button> */}
           <Button variant="outline" onClick={handleCreateAdjustment}>
             <Plus className="w-4 h-4 mr-2" />
             Criar Ajuste
           </Button>
-          <Button onClick={handleRefresh} disabled={isLoading}>
+          {/* <Button onClick={handleRefresh} disabled={isLoading}>
             <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
             Atualizar
-          </Button>
+          </Button> */}
         </div>
       </div>
 
