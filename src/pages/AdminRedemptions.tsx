@@ -217,7 +217,7 @@ const AdminRedemptions: React.FC = () => {
             Acompanhe e gerencie todos os resgates realizados pelos clientes
           </p>
         </div>
-        <div className="flex gap-2">
+        {/* <div className="flex gap-2">
           <Button variant="outline" onClick={handleExport}>
             <Download className="w-4 h-4 mr-2" />
             Exportar
@@ -226,11 +226,11 @@ const AdminRedemptions: React.FC = () => {
             <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
             Atualizar
           </Button>
-        </div>
+        </div> */}
       </div>
 
       {/* Estatísticas */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+      {/* <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="text-center">
@@ -295,7 +295,7 @@ const AdminRedemptions: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-      </div>
+      </div> */}
 
       {/* Filtros */}
       <Card>
@@ -320,7 +320,7 @@ const AdminRedemptions: React.FC = () => {
               </div>
             </div>
             
-            <div className="space-y-2">
+            {/* <div className="space-y-2">
               <label className="text-sm font-medium">Status</label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger>
@@ -335,7 +335,7 @@ const AdminRedemptions: React.FC = () => {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
+            </div> */}
             
 
             

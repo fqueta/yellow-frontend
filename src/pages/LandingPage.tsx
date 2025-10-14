@@ -407,8 +407,10 @@ const LandingPage = ({ linkLoja }: PointsStoreProps) => {
             <div>
               <h4 className="font-semibold mb-4">Suporte</h4>
               <ul className="space-y-2 text-sm text-purple-300">
-                <li><a href="#" className="hover:text-yellow-400">Central de Ajuda</a></li>
-                <li><a href="#" className="hover:text-yellow-400">Contato</a></li>
+                <li>contato@yellowbc.com.br</li>
+                <li>0800 000 4338</li>
+                {/* <li><a href="#" className="hover:text-yellow-400">Central de Ajuda</a></li>
+                <li><a href="#" className="hover:text-yellow-400">Contato</a></li> */}
               </ul>
             </div>
             <div>
@@ -420,7 +422,7 @@ const LandingPage = ({ linkLoja }: PointsStoreProps) => {
             </div>
           </div>
           <div className="border-t border-purple-800 mt-8 pt-8 text-center text-sm text-purple-300">
-            <p>&copy; 2024 Yellow Benefits Company. Todos os direitos reservados.</p>
+            <p>&copy; {new Date().getFullYear()} Yellow Benefits Company. Todos os direitos reservados.</p>
           </div>
         </div>
       </footer>
