@@ -160,14 +160,10 @@ const PointsStore: React.FC<PointsStoreProps> = ({ linkLoja }) => {
             {/* Logo */}
             <div className="flex items-center space-x-3">
               <img 
-                src="/oi-logo.svg" 
-                alt="oi tv logo" 
-                className="w-10 h-10"
-              />
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">Oi TV</h1>
-                <p className="text-xs text-gray-500">Clube de Pontos</p>
-              </div>
+                src="/antena-logo.png" 
+                alt="antena+ logo" 
+                className="h-8"
+              /> <span className="text-lg font-bold">Oi TV</span>
             </div>
 
             {/* Desktop Navigation */}
@@ -310,21 +306,21 @@ const PointsStore: React.FC<PointsStoreProps> = ({ linkLoja }) => {
       </header>
 
       {/* Hero Section */}
-      <section id="home" className="py-16 px-4">
+      <section id="home" className="py-10 px-4">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-            Transforme seus <span className="text-green-500">pontos</span> em <span className="text-gray-600">recompensas</span>
+          <h2 className="text-4xl md:text-3xl font-bold text-gray-900 mb-6">
+            Troque seus <span className="text-green-500">pontos</span> por <span className="text-gray-600">por prêmios!</span>
           </h2>
           <p className="text-xl text-gray-600 mb-8">
-            Descubra milhares de produtos incríveis e resgate com seus pontos oi
+            Com o Antena+, cada venda realizada, cada cliente mantido na base ou indicação de novo credenciado geram pontos, que podem ser trocados por PIX, prêmios exclusivos, kits técnico, produtos Antena+ Oi TV e muito mais. 
           </p>
-          <Button 
+          {/* <Button 
             size="lg" 
             className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
             onClick={scrollToProducts}
           >
             Explorar Produtos
-          </Button>
+          </Button> */}
         </div>
       </section>
 
@@ -486,14 +482,11 @@ const PointsStore: React.FC<PointsStoreProps> = ({ linkLoja }) => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
               <div className="flex items-center space-x-3 mb-4">
-                <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center">
-                  <img 
-                      src="/oi-logo.svg" 
-                      alt="oi logo" 
-                      className="w-10 h-10"
-                    />
-                </div>
-                <span className="text-xl font-bold">Oi Tv</span>
+                <img 
+                    src="/antena-log2.png" 
+                    alt="antena+ logo" 
+                    className="h-16"
+                  />
               </div>
               <p className="text-gray-400">
                 Transformando pontos em experiências incríveis.
