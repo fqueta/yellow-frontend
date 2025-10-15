@@ -227,7 +227,7 @@ const LandingPage = ({ linkLoja }: PointsStoreProps) => {
                  <div className="rounded-full flex items-center justify-center mx-auto mb-4">
                    <img src="/oi tv verde e preto.png" alt="oitv logo" className="h-20 w-20" />
                  </div>
-                <CardTitle className="text-green-800">Trocar Pontos Antena +</CardTitle>
+                <CardTitle className="text-green-700">Trocar Pontos Antena +</CardTitle>
               </CardHeader>
               <CardContent>
                 <CardDescription className="text-center text-purple-600">
