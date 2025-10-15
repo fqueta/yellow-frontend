@@ -92,9 +92,7 @@ const LandingPage = ({ linkLoja }: PointsStoreProps) => {
       <header className="bg-white/80 backdrop-blur-md border-b border-yellow-200 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center">
-              <span className="text-purple-700 font-bold text-xl">Y</span>
-            </div>
+              <img src="/logo-yellow.jpg" alt="yellow logo" className="h-16" />
             <div>
               <h1 className="text-2xl font-bold text-purple-700">Yellow</h1>
               <p className="text-sm text-purple-600">Benefits Company</p>
@@ -226,10 +224,8 @@ const LandingPage = ({ linkLoja }: PointsStoreProps) => {
           <div className="grid md:grid-cols-2 gap-8">
             <Card className="border-yellow-200 hover:shadow-lg transition-shadow">
               <CardHeader className="text-center">
-                <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Plus className="h-8 w-8 text-white" />
-                </div>
-                <CardTitle className="text-purple-800">Trocar pontos no Antena+ Oi TV</CardTitle>
+                <img src="/oi-logo.svg" alt="oitv logo" className="h-16 mb-2" />
+                <CardTitle className="text-purple-800">Trocar Pontos Antena +</CardTitle>
               </CardHeader>
               <CardContent>
                 <CardDescription className="text-center text-purple-600">
@@ -361,7 +357,8 @@ const LandingPage = ({ linkLoja }: PointsStoreProps) => {
             </div>
           </div>
           <div className="border-t border-purple-800 mt-8 pt-8 text-center text-sm text-purple-300">
-            <p>&copy; {new Date().getFullYear()} Yellow Benefits Company. Todos os direitos reservados.</p>
+            <p>&copy; {new Date().getFullYear()} Yellow Benefits Company. Todos os direitos reservados.</p> 
+            <p>Desenvolvido por <a href="https://mastertechbr.com/" target="_blank">Mastertech</a></p>
           </div>
         </div>
       </footer>

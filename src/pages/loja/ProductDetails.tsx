@@ -61,11 +61,11 @@ const ProductDetails: React.FC<PointsStoreProps> = ({ linkLoja }) => {
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-orange-50 to-pink-50 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-16 h-16 text-green-600 mx-auto mb-4 animate-spin" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Carregando produto...</h2>
-          <p className="text-gray-600">Aguarde enquanto buscamos as informações do produto.</p>
+          <Loader2 className="w-16 h-16 text-teal-600 mx-auto mb-4 animate-spin" />
+          <h2 className="text-2xl font-bold text-purple-800 mb-2">Carregando produto...</h2>
+          <p className="text-purple-600">Aguarde enquanto buscamos as informações do produto.</p>
         </div>
       </div>
     );
@@ -74,16 +74,16 @@ const ProductDetails: React.FC<PointsStoreProps> = ({ linkLoja }) => {
   // Error state
   if (error || !product) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-orange-50 to-pink-50 flex items-center justify-center">
         <div className="text-center">
           <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Produto não encontrado</h2>
-          <p className="text-gray-600 mb-6">
+          <h2 className="text-2xl font-bold text-purple-800 mb-2">Produto não encontrado</h2>
+          <p className="text-purple-600 mb-6">
             {error ? 'Erro ao carregar o produto. Tente novamente mais tarde.' : 'O produto que você está procurando não existe ou foi removido.'}
           </p>
           <button
             onClick={() => navigate(linkLoja)}
-            className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"
+            className="bg-gradient-to-r from-teal-500 to-green-500 text-white px-6 py-3 rounded-lg hover:from-teal-600 hover:to-green-600 transition-all transform hover:scale-105"
           >
             Voltar à Loja
           </button>
@@ -256,32 +256,32 @@ const ProductDetails: React.FC<PointsStoreProps> = ({ linkLoja }) => {
 
   if (showConfirmation) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full mx-4 text-center">
-          <CheckCircle className="w-20 h-20 text-green-500 mx-auto mb-6" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Resgate Confirmado!</h2>
-          <p className="text-gray-600 mb-6">
+      <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-orange-50 to-pink-50 flex items-center justify-center">
+        <div className="bg-white rounded-2xl shadow-xl border-2 border-purple-100 p-8 max-w-md w-full mx-4 text-center">
+          <CheckCircle className="w-20 h-20 text-teal-500 mx-auto mb-6" />
+          <h2 className="text-2xl font-bold text-purple-800 mb-4">Resgate Confirmado!</h2>
+          <p className="text-purple-600 mb-6">
             Seu produto <strong>{product.name}</strong> foi resgatado com sucesso.
           </p>
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-            <p className="text-sm text-green-800">
+          <div className="bg-gradient-to-r from-teal-50 to-green-50 border-2 border-teal-200 rounded-lg p-4 mb-6">
+            <p className="text-sm text-teal-800">
               <strong>Pontos utilizados:</strong> {(product.pointsRequired || 0).toLocaleString()}<br />
               <strong>Saldo restante:</strong> {(userPoints - (product.pointsRequired || 0)).toLocaleString()}
             </p>
           </div>
-          <p className="text-sm text-gray-500 mb-6">
+          <p className="text-sm text-purple-500 mb-6">
             Você receberá um e-mail com os detalhes do resgate e instruções para retirada.
           </p>
           <div className="space-y-3">
             <button
               onClick={() => navigate(linkLoja)}
-              className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors font-medium"
+              className="w-full bg-gradient-to-r from-teal-500 to-green-500 text-white py-3 rounded-lg hover:from-teal-600 hover:to-green-600 transition-all transform hover:scale-105 font-medium shadow-md"
             >
               Continuar comprando
             </button>
             <button
               onClick={() => navigate(linkLoja+'/meus-resgates')}
-              className="w-full border border-green-600 text-green-600 py-3 rounded-lg hover:bg-green-50 transition-colors font-medium"
+              className="w-full border-2 border-purple-300 text-purple-600 py-3 rounded-lg hover:bg-purple-50 transition-all transform hover:scale-105 font-medium"
             >
               Ver meus resgates
             </button>
@@ -292,22 +292,22 @@ const ProductDetails: React.FC<PointsStoreProps> = ({ linkLoja }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-orange-50 to-pink-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="bg-gradient-to-r from-purple-600 via-purple-700 to-teal-600 shadow-lg border-b-4 border-yellow-400">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <button
               onClick={() => navigate(linkLoja)}
-              className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+              className="flex items-center text-white hover:text-yellow-300 transition-all transform hover:scale-105"
             >
               <ArrowLeft className="w-5 h-5 mr-2" />
               Voltar à loja
             </button>
             <div className="flex items-center space-x-4">
-              <div className="text-right">
-                <p className="text-sm text-gray-600">Seus pontos</p>
-                <p className="text-lg font-bold text-green-600">{userPoints.toLocaleString()}</p>
+              <div className="text-right bg-white/20 rounded-lg px-4 py-2 backdrop-blur-sm">
+                <p className="text-sm text-yellow-200">Seus pontos</p>
+                <p className="text-lg font-bold text-yellow-300">{userPoints.toLocaleString()}</p>
               </div>
             </div>
           </div>
@@ -319,7 +319,7 @@ const ProductDetails: React.FC<PointsStoreProps> = ({ linkLoja }) => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Imagem do produto */}
           <div className="space-y-4">
-            <div className="aspect-square bg-white rounded-2xl shadow-lg overflow-hidden">
+            <div className="aspect-square bg-white rounded-2xl shadow-xl border-2 border-purple-100 overflow-hidden transform hover:scale-105 transition-all duration-300">
               <img
                 src={product.image}
                 alt={product.name}
@@ -332,69 +332,47 @@ const ProductDetails: React.FC<PointsStoreProps> = ({ linkLoja }) => {
           <div className="space-y-6">
             {/* Título e categoria */}
             <div>
-              <span className="inline-block bg-green-100 text-green-800 text-sm font-medium px-3 py-1 rounded-full mb-3">
+              <span className="inline-block bg-gradient-to-r from-teal-400 to-green-400 text-white text-sm font-medium px-3 py-1 rounded-full mb-3 shadow-md">
                 {product.category?.name || 'Categoria'}
               </span>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">{product.name}</h1>
-              
-              {/* Avaliação */}
-              <div className="flex items-center space-x-2 mb-4">
-                <div className="flex items-center">
-                  {renderStars(4.5)}
-                </div>
-                <span className="text-sm text-gray-600">
-                  4.5 (0 avaliações)
-                </span>
-              </div>
+              <h1 className="text-3xl font-bold text-purple-800 mb-2">{product.name}</h1>
             </div>
 
             {/* Pontos necessários */}
-            <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-2xl p-6">
+            <div className="bg-gradient-to-r from-yellow-400 to-orange-400 rounded-2xl p-6 shadow-lg border-2 border-purple-100">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-green-700 font-medium">Pontos necessários</p>
-                  <p className="text-3xl font-bold text-green-800">{product.pointsRequired?.toLocaleString() || '0'}</p>
+                  <p className="text-sm text-purple-800 font-medium">Pontos necessários</p>
+                  <p className="text-3xl font-bold text-purple-900">{product.pointsRequired?.toLocaleString() || '0'}</p>
                 </div>
-                <Gift className="w-12 h-12 text-green-600" />
+                <Gift className="w-12 h-12 text-purple-700" />
               </div>
             </div>
 
-            {/* Status de disponibilidade */}
-            {/* <div className="flex items-center space-x-2">
-              <span className={`px-3 py-1 rounded-full text-sm font-medium ${getAvailabilityColor(product.isActive ? 'available' : 'unavailable')}`}>
-                {getAvailabilityText(product.isActive ? 'available' : 'unavailable')}
-              </span>
-              {product.expiresAt && (
-                <span className="text-sm text-gray-500">
-                  Válido até {new Date(product.expiresAt).toLocaleDateString('pt-BR')}
-                </span>
-              )}
-            </div> */}
-
             {/* Descrição */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Descrição</h3>
+            <div className="bg-white rounded-xl p-6 shadow-lg border-2 border-purple-100">
+              <h3 className="text-lg font-semibold text-purple-800 mb-3">Descrição</h3>
               <div 
-                className="text-gray-600 leading-relaxed"
+                className="text-purple-600 leading-relaxed"
                 dangerouslySetInnerHTML={{ __html: product.description }}
               />
             </div>
 
             {/* Termos e condições */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Termos e Condições</h3>
+            <div className="bg-gradient-to-b from-white to-purple-50 rounded-xl p-6 shadow-lg border-2 border-purple-100">
+              <h3 className="text-lg font-semibold text-purple-800 mb-3">Termos e Condições</h3>
               <ul className="space-y-2">
                 <li className="flex items-start space-x-2">
-                  <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span className="text-sm text-gray-600">Produto sujeito à disponibilidade</span>
+                  <CheckCircle className="w-4 h-4 text-teal-500 mt-0.5 flex-shrink-0" />
+                  <span className="text-sm text-purple-600">Produto sujeito à disponibilidade</span>
                 </li>
                 <li className="flex items-start space-x-2">
-                  <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span className="text-sm text-gray-600">Resgate não pode ser cancelado após confirmação</span>
+                  <CheckCircle className="w-4 h-4 text-teal-500 mt-0.5 flex-shrink-0" />
+                  <span className="text-sm text-purple-600">Resgate não pode ser cancelado após confirmação</span>
                 </li>
                 <li className="flex items-start space-x-2">
-                  <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span className="text-sm text-gray-600">Entrega conforme disponibilidade</span>
+                  <CheckCircle className="w-4 h-4 text-teal-500 mt-0.5 flex-shrink-0" />
+                  <span className="text-sm text-purple-600">Entrega conforme disponibilidade</span>
                 </li>
               </ul>
             </div>
@@ -402,7 +380,7 @@ const ProductDetails: React.FC<PointsStoreProps> = ({ linkLoja }) => {
             {/* Botão de resgate */}
             <div className="space-y-4">
               {userPoints < (product.pointsRequired || 0) && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="bg-gradient-to-r from-red-50 to-pink-50 border-2 border-red-300 rounded-lg p-4">
                   <p className="text-sm text-red-800">
                     <strong>Pontos insuficientes!</strong><br />
                     Você precisa de mais {((product.pointsRequired || 0) - userPoints).toLocaleString()} pontos para resgatar este produto.
@@ -413,10 +391,10 @@ const ProductDetails: React.FC<PointsStoreProps> = ({ linkLoja }) => {
               <button
                 onClick={handleStartRedeem}
                 disabled={userPoints < (product.pointsRequired || 0) || !product.isActive}
-                className={`w-full py-4 rounded-xl font-semibold text-lg transition-all duration-200 ${
+                className={`w-full py-4 rounded-xl font-semibold text-lg transition-all duration-300 shadow-lg ${
                   userPoints < (product.pointsRequired || 0) || !product.isActive
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'bg-green-600 text-white hover:bg-green-700 hover:shadow-lg transform hover:-translate-y-0.5'
+                    : 'bg-gradient-to-r from-teal-500 to-green-500 text-white hover:from-teal-600 hover:to-green-600 hover:shadow-xl transform hover:scale-105'
                 }`}
               >
                 Resgatar agora
@@ -429,15 +407,15 @@ const ProductDetails: React.FC<PointsStoreProps> = ({ linkLoja }) => {
       {/* Modal do formulário de resgate */}
       {showRedemptionForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-xl border-2 border-purple-100 max-w-md w-full max-h-[90vh] overflow-y-auto">
             {/* Header do modal */}
-            <div className="flex items-center justify-between p-6 border-b">
-              <h2 className="text-xl font-bold text-gray-900">
+            <div className="flex items-center justify-between p-6 border-b border-purple-100 bg-gradient-to-r from-purple-50 to-teal-50">
+              <h2 className="text-xl font-bold text-purple-800">
                 {(categoryId === 3 || categoryId === '3') ? 'Dados para PIX' : 'Dados para entrega'}
               </h2>
               <button
                 onClick={handleCloseForm}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-purple-400 hover:text-purple-600 transition-colors"
               >
                 <X className="w-6 h-6" />
               </button>
@@ -448,25 +426,25 @@ const ProductDetails: React.FC<PointsStoreProps> = ({ linkLoja }) => {
               {(categoryId === 3 || categoryId === '3') ? (
                 // Formulário PIX
                 <div className="space-y-4">
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                    <p className="text-sm text-blue-800">
+                  <div className="bg-gradient-to-r from-teal-50 to-green-50 border-2 border-teal-200 rounded-lg p-4 mb-6">
+                    <p className="text-sm text-teal-800">
                       <strong>Instruções importantes:</strong><br />
-                      • O PIX será processado em até 2 dias úteis<br />
+                      • O PIX será processado em até 10 dias úteis<br />
                       • Verifique se a chave PIX está correta<br />
                       • Não é possível alterar os dados após confirmação
                     </p>
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-purple-700 mb-2">
                       Chave PIX *
                     </label>
                     <input
                       type="text"
                       value={formData.chave_pix || ''}
                       onChange={(e) => setFormData({ ...formData, chave_pix: e.target.value })}
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
-                        formErrors.chave_pix ? 'border-red-500' : 'border-gray-300'
+                      className={`w-full px-3 py-2 border-2 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400 transition-all ${
+                        formErrors.chave_pix ? 'border-red-500' : 'border-purple-300'
                       }`}
                       placeholder="Digite sua chave PIX"
                     />
@@ -476,15 +454,15 @@ const ProductDetails: React.FC<PointsStoreProps> = ({ linkLoja }) => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-purple-700 mb-2">
                       Digite chave PIX novamente *
                     </label>
                     <input
                       type="text"
                       value={formData.confira_pix || ''}
                       onChange={(e) => setFormData({ ...formData, confira_pix: e.target.value })}
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
-                        formErrors.confira_pix ? 'border-red-500' : 'border-gray-300'
+                      className={`w-full px-3 py-2 border-2 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400 transition-all ${
+                        formErrors.confira_pix ? 'border-red-500' : 'border-purple-300'
                       }`}
                       placeholder="Confirme sua chave PIX"
                     />
@@ -497,28 +475,36 @@ const ProductDetails: React.FC<PointsStoreProps> = ({ linkLoja }) => {
                 // Formulário de endereço
                 <div className="space-y-4">
                   {/* Informações do usuário */}
-                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">Dados do usuário</h4>
+                  <div className="bg-gradient-to-r from-teal-50 to-green-50 border-2 border-teal-200 rounded-lg p-4 mb-6">
+                    <p className="text-sm text-teal-800">
+                      <strong>Instruções importantes:</strong><br />
+                      • O item resgatado será entregue em até 20 dias úteis após geração de código de rastreio.<br />
+                      • Verifique se os dados de endereço estão corretos antes do resgate.<br />
+                      • Não será possível alterar os dados após solicitação.
+                    </p>
+                  </div>
+                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg p-4 mb-4">
+                    <h4 className="text-sm font-medium text-purple-700 mb-2">Dados do usuário</h4>
                     <div className="space-y-1">
                       <p className="text-sm">
-                        <span className="font-medium text-gray-600">Nome completo:</span> {user?.name || 'Não informado'}
+                        <span className="font-medium text-purple-600">Nome completo:</span> {user?.name || 'Não informado'}
                       </p>
                       <p className="text-sm">
-                        <span className="font-medium text-gray-600">CPF:</span> {user?.cpf ? mascaraCpf(user.cpf) : 'Não informado'}
+                        <span className="font-medium text-purple-600">CPF:</span> {user?.cpf ? mascaraCpf(user.cpf) : 'Não informado'}
                       </p>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-purple-700 mb-2">
                         CEP *
                       </label>
                       <input
                         type="text"
                         value={formData.cep || ''}
                         onChange={(e) => handleCepChange(formatCep(e.target.value))}
-                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
-                          formErrors.cep ? 'border-red-500' : 'border-gray-300'
+                        className={`w-full px-3 py-2 border-2 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400 transition-all ${
+                          formErrors.cep ? 'border-red-500' : 'border-purple-300'
                         }`}
                         placeholder="00000-000"
                         maxLength={9}
@@ -530,15 +516,15 @@ const ProductDetails: React.FC<PointsStoreProps> = ({ linkLoja }) => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-purple-700 mb-2">
                       Logradouro *
                     </label>
                     <input
                       type="text"
                       value={formData.logradouro || ''}
                       onChange={(e) => setFormData({ ...formData, logradouro: e.target.value })}
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
-                        formErrors.logradouro ? 'border-red-500' : 'border-gray-300'
+                      className={`w-full px-3 py-2 border-2 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400 transition-all ${
+                        formErrors.logradouro ? 'border-red-500' : 'border-purple-300'
                       }`}
                       placeholder="Rua, Avenida, etc."
                     />
@@ -549,15 +535,15 @@ const ProductDetails: React.FC<PointsStoreProps> = ({ linkLoja }) => {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-purple-700 mb-2">
                         Número *
                       </label>
                       <input
                         type="text"
                         value={formData.numero || ''}
                         onChange={(e) => setFormData({ ...formData, numero: e.target.value })}
-                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
-                          formErrors.numero ? 'border-red-500' : 'border-gray-300'
+                        className={`w-full px-3 py-2 border-2 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400 transition-all ${
+                          formErrors.numero ? 'border-red-500' : 'border-purple-300'
                         }`}
                         placeholder="123"
                       />
@@ -567,29 +553,29 @@ const ProductDetails: React.FC<PointsStoreProps> = ({ linkLoja }) => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-purple-700 mb-2">
                         Complemento
                       </label>
                       <input
                         type="text"
                         value={formData.complemento || ''}
                         onChange={(e) => setFormData({ ...formData, complemento: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border-2 border-purple-300 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400 transition-all"
                         placeholder="Apto, Bloco, etc."
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-purple-700 mb-2">
                       Bairro *
                     </label>
                     <input
                       type="text"
                       value={formData.bairro || ''}
                       onChange={(e) => setFormData({ ...formData, bairro: e.target.value })}
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
-                        formErrors.bairro ? 'border-red-500' : 'border-gray-300'
+                      className={`w-full px-3 py-2 border-2 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400 transition-all ${
+                        formErrors.bairro ? 'border-red-500' : 'border-purple-300'
                       }`}
                       placeholder="Nome do bairro"
                     />
@@ -600,15 +586,15 @@ const ProductDetails: React.FC<PointsStoreProps> = ({ linkLoja }) => {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-purple-700 mb-2">
                         Cidade *
                       </label>
                       <input
                         type="text"
                         value={formData.cidade || ''}
                         onChange={(e) => setFormData({ ...formData, cidade: e.target.value })}
-                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
-                          formErrors.cidade ? 'border-red-500' : 'border-gray-300'
+                        className={`w-full px-3 py-2 border-2 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400 transition-all ${
+                          formErrors.cidade ? 'border-red-500' : 'border-purple-300'
                         }`}
                         placeholder="Nome da cidade"
                       />
@@ -618,15 +604,15 @@ const ProductDetails: React.FC<PointsStoreProps> = ({ linkLoja }) => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-purple-700 mb-2">
                         UF *
                       </label>
                       <input
                         type="text"
                         value={formData.uf || ''}
                         onChange={(e) => setFormData({ ...formData, uf: e.target.value.toUpperCase() })}
-                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
-                          formErrors.uf ? 'border-red-500' : 'border-gray-300'
+                        className={`w-full px-3 py-2 border-2 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400 transition-all ${
+                          formErrors.uf ? 'border-red-500' : 'border-purple-300'
                         }`}
                         placeholder="SP"
                         maxLength={2}
@@ -638,14 +624,14 @@ const ProductDetails: React.FC<PointsStoreProps> = ({ linkLoja }) => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-purple-700 mb-2">
                       Ponto de referência
                     </label>
                     <input
                       type="text"
                       value={formData.ponto_referencia || ''}
                       onChange={(e) => setFormData({ ...formData, ponto_referencia: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border-2 border-purple-300 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400 transition-all"
                       placeholder="Próximo ao shopping, etc."
                     />
                   </div>
@@ -656,17 +642,17 @@ const ProductDetails: React.FC<PointsStoreProps> = ({ linkLoja }) => {
               <div className="flex space-x-3 mt-6">
                 <button
                   onClick={handleCloseForm}
-                  className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                  className="flex-1 px-4 py-3 border-2 border-purple-300 text-purple-600 rounded-lg hover:bg-purple-50 transition-all transform hover:scale-105 font-medium"
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={handleRedeem}
                   disabled={isRedeeming}
-                  className={`flex-1 px-4 py-3 rounded-lg font-medium transition-colors ${
+                  className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all transform hover:scale-105 shadow-md ${
                     isRedeeming
                       ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      : 'bg-green-600 text-white hover:bg-green-700'
+                      : 'bg-gradient-to-r from-teal-500 to-green-500 text-white hover:from-teal-600 hover:to-green-600'
                   }`}
                 >
                   {isRedeeming ? (

@@ -187,9 +187,9 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-orange-50 to-pink-50">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
+      <div className="bg-gradient-to-r from-purple-600 via-purple-700 to-teal-600 shadow-lg border-b-4 border-yellow-400">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-4">
@@ -197,40 +197,44 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
                 variant="ghost"
                 size="sm"
                 onClick={() => navigate(linkLoja)}
-                className="flex items-center space-x-2"
+                className="text-white hover:text-yellow-300 transition-all transform hover:scale-105"
               >
-                <ArrowLeft className="w-4 h-4" />
-                <span>Voltar à Loja</span>
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Voltar à Loja
               </Button>
-              <Separator orientation="vertical" className="h-6" />
-              <h1 className="text-xl font-semibold text-gray-900">Minha Área</h1>
+              <h1 className="text-xl font-bold text-white">Área do Cliente</h1>
             </div>
-            <div className="flex items-center space-x-3">
-              <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">{user?.name}</p>
-                <p className="text-xs text-gray-500">{user?.email}</p>
-              </div>
-              <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center">
-                <User className="w-4 h-4 text-white" />
-              </div>
+            <div className="bg-white/20 rounded-lg px-4 py-2 backdrop-blur-sm">
+              <span className="text-yellow-200 text-sm font-medium">Pontos: </span>
+              <span className="text-yellow-300 font-bold">
+                {user?.points ? Number(user.points).toLocaleString() : '0'}
+              </span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="profile" className="flex items-center space-x-2">
+          <TabsList className="grid w-full grid-cols-3 bg-white rounded-xl shadow-lg border-2 border-purple-100">
+            <TabsTrigger 
+              value="profile" 
+              className="flex items-center space-x-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-teal-500 data-[state=active]:to-green-500 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"
+            >
               <User className="w-4 h-4" />
               <span>Perfil</span>
             </TabsTrigger>
-            <TabsTrigger value="history" className="flex items-center space-x-2">
+            <TabsTrigger 
+              value="history" 
+              className="flex items-center space-x-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"
+            >
               <History className="w-4 h-4" />
               <span>Histórico</span>
             </TabsTrigger>
-            <TabsTrigger value="settings" className="flex items-center space-x-2">
+            <TabsTrigger 
+              value="settings" 
+              className="flex items-center space-x-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-red-500 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"
+            >
               <Settings className="w-4 h-4" />
               <span>Configurações</span>
             </TabsTrigger>
@@ -238,21 +242,24 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
 
           {/* Aba Perfil */}
           <TabsContent value="profile" className="space-y-6">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="flex items-center space-x-2">
-                  <User className="w-5 h-5" />
-                  <span>Informações Pessoais</span>
-                </CardTitle>
-                {/* {!isEditingProfile && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsEditingProfile(true)}
-                  >
-                    Editar Perfil
-                  </Button>
-                )} */}
+            <Card className="bg-white rounded-2xl shadow-xl border-2 border-purple-100">
+              <CardHeader className="bg-gradient-to-r from-teal-50 to-green-50 border-b-2 border-purple-100 rounded-t-2xl">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center space-x-2 text-purple-800">
+                    <User className="w-5 h-5 text-teal-600" />
+                    <span>Informações Pessoais</span>
+                  </CardTitle>
+                  {/* {!isEditingProfile && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsEditingProfile(true)}
+                      className="border-2 border-purple-300 text-purple-600 hover:bg-purple-50 transition-all transform hover:scale-105"
+                    >
+                      Editar Perfil
+                    </Button>
+                  )} */}
+                </div>
               </CardHeader>
               <CardContent className="space-y-6">
                 {!isEditingProfile ? (
@@ -462,15 +469,15 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
 
             {/* Estatísticas do usuário */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card>
+              <Card className="bg-white rounded-2xl shadow-xl border-2 border-purple-100 transform hover:scale-105 transition-all duration-300">
                 <CardContent className="p-6">
                   <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-green-100 rounded-lg">
-                      <Gift className="w-6 h-6 text-green-600" />
+                    <div className="p-3 bg-gradient-to-r from-teal-100 to-green-100 rounded-xl shadow-md">
+                      <Gift className="w-6 h-6 text-teal-600" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-500">Pontos Disponíveis</p>
-                      <p className="text-2xl font-bold text-green-600">
+                      <p className="text-sm font-medium text-purple-600">Pontos Disponíveis</p>
+                      <p className="text-2xl font-bold text-teal-600">
                         {user?.points ? Number(user.points).toLocaleString() : '0'}
                       </p>
                     </div>
@@ -478,16 +485,22 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="bg-white rounded-2xl shadow-xl border-2 border-purple-100 transform hover:scale-105 transition-all duration-300">
                 <CardContent className="p-6">
                   <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-blue-100 rounded-lg">
-                      <Mail className="w-6 h-6 text-blue-600" />
+                    <div className="p-3 bg-gradient-to-r from-purple-100 to-pink-100 rounded-xl shadow-md">
+                      <Mail className="w-6 h-6 text-purple-600" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-500">E-mail</p>
-                      <p className="text-sm font-medium">{user?.email}</p>
-                      <Badge variant={user?.email_verified_at ? 'default' : 'secondary'} className="mt-1">
+                      <p className="text-sm font-medium text-purple-600">E-mail</p>
+                      <p className="text-sm font-medium text-purple-800">{user?.email}</p>
+                      <Badge 
+                        variant={user?.email_verified_at ? 'default' : 'secondary'} 
+                        className={`mt-1 ${user?.email_verified_at 
+                          ? 'bg-gradient-to-r from-teal-500 to-green-500 text-white' 
+                          : 'bg-gradient-to-r from-orange-400 to-red-400 text-white'
+                        }`}
+                      >
                         {user?.email_verified_at ? 'Verificado' : 'Não verificado'}
                       </Badge>
                     </div>
@@ -495,15 +508,15 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="bg-white rounded-2xl shadow-xl border-2 border-purple-100 transform hover:scale-105 transition-all duration-300">
                 <CardContent className="p-6">
                   <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-purple-100 rounded-lg">
-                      <Calendar className="w-6 h-6 text-purple-600" />
+                    <div className="p-3 bg-gradient-to-r from-orange-100 to-yellow-100 rounded-xl shadow-md">
+                      <Calendar className="w-6 h-6 text-orange-600" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-500">Membro desde</p>
-                      <p className="text-sm font-medium">
+                      <p className="text-sm font-medium text-purple-600">Membro desde</p>
+                      <p className="text-sm font-medium text-orange-600">
                         {user?.created_at ? new Date(user.created_at).toLocaleDateString('pt-BR') : 'N/A'}
                       </p>
                     </div>
@@ -520,16 +533,16 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
 
           {/* Aba Configurações */}
           <TabsContent value="settings" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Lock className="w-5 h-5" />
+            <Card className="bg-white rounded-2xl shadow-xl border-2 border-purple-100">
+              <CardHeader className="bg-gradient-to-r from-orange-50 to-red-50 border-b-2 border-purple-100 rounded-t-2xl">
+                <CardTitle className="flex items-center space-x-2 text-purple-800">
+                  <Lock className="w-5 h-5 text-orange-600" />
                   <span>Alterar Senha</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 p-6">
                 <div className="space-y-2">
-                  <Label htmlFor="currentPassword">Senha Atual *</Label>
+                  <Label htmlFor="currentPassword" className="text-purple-700 font-medium">Senha Atual *</Label>
                   <div className="relative">
                     <Input
                       id="currentPassword"
@@ -537,12 +550,13 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
                       value={passwordData.currentPassword}
                       onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
                       placeholder="Digite sua senha atual"
+                      className="border-2 border-purple-200 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400 transition-all"
                     />
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-purple-50 text-purple-600"
                       onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                     >
                       {showCurrentPassword ? (
@@ -555,7 +569,7 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="newPassword">Nova Senha *</Label>
+                  <Label htmlFor="newPassword" className="text-purple-700 font-medium">Nova Senha *</Label>
                   <div className="relative">
                     <Input
                       id="newPassword"
@@ -563,12 +577,13 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
                       value={passwordData.newPassword}
                       onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
                       placeholder="Digite sua nova senha"
+                      className="border-2 border-purple-200 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400 transition-all"
                     />
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-purple-50 text-purple-600"
                       onClick={() => setShowNewPassword(!showNewPassword)}
                     >
                       {showNewPassword ? (
@@ -581,7 +596,7 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirmar Nova Senha *</Label>
+                  <Label htmlFor="confirmPassword" className="text-purple-700 font-medium">Confirmar Nova Senha *</Label>
                   <div className="relative">
                     <Input
                       id="confirmPassword"
@@ -589,12 +604,13 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
                       value={passwordData.confirmPassword}
                       onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
                       placeholder="Confirme sua nova senha"
+                      className="border-2 border-purple-200 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400 transition-all"
                     />
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-purple-50 text-purple-600"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     >
                       {showConfirmPassword ? (
@@ -609,7 +625,7 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
                 <Button
                   onClick={handleChangePassword}
                   disabled={isChangingPassword}
-                  className="w-full"
+                  className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white hover:from-orange-600 hover:to-red-600 transition-all transform hover:scale-105 font-medium shadow-md py-3 rounded-lg"
                 >
                   {isChangingPassword ? 'Alterando...' : 'Alterar Senha'}
                 </Button>
