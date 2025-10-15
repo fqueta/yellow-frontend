@@ -23,3 +23,13 @@ export function formatDate(date: string | Date): string {
     minute: '2-digit'
   });
 }
+
+/**
+ * Formata pontos como números inteiros com separadores de milhares
+ */
+export function formatPoints(points: number): string {
+  if (typeof points !== 'number' || isNaN(points)) return '0';
+  
+  // Converte para inteiro e formata com separadores de milhares
+  return Math.floor(points).toLocaleString('pt-BR');
+}

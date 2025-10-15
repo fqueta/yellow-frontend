@@ -19,6 +19,7 @@ import { useCategoriesList } from '@/hooks/categories';
 import { useAuth } from '@/contexts/AuthContext';
 import { Product, PointsStoreProps } from '@/types/products';
 import { Category } from '@/types/categories';
+import { formatPoints } from '@/lib/utils';
 
 
 
@@ -194,7 +195,7 @@ const PointsStore: React.FC<PointsStoreProps> = ({ linkLoja }) => {
               <div className="hidden sm:flex items-center space-x-2 bg-yellow-400 px-4 py-2 rounded-lg shadow-md">
                 <Gift className="w-4 h-4 text-purple-800" />
                 <span className="text-purple-800 text-sm font-medium">Seus pontos: </span>
-                <span className="text-purple-900 font-bold">{user.points.toLocaleString()}</span>
+                <span className="text-purple-900 font-bold">{formatPoints(user.points)}</span>
               </div>
               
               <div className="hidden sm:flex items-center space-x-2">
@@ -274,7 +275,7 @@ const PointsStore: React.FC<PointsStoreProps> = ({ linkLoja }) => {
             <div className="px-4 py-2 space-y-2">
               <div className="flex items-center space-x-2 bg-green-100 px-3 py-2 rounded-lg">
                 <Gift className="w-4 h-4 text-green-600" />
-                <span className="text-sm font-semibold text-green-800">{user.points.toLocaleString()} pontos</span>
+                <span className="text-sm font-semibold text-green-800">{formatPoints(user.points)} pontos</span>
               </div>
               <a href="#home" className="block py-2 text-gray-700">Início</a>
               <button onClick={scrollToProducts} className="block py-2 text-gray-700 bg-transparent border-none cursor-pointer text-left w-full">Produtos</button>

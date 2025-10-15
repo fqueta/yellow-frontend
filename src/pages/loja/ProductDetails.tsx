@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { useProductBySlug, useRedeemProduct } from '@/hooks/products';
 import { ProductRedemptionResponse } from '@/types/products';
 import { zerofill, mascaraCpf } from '@/lib/qlib';
+import { formatPoints } from '@/lib/utils';
 import { PointsStoreProps } from '@/types/products';
 import { useCep } from '@/hooks/useCep';
 import { useAuth } from '@/contexts/AuthContext';
@@ -16,7 +17,7 @@ import { useAuth } from '@/contexts/AuthContext';
 const ProductDetails: React.FC<PointsStoreProps> = ({ linkLoja }) => {
   const { productId } = useParams<{ productId: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, userPointsBalance } = useAuth();
   const [isRedeeming, setIsRedeeming] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showRedemptionForm, setShowRedemptionForm] = useState(false);
@@ -27,10 +28,11 @@ const ProductDetails: React.FC<PointsStoreProps> = ({ linkLoja }) => {
   // Buscar produto pela API usando slug
   const { data: productGet, isLoading, error } = useProductBySlug(productId || '');
   const product:any = productGet || {};
-  const userPoints:number = product?.user?.points_saldo || 0;
+  const userPoints:number = userPointsBalance?.active_points ? Number(userPointsBalance.active_points) : (user?.points ? Number(user.points) : 0);
   const categoryData:any = product?.categoryData || {};
   const categoryId = categoryData?.id || '';
-  console.log('categoryData:', categoryData, 'categoryId:', categoryId);
+  // console.log('categoryData:', categoryData, 'categoryId:', categoryId);
+  
   // Hook para buscar dados do CEP - deve estar antes dos returns condicionais
   const { fetchCep } = useCep();
   
@@ -265,8 +267,8 @@ const ProductDetails: React.FC<PointsStoreProps> = ({ linkLoja }) => {
           </p>
           <div className="bg-gradient-to-r from-teal-50 to-green-50 border-2 border-teal-200 rounded-lg p-4 mb-6">
             <p className="text-sm text-teal-800">
-              <strong>Pontos utilizados:</strong> {(product.pointsRequired || 0).toLocaleString()}<br />
-              <strong>Saldo restante:</strong> {(userPoints - (product.pointsRequired || 0)).toLocaleString()}
+              <strong>Pontos utilizados:</strong> {formatPoints(product.pointsRequired || 0)}<br />
+              <strong>Saldo restante:</strong> {formatPoints(userPoints - (product.pointsRequired || 0))}
             </p>
           </div>
           <p className="text-sm text-purple-500 mb-6">
@@ -307,7 +309,7 @@ const ProductDetails: React.FC<PointsStoreProps> = ({ linkLoja }) => {
             <div className="flex items-center space-x-4">
               <div className="text-right bg-white/20 rounded-lg px-4 py-2 backdrop-blur-sm">
                 <p className="text-sm text-yellow-200">Seus pontos</p>
-                <p className="text-lg font-bold text-yellow-300">{userPoints.toLocaleString()}</p>
+                <p className="text-lg font-bold text-yellow-300">{formatPoints(userPoints)}</p>
               </div>
             </div>
           </div>
@@ -333,7 +335,7 @@ const ProductDetails: React.FC<PointsStoreProps> = ({ linkLoja }) => {
             {/* Título e categoria */}
             <div>
               <span className="inline-block bg-gradient-to-r from-teal-400 to-green-400 text-white text-sm font-medium px-3 py-1 rounded-full mb-3 shadow-md">
-                {product.category?.name || 'Categoria'}
+                {product.categoryData?.name || 'Categoria'}
               </span>
               <h1 className="text-3xl font-bold text-purple-800 mb-2">{product.name}</h1>
             </div>
@@ -343,7 +345,7 @@ const ProductDetails: React.FC<PointsStoreProps> = ({ linkLoja }) => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-purple-800 font-medium">Pontos necessários</p>
-                  <p className="text-3xl font-bold text-purple-900">{product.pointsRequired?.toLocaleString() || '0'}</p>
+                  <p className="text-3xl font-bold text-purple-900">{formatPoints(product.pointsRequired || 0)}</p>
                 </div>
                 <Gift className="w-12 h-12 text-purple-700" />
               </div>
@@ -383,7 +385,7 @@ const ProductDetails: React.FC<PointsStoreProps> = ({ linkLoja }) => {
                 <div className="bg-gradient-to-r from-red-50 to-pink-50 border-2 border-red-300 rounded-lg p-4">
                   <p className="text-sm text-red-800">
                     <strong>Pontos insuficientes!</strong><br />
-                    Você precisa de mais {((product.pointsRequired || 0) - userPoints).toLocaleString()} pontos para resgatar este produto.
+                    Você precisa de mais {formatPoints((product.pointsRequired || 0) - userPoints)} pontos para resgatar este produto.
                   </p>
                 </div>
               )}

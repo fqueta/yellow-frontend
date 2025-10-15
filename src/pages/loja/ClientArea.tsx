@@ -12,6 +12,7 @@ import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import MyRedemptionsContent from '@/components/loja/MyRedemptionsContent';
 import { PointsStoreProps } from '@/types/products';
+import { formatPoints } from '@/lib/utils';
 
 /**
  * Componente da área do cliente com abas para perfil, histórico e configurações
@@ -207,7 +208,7 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
             <div className="bg-white/20 rounded-lg px-4 py-2 backdrop-blur-sm">
               <span className="text-yellow-200 text-sm font-medium">Pontos: </span>
               <span className="text-yellow-300 font-bold">
-                {user?.points ? Number(user.points).toLocaleString() : '0'}
+                {user?.points ? formatPoints(Number(user.points)) : '0'}
               </span>
             </div>
           </div>
@@ -477,8 +478,8 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
                     </div>
                     <div>
                       <p className="text-sm font-medium text-purple-600">Pontos Disponíveis</p>
-                      <p className="text-2xl font-bold text-teal-600">
-                        {user?.points ? Number(user.points).toLocaleString() : '0'}
+                      <p className="text-2xl font-bold text-purple-800">
+                        {user?.points ? formatPoints(Number(user.points)) : '0'}
                       </p>
                     </div>
                   </div>
