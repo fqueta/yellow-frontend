@@ -166,7 +166,7 @@ const MyRedemptionsContent: React.FC<MyRedemptionsContentProps & PointsStoreProp
       </div>
     );
   }
-
+  // console.log('redemptions:', redemptions);
   return (
     <div className="space-y-6">
       {/* Header opcional */}
@@ -306,7 +306,7 @@ const MyRedemptionsContent: React.FC<MyRedemptionsContentProps & PointsStoreProp
                     {/* Imagem do produto */}
                     <div className="flex-shrink-0">
                       <img
-                        src={redemption.productImage || '/placeholder.svg'}
+                        src={redemption.productImage2 || redemption.productImage || '/placeholder.svg'}
                         alt={redemption.productName || 'Produto'}
                         className="w-24 h-24 object-cover rounded-xl"
                       />
