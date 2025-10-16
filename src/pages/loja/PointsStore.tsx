@@ -135,7 +135,7 @@ const PointsStore: React.FC<PointsStoreProps> = ({ linkLoja }) => {
                          product.description.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesCategory && matchesSearch;
   });
-  console.log('filteredProducts:', filteredProducts);
+  // console.log('filteredProducts:', filteredProducts);
 
   // Função para resgatar produto
   const handleRedeem = (product: Product) => {

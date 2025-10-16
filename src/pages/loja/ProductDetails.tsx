@@ -205,7 +205,7 @@ const ProductDetails: React.FC<PointsStoreProps> = ({ linkLoja }) => {
     setFormData({});
     setFormErrors({});
   };
-
+  console.log('product:', product);
   /**
    * Renderizar estrelas de avaliação
    */
@@ -323,7 +323,7 @@ const ProductDetails: React.FC<PointsStoreProps> = ({ linkLoja }) => {
           <div className="space-y-4">
             <div className="aspect-square bg-white rounded-2xl shadow-xl border-2 border-purple-100 overflow-hidden transform hover:scale-105 transition-all duration-300">
               <img
-                src={product.image}
+                src={product.image2??product.image}
                 alt={product.name}
                 className="w-full h-full object-cover"
               />
