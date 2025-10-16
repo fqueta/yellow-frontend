@@ -134,7 +134,7 @@ const RedemptionDetails: React.FC<PointsStoreProps> = ({ linkLoja }) => {
                   {redemption.productImage && (
                     <div className="flex-shrink-0">
                       <img
-                        src={redemption.productImage}
+                        src={redemption.productImage2 || redemption.productImage}
                         alt={redemption.productName}
                         className="w-32 h-32 object-cover rounded-lg border-2 border-purple-200 shadow-md"
                       />
