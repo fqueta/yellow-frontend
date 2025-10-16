@@ -385,7 +385,7 @@ const PointsStore: React.FC<PointsStoreProps> = ({ linkLoja }) => {
                 {filteredProducts.map((product) => {
                   const pointsRequired = product.pointsRequired || 0;
                   return (
-                    <Card key={product.id} className="overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-2 border-purple-100">
+                    <Card key={product.id} className="overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-2 border-purple-100 flex flex-col h-full">
                       <div className="relative">
                         <img
                           src={product.image || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=300&h=300&fit=crop'}
@@ -404,7 +404,7 @@ const PointsStore: React.FC<PointsStoreProps> = ({ linkLoja }) => {
                         )}
                       </div>
                       
-                      <CardHeader className="bg-gradient-to-b from-white to-purple-50">
+                      <CardHeader className="bg-gradient-to-b from-white to-purple-50 flex-grow">
                         <CardTitle className="text-lg font-bold text-purple-800">{product.name}</CardTitle>
                         <CardDescription 
                           dangerouslySetInnerHTML={{ __html: product.shortDescription }}
@@ -425,7 +425,7 @@ const PointsStore: React.FC<PointsStoreProps> = ({ linkLoja }) => {
                         </div> */}
                       </CardHeader>
                       
-                      <CardContent className="bg-gradient-to-b mt-4 from-white to-purple-50">
+                      <CardContent className="bg-gradient-to-b mt-4 from-white to-purple-50 mt-auto">
                         <div className="flex items-center justify-between mb-4">
                           <div>
                             <div className="text-2xl font-bold text-teal-600 bg-teal-100 px-2 py-1 rounded-full">
