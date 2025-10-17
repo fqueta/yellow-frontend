@@ -1,9 +1,9 @@
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
-
-# Redireciona todas as requisições para o index.html (exceto arquivos reais)
-
+  
+  # Redireciona todas as requisições para o index.html (exceto arquivos reais)
+  
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
   RewriteRule ^ index.html [L]
