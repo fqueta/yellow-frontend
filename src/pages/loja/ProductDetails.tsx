@@ -151,7 +151,7 @@ const ProductDetails: React.FC<PointsStoreProps> = ({ linkLoja }) => {
       }
     } else {
       // Validação para formulário de endereço
-      const requiredFields = ['cep', 'logradouro', 'numero', 'bairro', 'cidade', 'uf'];
+      const requiredFields = ['cep', 'logradouro', 'numero', 'complemento', 'bairro', 'cidade', 'uf'];
       requiredFields.forEach(field => {
         if (!formData[field]) {
           errors[field] = 'Campo obrigatório';
@@ -556,15 +556,20 @@ const ProductDetails: React.FC<PointsStoreProps> = ({ linkLoja }) => {
 
                     <div>
                       <label className="block text-sm font-medium text-purple-700 mb-2">
-                        Complemento
+                        Complemento *
                       </label>
                       <input
                         type="text"
                         value={formData.complemento || ''}
                         onChange={(e) => setFormData({ ...formData, complemento: e.target.value })}
-                        className="w-full px-3 py-2 border-2 border-purple-300 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400 transition-all"
+                        className={`w-full px-3 py-2 border-2 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400 transition-all ${
+                          formErrors.complemento ? 'border-red-500' : 'border-purple-300'
+                        }`}
                         placeholder="Apto, Bloco, etc."
                       />
+                      {formErrors.complemento && (
+                        <p className="text-red-500 text-sm mt-1">{formErrors.complemento}</p>
+                      )}
                     </div>
                   </div>
 
