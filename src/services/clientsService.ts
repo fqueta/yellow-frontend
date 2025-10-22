@@ -4,7 +4,7 @@ import {
   UpdateClientInput, 
   ClientsListParams,  
 } from '@/types/clients';
-import { PaginatedResponse } from '@/types/index';
+import { PaginatedResponse, ApiDeleteResponse } from '@/types/index';
 import { BaseApiService } from './BaseApiService';
 
 /**
@@ -50,8 +50,8 @@ class ClientsService extends BaseApiService {
    * Exclui cliente
    * @param id - ID do cliente
    */
-  async deleteClient(id: string): Promise<void> {
-    return this.delete<void>(`/clients/${id}`);
+  async deleteClient(id: string): Promise<ApiDeleteResponse> {
+    return super.delete<ApiDeleteResponse>(`/clients/${id}`);
   }
 
   // Métodos para compatibilidade com o hook genérico
@@ -71,7 +71,7 @@ class ClientsService extends BaseApiService {
     return this.updateClient(id, data);
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: string): Promise<ApiDeleteResponse> {
     return this.deleteClient(id);
   }
 }

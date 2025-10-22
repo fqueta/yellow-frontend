@@ -294,6 +294,13 @@ export interface ServiceOrderFormData {
   }[];
 }
 
+// API Response types
+export interface ApiDeleteResponse {
+  exec: boolean;
+  message: string;
+  status: number;
+}
+
 // Export product types
 export * from './products';
 export * from './serviceOrders';

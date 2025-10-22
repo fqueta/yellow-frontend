@@ -51,10 +51,15 @@ import {
   useUpdateClient,
   useDeleteClient
 } from '@/hooks/clients';
+import { useQueryClient } from '@tanstack/react-query';
 import { ClientRecord, CreateClientInput } from '@/types/clients';
 import { ClientForm } from '@/components/clients/ClientForm';
 import { ClientsTable } from '@/components/clients/ClientsTable';
-
+interface ApiDeleteResponse {
+  exec: boolean;
+  message: string;
+  status: number;
+}
 // Utility functions for validation
 const isValidCPF = (cpf: string): boolean => {
   const cleanCPF = cpf.replace(/\D/g, '');
@@ -215,6 +220,7 @@ export default function Clients() {
   const [pageSize] = useState(10);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   // React Query hooks for client operations
   const clientsQuery = useClientsList({
@@ -309,19 +315,31 @@ export default function Clients() {
   const confirmDeleteClient = useCallback(() => {
     if (clientToDelete) {
       deleteClientMutation.mutate(clientToDelete.id, {
-        onSuccess: () => {
-          toast({
-            title: "Cliente excluído",
-            description: "Cliente excluído com sucesso",
-          });
-          setOpenDeleteDialog(false);
-          setClientToDelete(null);
+        onSuccess: (res) => {
+          const response: ApiDeleteResponse = res as unknown as ApiDeleteResponse;
+          // console.log('Resposta de sucesso:', response);
+          // Verifica se a operação foi executada com sucesso
+          if (response.exec) {
+            toast({
+              title: "Sucesso",
+              description: response.message,
+            });
+            setOpenDeleteDialog(false);
+            setClientToDelete(null);
+            // Invalida e recarrega a query de clientes para atualizar a lista
+            queryClient.invalidateQueries({ queryKey: ['clients'] });
+          } else {
+            toast({
+              title: "Erro",
+              description: response.message || "Não foi possível excluir o cliente",
+              variant: "destructive",
+            });
+          }
         },
         onError: (error) => {
           // Função para determinar mensagem de erro específica
           const getErrorMessage = () => {
             const errorWithStatus = error as Error & { status?: number };
-            
             switch (errorWithStatus.status) {
               case 400:
                 return "Não é possível excluir este cliente. Verifique se não há dependências.";
@@ -718,9 +736,13 @@ export default function Clients() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDeleteClient} className="bg-red-600 hover:bg-red-700">
+            <Button 
+              onClick={confirmDeleteClient} 
+              className="bg-red-600 hover:bg-red-700"
+              variant="destructive"
+            >
               Excluir
-            </AlertDialogAction>
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
