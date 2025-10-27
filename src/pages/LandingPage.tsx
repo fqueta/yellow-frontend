@@ -297,9 +297,23 @@ const LandingPage = ({ linkLoja }: PointsStoreProps) => {
         <div className="container mx-auto text-center">
           <h2 className="text-4xl font-bold text-white mb-6">Pronto para começar sua jornada?</h2>
           <p className="text-xl text-purple-100 mb-8 max-w-2xl mx-auto">
-            Junte-se a milhares de membros que já descobriram as vantagens do Yellow Club. 
-            Cadastre-se agora e comece a aproveitar todos os benefícios!
+            Para acessar e aproveitar os benefícios do Antena+ e do Clube Yellow, é importante saber:
           </p>
+          <p className="text-xl text-purple-100 mb-8 max-w-2xl mx-auto">
+            1 - É necessário ser um Antenista credenciado Oi TV.
+          </p>
+          <p className="text-xl text-purple-100 mb-8 max-w-2xl mx-auto">
+            2 - Você deve ter realizado a primeira transferência de pontos para o cliente Yellow pelo Portal do Antenista Oi TV: <a target="_blank" href="https://parceiros.oitv.net/" className="text-yellow-400 hover:underline">https://parceiros.oitv.net/</a>
+          </p>
+          <p className="text-xl text-purple-100 mb-8 max-w-2xl mx-auto">
+            3 - E, por fim, fazer um cadastro simples no Clube Yellow para começar a aproveitar todas as vantagens.
+          </p>
+           {!isAuthenticated && (
+          <p className="text-xl text-purple-100 mb-8 max-w-2xl mx-auto">
+            👉 Clique no botão abaixo e cadastre-se gratuitamente para iniciar sua jornada!
+          </p>
+          )}
+
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             {!isAuthenticated && (
               <Button size="lg" className="bg-yellow-500 hover:bg-yellow-600 text-purple-800" asChild>
