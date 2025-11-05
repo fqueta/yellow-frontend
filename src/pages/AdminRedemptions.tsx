@@ -131,18 +131,29 @@ const AdminRedemptions: React.FC = () => {
 
 
   // Filtrar resgates baseado nos filtros aplicados
+  /**
+   * Aplica filtros de busca, status e categoria.
+   * Normaliza campos para string para evitar erros (ex.: id numérico).
+   */
   const filteredRedemptions = useMemo(() => {
-    return redemptions.filter(redemption => {
-      const matchesSearch = 
-        redemption.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        redemption.userEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        redemption.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        redemption.id.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const matchesStatus = statusFilter === 'all' || redemption.status === statusFilter;
+    const term = (searchTerm || '').toLowerCase();
 
-      const matchesCategory = categoryFilter === 'all' || redemption.productCategory === categoryFilter;
-      
+    return redemptions.filter((redemption: any) => {
+      const idStr = String(redemption?.id ?? '').toLowerCase();
+      const userNameStr = String(redemption?.userName ?? '').toLowerCase();
+      const userEmailStr = String(redemption?.userEmail ?? '').toLowerCase();
+      const productNameStr = String(redemption?.productName ?? '').toLowerCase();
+      const categoryStr = String(redemption?.productCategory ?? '').toLowerCase();
+
+      const matchesSearch =
+        userNameStr.includes(term) ||
+        userEmailStr.includes(term) ||
+        productNameStr.includes(term) ||
+        idStr.includes(term);
+
+      const matchesStatus = statusFilter === 'all' || redemption.status === statusFilter;
+      const matchesCategory = categoryFilter === 'all' || categoryStr === String(categoryFilter).toLowerCase();
+
       return matchesSearch && matchesStatus && matchesCategory;
     });
   }, [redemptions, searchTerm, statusFilter, categoryFilter]);

@@ -169,7 +169,9 @@ const AdminRedemptionDetails: React.FC = () => {
   // Função para atualizar status
   /**
    * Atualiza o status do resgate.
-   * Bloqueia edição se o resgate estiver cancelado ou estornado.
+   * - Usa `newStatus` (state) como status selecionado.
+   * - Envia `notes` e `trackingCode` junto com o ID.
+   * - Bloqueia edição se o resgate estiver cancelado ou estornado.
    */
   const handleUpdateStatus = async () => {
     // Bloqueio de edição para pedidos cancelados ou estornados
@@ -203,8 +205,9 @@ const AdminRedemptionDetails: React.FC = () => {
     try {
       await updateRedemptionStatusMutation.mutateAsync({
         id: redemption.id,
-        status: selectedStatus,
-        comment: statusComment
+        status: newStatus,
+        notes: statusComment,
+        trackingCode: trackingCode || undefined,
       });
       setStatusComment('');
       toast({
