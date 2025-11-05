@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,6 +55,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { ClientRecord, CreateClientInput } from '@/types/clients';
 import { ClientForm } from '@/components/clients/ClientForm';
 import { ClientsTable } from '@/components/clients/ClientsTable';
+import { useDebounce } from '@/hooks/useDebounce';
 interface ApiDeleteResponse {
   exec: boolean;
   message: string;
@@ -217,16 +218,24 @@ export default function Clients() {
   const [editingClient, setEditingClient] = useState<ClientRecord | null>(null);
   const [clientToDelete, setClientToDelete] = useState<ClientRecord | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(10);
+  const [pageSize] = useState(100);
   const { toast } = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-
-  // React Query hooks for client operations
+  const debouncedSearchTerm = useDebounce(searchTerm, 400);
+  // React Query: fetch clients with pagination and debounced search
   const clientsQuery = useClientsList({
     page: currentPage,
     per_page: pageSize,
+    search: debouncedSearchTerm,
   });
+  // console.log('clientsQuery:', clientsQuery);
+  // Compute total pages from API response
+  const totalPages = clientsQuery?.data?.last_page || 1;
+  // Reset to first page when search or status filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchTerm, statusFilter]);
   const createClientMutation = useCreateClient();
   const updateClientMutation = useUpdateClient();
   const deleteClientMutation = useDeleteClient();
@@ -537,7 +546,7 @@ export default function Clients() {
   // Filter clients based on search term and status - memoized for performance
   const filteredClients = useMemo(() => {
     if (!clientsQuery.data?.data) return [];
-    
+    // console.log('clientsQuery:', clientsQuery);
     const searchTermLower = searchTerm.toLowerCase();
     return clientsQuery.data.data.filter((client) => {
       const document = client.tipo_pessoa === 'pf' ? client.cpf : client.cnpj;
@@ -706,6 +715,30 @@ export default function Clients() {
               onDelete={handleDeleteClient}
               isLoading={clientsQuery.isLoading}
             />
+          )}
+          {/* Pagination */}
+          {clientsQuery.data && clientsQuery.data.total > 0 && totalPages > 1 && (
+            <div className="flex items-center justify-between mt-4">
+              <p className="text-sm text-muted-foreground">Página {currentPage} de {totalPages}</p>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))} 
+                  disabled={currentPage <= 1 || clientsQuery.isLoading}
+                >
+                  Anterior
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))} 
+                  disabled={currentPage >= totalPages || clientsQuery.isLoading}
+                >
+                  Próxima
+                </Button>
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>

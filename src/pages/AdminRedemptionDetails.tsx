@@ -44,6 +44,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import { useRedemption, useUpdateRedemptionStatus } from '@/hooks/redemptions';
+import { useRefundRedemption } from '@/hooks/redemptions';
 import { 
   Redemption, 
   RedemptionStatus,
@@ -90,6 +91,33 @@ const AdminRedemptionDetails: React.FC = () => {
     }
   });
 
+  // Mutation para extornar resgate
+  const refundMutation = useRefundRedemption({
+    onSuccess: () => {
+      toast({
+        title: 'Resgate extornado',
+        description: 'O pedido de resgate foi extornado com sucesso.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Erro ao extornar',
+        description: error?.message || 'Ocorreu um erro ao extornar o resgate.',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  /**
+   * Extorna o resgate atual
+   * Envia o ID do resgate para API e atualiza a UI
+   */
+  const handleRefund = () => {
+    if (!id) return;
+    const confirmed = window.confirm('Confirmar extorno deste resgate?');
+    if (!confirmed) return;
+    refundMutation.mutate({ id: id! });
+  };
   // Atualizar status inicial quando os dados carregarem
   useEffect(() => {
     if (redemption) {
@@ -254,16 +282,24 @@ const AdminRedemptionDetails: React.FC = () => {
             </p>
           </div>
         </div>
-        <div className="flex gap-2"> 
-          {/* <Button variant="outline" onClick={handleDownloadReceipt}>
-            <Download className="w-4 h-4 mr-2" />
-            Comprovante
-          </Button>
-          <Button variant="outline">
-            <MessageSquare className="w-4 h-4 mr-2" />
-            Contatar Cliente
-          </Button> */}
-        </div>
+        <div className="flex gap-2">
+           {/* Botão de Extorno */}
+           {redemption.status !== 'refunded' && (
+             <Button 
+               variant="destructive" 
+               onClick={handleRefund}
+               disabled={refundMutation.isPending || redemption.status === 'cancelled'}
+               title={redemption.status === 'cancelled' ? 'Extorno indisponível para pedidos cancelados' : undefined}
+             >
+               {refundMutation.isPending ? (
+                 <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+               ) : (
+                 <XCircle className="w-4 h-4 mr-2" />
+               )}
+               {refundMutation.isPending ? 'Extornando...' : 'Extornar'}
+             </Button>
+           )}
+         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -394,7 +430,7 @@ const AdminRedemptionDetails: React.FC = () => {
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Status Atual */}
-          {/* <Card>
+          <Card>
             <CardHeader>
               <CardTitle className="text-lg">Status Atual</CardTitle>
             </CardHeader>
@@ -434,7 +470,7 @@ const AdminRedemptionDetails: React.FC = () => {
                 )}
               </div>
             </CardContent>
-          </Card> */}
+          </Card>
 
           {/* Atualizar Status */}
           {/* <Card>

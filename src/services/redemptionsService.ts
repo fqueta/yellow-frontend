@@ -23,7 +23,8 @@ class RedemptionsService extends BaseApiService {
    * @param params - Parâmetros de filtro e paginação
    */
   async listUserRedemptions(params?: RedemptionListParams): Promise<ApiResponse<Redemption[]>> {
-    const response = await this.get<ApiResponse<Redemption[]>>(this.endpoint, { params });
+    // Passa params diretamente para buildUrlWithParams
+    const response = await this.get<ApiResponse<Redemption[]>>(this.endpoint, params);
     return response;
   }
 
@@ -41,7 +42,8 @@ class RedemptionsService extends BaseApiService {
    * @param params - Parâmetros de filtro e paginação
    */
   async listAllRedemptions(params?: RedemptionListParams): Promise<PaginatedResponse<Redemption>> {
-    const response = await this.get<ApiResponse<PaginatedResponse<Redemption>>>('/admin/redemptions', { params });
+    // Passa params diretamente para buildUrlWithParams
+    const response = await this.get<ApiResponse<PaginatedResponse<Redemption>>>('/admin/redemptions', params);
     return response.data;
   }
 
@@ -58,6 +60,17 @@ class RedemptionsService extends BaseApiService {
       notes,
       trackingCode
     });
+    return response.data;
+  }
+
+  /**
+   * Extorna um resgate (admin)
+   * Endpoint correto: PATCH /admin/redemptions/{id}/refund
+   * @param id - ID do resgate a ser extornado
+   * @param notes - Observações opcionais
+   */
+  async refundRedemption(id: string, notes?: string): Promise<Redemption> {
+    const response = await this.patch<ApiResponse<Redemption>>(`/admin/redemptions/${id}/refund`, { notes });
     return response.data;
   }
 }

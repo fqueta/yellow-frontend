@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Package, 
@@ -67,7 +67,7 @@ const AdminRedemptions: React.FC = () => {
 
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
+  const [itemsPerPage] = useState(100);
 
   const {
     data: redemptionsData,
@@ -204,8 +204,24 @@ const AdminRedemptions: React.FC = () => {
     });
   };
 
+  /**
+   * Handle pagination page change
+   * Manipula a mudança de página na paginação
+   */
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
   // Obter categorias únicas para o filtro
   const categories = Array.from(new Set(redemptions.map((r: any) => r.productCategory)));
+
+  /**
+   * Reset page to 1 when filters or search change
+   * Reseta a página quando filtros ou busca mudarem para evitar páginas vazias
+   */
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, categoryFilter]);
 
   return (
     <div className="space-y-6">
@@ -380,9 +396,8 @@ const AdminRedemptions: React.FC = () => {
                   <TableHead>Produto</TableHead>
                   <TableHead>Pontos</TableHead>
                   <TableHead>Data</TableHead>
-                  {/* <TableHead>Status</TableHead>
-
-                  <TableHead>Entrega</TableHead> */}
+                  <TableHead>Status</TableHead>
+                  {/* <TableHead>Entrega</TableHead> */}
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -433,7 +448,7 @@ const AdminRedemptions: React.FC = () => {
                           </span>
                         </div>
                       </TableCell>
-                      {/* <TableCell>
+                      <TableCell>
                         <Badge 
                           variant="outline"
                           className={`flex items-center gap-1 w-fit ${getStatusColor(redemption.status)}`}
@@ -442,8 +457,7 @@ const AdminRedemptions: React.FC = () => {
                           {REDEMPTION_STATUSES[redemption.status].label}
                         </Badge>
                       </TableCell>
-
-                      <TableCell>
+                      {/* <TableCell>
                         {redemption.estimatedDelivery && (
                           <span className="text-sm">
                             {format(new Date(redemption.estimatedDelivery), 'dd/MM/yyyy', { locale: ptBR })}
@@ -503,6 +517,33 @@ const AdminRedemptions: React.FC = () => {
               </TableBody>
             </Table>
           </div>
+
+          {/* Paginação */}
+          {totalItems > 0 && totalPages > 1 && (
+            <div className="flex items-center justify-between px-6 py-4 border-t">
+              <div className="text-sm text-gray-500">
+                Mostrando {((currentPage - 1) * itemsPerPage) + 1} a {Math.min(currentPage * itemsPerPage, totalItems)} de {totalItems} resultados
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                  disabled={currentPage <= 1 || isLoading}
+                >
+                  Anterior
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage >= totalPages || isLoading}
+                >
+                  Próxima
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

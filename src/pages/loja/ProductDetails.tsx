@@ -431,7 +431,7 @@ const ProductDetails: React.FC<PointsStoreProps> = ({ linkLoja }) => {
                   <div className="bg-gradient-to-r from-teal-50 to-green-50 border-2 border-teal-200 rounded-lg p-4 mb-6">
                     <p className="text-sm text-teal-800">
                       <strong>Instruções importantes:</strong><br />
-                      • O PIX será processado em até 10 dias úteis<br />
+                      • O PIX será processado em até 20 dias úteis<br />
                       • Verifique se a chave PIX está correta<br />
                       • Não é possível alterar os dados após confirmação
                     </p>
@@ -463,6 +463,8 @@ const ProductDetails: React.FC<PointsStoreProps> = ({ linkLoja }) => {
                       type="text"
                       value={formData.confira_pix || ''}
                       onChange={(e) => setFormData({ ...formData, confira_pix: e.target.value })}
+                      onPaste={handleConfirmPixPasteBlock}
+                      onKeyDown={handleConfirmPixKeyDown}
                       className={`w-full px-3 py-2 border-2 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400 transition-all ${
                         formErrors.confira_pix ? 'border-red-500' : 'border-purple-300'
                       }`}
@@ -681,3 +683,21 @@ const ProductDetails: React.FC<PointsStoreProps> = ({ linkLoja }) => {
 };
 
 export default ProductDetails;
+
+/**
+ * Função para impedir colar no campo de confirmação da chave PIX
+ */
+const handleConfirmPixPasteBlock = (e: React.ClipboardEvent<HTMLInputElement>) => {
+  e.preventDefault();
+  toast.info('Colar não é permitido neste campo.');
+};
+
+/**
+ * Função para impedir colagem via atalho de teclado (Ctrl+V)
+ */
+const handleConfirmPixKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  if (e.ctrlKey && (e.key === 'v' || e.key === 'V')) {
+    e.preventDefault();
+    toast.info('Colar não é permitido neste campo.');
+  }
+};

@@ -58,3 +58,24 @@ export function useUpdateRedemptionStatus(mutationOptions?: any) {
     ...mutationOptions
   });
 }
+
+/**
+ * Hook para extornar um resgate (admin)
+ * Envia o ID do resgate para API e atualiza caches relacionados
+ */
+export function useRefundRedemption(mutationOptions?: any) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, notes }: { id: string; notes?: string }) => redemptionsService.refundRedemption(id, notes),
+    onSuccess: (data, variables) => {
+      // Invalidar caches para refletir o extorno
+      queryClient.invalidateQueries({ queryKey: ['redemptions'] });
+      queryClient.invalidateQueries({ queryKey: ['user-redemptions'] });
+      queryClient.invalidateQueries({ queryKey: ['all-redemptions'] });
+      queryClient.invalidateQueries({ queryKey: ['redemption', variables.id] });
+      queryClient.refetchQueries({ queryKey: ['all-redemptions'] });
+    },
+    ...mutationOptions,
+  });
+}
