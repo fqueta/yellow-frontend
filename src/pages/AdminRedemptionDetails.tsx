@@ -296,7 +296,7 @@ const AdminRedemptionDetails: React.FC = () => {
                ) : (
                  <XCircle className="w-4 h-4 mr-2" />
                )}
-               {refundMutation.isPending ? 'Extornando...' : 'Extornar'}
+               {refundMutation.isPending ? 'Estornando...' : 'Estornar'}
              </Button>
            )}
          </div>
