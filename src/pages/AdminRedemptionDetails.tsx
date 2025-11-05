@@ -167,38 +167,51 @@ const AdminRedemptionDetails: React.FC = () => {
 
 
   // Função para atualizar status
+  /**
+   * Atualiza o status do resgate.
+   * Bloqueia edição se o resgate estiver cancelado ou estornado.
+   */
   const handleUpdateStatus = async () => {
-    if (!redemption || !statusComment.trim()) {
+    // Bloqueio de edição para pedidos cancelados ou estornados
+    if (redemption && (redemption.status === 'cancelled' || redemption.status === 'refunded')) {
       toast({
-        title: "Erro",
-        description: "Por favor, adicione um comentário para a atualização de status.",
-        variant: "destructive"
+        title: 'Ação não permitida',
+        description: 'Edição de status indisponível para pedidos cancelados ou estornados.',
+        variant: 'destructive'
       });
       return;
     }
-    
+
+    if (!redemption) {
+      toast({
+        title: 'Resgate não carregado',
+        description: 'Não foi possível identificar o resgate para atualização.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    if (!statusComment.trim()) {
+      toast({
+        title: 'Comentário obrigatório',
+        description: 'Adicione um comentário para registrar a atualização de status.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
     try {
       await updateRedemptionStatusMutation.mutateAsync({
         id: redemption.id,
-        status: newStatus,
-        notes: statusComment,
-        trackingCode: trackingCode.trim() || undefined
+        status: selectedStatus,
+        comment: statusComment
       });
-      
-      // Adicionar ao histórico local (será atualizado na próxima busca da API)
-      const newHistoryEntry: StatusHistory = {
-        id: `SH${Date.now()}`,
-        status: newStatus,
-        comment: statusComment,
-        createdAt: new Date().toISOString(),
-        createdBy: 'ADMIN_CURRENT',
-        redeemId: redemption.id,
-        createdByName: 'Administrador Atual'
-      };
-      
-      setStatusHistory(prev => [...prev, newHistoryEntry]);
+      setStatusComment('');
+      toast({
+        title: 'Status atualizado',
+        description: 'O status foi atualizado com sucesso.',
+      });
     } catch (error) {
-      // Erro já tratado no onError da mutation
       console.error('Erro ao atualizar status:', error);
     }
   };
@@ -289,7 +302,7 @@ const AdminRedemptionDetails: React.FC = () => {
                variant="destructive" 
                onClick={handleRefund}
                disabled={refundMutation.isPending || redemption.status === 'cancelled'}
-               title={redemption.status === 'cancelled' ? 'Extorno indisponível para pedidos cancelados' : undefined}
+               title={redemption.status === 'cancelled' ? 'Estorno indisponível para pedidos cancelados' : undefined}
              >
                {refundMutation.isPending ? (
                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
@@ -473,7 +486,7 @@ const AdminRedemptionDetails: React.FC = () => {
           </Card>
 
           {/* Atualizar Status */}
-          {/* <Card>
+          <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Edit className="w-4 h-4" />
@@ -536,7 +549,7 @@ const AdminRedemptionDetails: React.FC = () => {
                 </Button>
               </div>
             </CardContent>
-          </Card> */}
+          </Card>
 
           {/* Observações */}
           {redemption.notes && (

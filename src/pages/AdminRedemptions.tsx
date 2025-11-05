@@ -162,8 +162,13 @@ const AdminRedemptions: React.FC = () => {
   }, [redemptions]);
 
   // Hook para atualizar status do resgate
+  /**
+   * Mutation para atualizar o status de um resgate.
+   * Ao concluir com sucesso, força um refetch da listagem para refletir a mudança imediatamente.
+   */
   const updateRedemptionStatusMutation = useUpdateRedemptionStatus({
     onSuccess: () => {
+      refetch();
       toast({
         title: "Status atualizado",
         description: "Status do resgate foi atualizado com sucesso.",
@@ -179,7 +184,22 @@ const AdminRedemptions: React.FC = () => {
   });
 
   // Função para atualizar status do resgate
+  /**
+   * Atualiza o status do resgate.
+   * Bloqueia edição se o resgate estiver cancelado ou estornado.
+   */
   const handleStatusUpdate = async (redemptionId: string, newStatus: RedemptionStatus) => {
+    // Bloqueio de edição para pedidos cancelados ou estornados
+    const target = (redemptions as any[]).find((r: any) => r.id === redemptionId);
+    if (target && (target.status === 'cancelled' || target.status === 'refunded')) {
+      toast({
+        title: 'Ação não permitida',
+        description: 'Edição de status indisponível para pedidos cancelados ou estornados.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     try {
       await updateRedemptionStatusMutation.mutateAsync({
         id: redemptionId,
@@ -246,7 +266,7 @@ const AdminRedemptions: React.FC = () => {
       </div>
 
       {/* Estatísticas */}
-      {/* <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="text-center">
@@ -311,7 +331,7 @@ const AdminRedemptions: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-      </div> */}
+      </div>
 
       {/* Filtros */}
       <Card>
@@ -336,7 +356,7 @@ const AdminRedemptions: React.FC = () => {
               </div>
             </div>
             
-            {/* <div className="space-y-2">
+            <div className="space-y-2">
               <label className="text-sm font-medium">Status</label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger>
@@ -351,7 +371,7 @@ const AdminRedemptions: React.FC = () => {
                   ))}
                 </SelectContent>
               </Select>
-            </div> */}
+            </div>
             
 
             
@@ -478,7 +498,7 @@ const AdminRedemptions: React.FC = () => {
                               Ver detalhes
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            {/* <DropdownMenuItem 
+                            <DropdownMenuItem 
                               onClick={() => handleStatusUpdate(redemption.id, 'confirmed')}
                               disabled={updateRedemptionStatusMutation.isPending}
                             >
@@ -498,11 +518,11 @@ const AdminRedemptions: React.FC = () => {
                             >
                               <CheckCircle className="mr-2 h-4 w-4" />
                               Marcar como entregue
-                            </DropdownMenuItem> */}
+                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem 
                               onClick={() => handleStatusUpdate(redemption.id, 'cancelled')}
-                              disabled={updateRedemptionStatusMutation.isPending}
+                              disabled={updateRedemptionStatusMutation.isPending || redemption.status === 'cancelled' || redemption.status === 'refunded'}
                               className="text-red-600"
                             >
                               <XCircle className="mr-2 h-4 w-4" />
