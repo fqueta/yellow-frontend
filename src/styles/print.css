@@ -20,6 +20,9 @@
     display: none !important;
   }
 
+  /* Ocultar notificações específicas por aria-label */
+  [aria-label="Notifications (F8)"] { display: none !important; }
+
   /* Remove sombras e bordas desnecessárias */
   .shadow,
   .shadow-sm,

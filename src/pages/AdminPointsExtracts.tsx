@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PrintButton } from '@/components/ui/PrintButton';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -221,7 +222,10 @@ const AdminPointsExtracts: React.FC = () => {
       {/* Cabeçalho */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Extratos de Pontos</h1>
+          <div className="flex items-center justify-between gap-3">
+  <h1 className="text-3xl font-bold tracking-tight">Extratos de Pontos</h1>
+  <PrintButton className="ml-auto" label="Imprimir extratos" />
+</div>
           <p className="text-muted-foreground">
             Acompanhe todas as movimentações de pontos dos clientes
           </p>

@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDebounce } from "@/hooks/useDebounce";
 import { Button } from "@/components/ui/button";
+import { PrintButton } from "@/components/ui/PrintButton";
 import {
   Card,
   CardContent,
@@ -227,6 +228,7 @@ export default function ServiceOrders() {
           </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
+          <PrintButton label="Imprimir pedidos" className="w-full sm:w-auto text-xs sm:text-sm" />
           <Button
             variant="outline"
             onClick={handleRefresh}
