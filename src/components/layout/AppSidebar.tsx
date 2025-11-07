@@ -47,7 +47,7 @@ export function AppSidebar() {
   const rota_admin = 'admin';
   return (
     <Sidebar className={collapsed ? "w-14" : "w-64"} collapsible="icon">
-      <SidebarHeader className="border-b border-border">
+      <SidebarHeader className="border-b border-border print:hidden">
         <div className="flex items-center gap-2 px-4 py-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <Wrench className="h-4 w-4" />

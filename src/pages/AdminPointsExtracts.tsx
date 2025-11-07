@@ -96,6 +96,7 @@ const AdminPointsExtracts: React.FC = () => {
   const exportMutation = useExportPointsExtracts();
   // console.log('extractsResponse',extractsResponse);
   const extracts = extractsResponse?.data || [];
+  console.log('extracts',extracts);
   const pagination = {
     current_page: extractsResponse?.current_page || 1,
     last_page: extractsResponse?.last_page || 1,
@@ -139,6 +140,24 @@ const AdminPointsExtracts: React.FC = () => {
         return 'secondary';
       default:
         return 'secondary';
+    }
+  };
+  const getTransactionLabel = (type: PointsTransactionType) => {
+    switch (type) {
+      case 'earned':
+        return 'Pontos ganhos';
+      case 'bonus':
+        return 'Bônus';
+      case 'redeemed':
+        return 'Pontos resgatados';
+      case 'expired':
+        return 'Pontos expirados';
+      case 'refund':
+        return 'Reembolso';
+      case 'adjustment':
+        return 'Ajuste manual';
+      default:
+        return type;
     }
   };
 
@@ -411,7 +430,7 @@ const AdminPointsExtracts: React.FC = () => {
                       <TableCell>
                         <Badge variant={getTypeColor(extract.type)} className="flex items-center gap-1 w-fit">
                           {getTransactionIcon(extract.type)}
-                          {POINTS_TRANSACTION_TYPES[extract.type]?.label || extract.type || 'Tipo desconhecido'}
+                          {getTransactionLabel(extract.type)}
                         </Badge>
                       </TableCell>
                       <TableCell>

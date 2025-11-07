@@ -61,17 +61,17 @@ export interface Redemption {
 
 // Tipos de transação de pontos
 export type PointsTransactionType = 
-  | 'earned'       // Pontos ganhos
-  | 'redeemed'     // Pontos resgatados
-  | 'expired'      // Pontos expirados
-  | 'bonus'        // Bônus
-  | 'refund'       // Reembolso
-  | 'adjustment'   // Ajuste manual
+  // | 'earned'       // Pontos ganhos
+  // | 'redeemed'     // Pontos resgatados
+  // | 'expired'      // Pontos expirados
+  // | 'bonus'        // Bônus
+  // | 'refund'       // Reembolso
+  // | 'adjustment'   // Ajuste manual
   | 'credito'      // Crédito (da API)
   | 'debito'       // Débito (da API)
-  | 'ajuste'       // Ajuste (da API)
-  | 'reembolso'    // Reembolso (da API)
-  | 'expiracao';   // Expiração (da API)
+  // | 'ajuste'       // Ajuste (da API)
+  // | 'reembolso'    // Reembolso (da API)
+  // | 'expiracao';   // Expiração (da API)
 
 // Interface para extrato de pontos
 export interface PointsExtract {
@@ -162,14 +162,14 @@ export const REDEMPTION_STATUSES = {
 export const POINTS_TRANSACTION_TYPES = {
   earned: { label: 'Ganhos', color: 'green' },
   redeemed: { label: 'Resgatados', color: 'blue' },
-  expired: { label: 'Expirados', color: 'red' },
-  bonus: { label: 'Bônus', color: 'purple' },
-  refund: { label: 'Reembolso', color: 'orange' },
-  adjustment: { label: 'Ajuste', color: 'gray' },
+  // expired: { label: 'Expirados', color: 'red' },
+  // bonus: { label: 'Bônus', color: 'purple' },
+  // refund: { label: 'Reembolso', color: 'orange' },
+  // adjustment: { label: 'Ajuste', color: 'gray' },
   // Tipos da API
   credito: { label: 'Crédito', color: 'green' },
   debito: { label: 'Débito', color: 'blue' },
-  ajuste: { label: 'Ajuste', color: 'gray' },
-  reembolso: { label: 'Reembolso', color: 'orange' },
-  expiracao: { label: 'Expiração', color: 'red' }
+  // ajuste: { label: 'Ajuste', color: 'gray' },
+  // reembolso: { label: 'Reembolso', color: 'orange' },
+  // expiracao: { label: 'Expiração', color: 'red' }
 } as const;

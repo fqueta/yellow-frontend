@@ -64,6 +64,15 @@ class RedemptionsService extends BaseApiService {
   }
 
   /**
+   * Exclui um resgate (admin)
+   * Endpoint: DELETE /admin/redemptions/{id}
+   * @param id - ID do resgate a ser excluído
+   */
+  async deleteRedemption(id: string): Promise<void> {
+    await this.delete<void>(`/admin/redemptions/${id}`);
+  }
+
+  /**
    * Extorna um resgate (admin)
    * Endpoint correto: PATCH /admin/redemptions/{id}/refund
    * @param id - ID do resgate a ser extornado

@@ -20,7 +20,8 @@ import {
   RefreshCw,
   Star,
   Gift,
-  DollarSign
+  DollarSign,
+  Trash
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -44,7 +45,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import { useRedemption, useUpdateRedemptionStatus } from '@/hooks/redemptions';
-import { useRefundRedemption } from '@/hooks/redemptions';
+import { useRefundRedemption, useDeleteRedemption } from '@/hooks/redemptions';
 import { 
   Redemption, 
   RedemptionStatus,
@@ -108,6 +109,24 @@ const AdminRedemptionDetails: React.FC = () => {
     },
   });
 
+  // Mutation para excluir resgate
+  const deleteRedemptionMutation = useDeleteRedemption({
+    onSuccess: () => {
+      toast({
+        title: 'Resgate excluído',
+        description: 'O resgate foi excluído com sucesso.',
+      });
+      navigate('/admin/redemptions');
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Erro ao excluir',
+        description: error?.message || 'Não foi possível excluir o resgate.',
+        variant: 'destructive',
+      });
+    },
+  });
+
   /**
    * Extorna o resgate atual
    * Envia o ID do resgate para API e atualiza a UI
@@ -117,6 +136,17 @@ const AdminRedemptionDetails: React.FC = () => {
     const confirmed = window.confirm('Confirmar extorno deste resgate?');
     if (!confirmed) return;
     refundMutation.mutate({ id: id! });
+  };
+
+  /**
+   * Exclui o resgate atual
+   * Confirma com o usuário e executa a mutação de exclusão.
+   */
+  const handleDeleteRedemption = async () => {
+    if (!id) return;
+    const confirmed = window.confirm('Tem certeza que deseja excluir este resgate? Esta ação é permanente.');
+    if (!confirmed) return;
+    await deleteRedemptionMutation.mutateAsync(id!);
   };
   // Atualizar status inicial quando os dados carregarem
   useEffect(() => {
@@ -315,6 +345,20 @@ const AdminRedemptionDetails: React.FC = () => {
                {refundMutation.isPending ? 'Estornando...' : 'Estornar'}
              </Button>
            )}
+           {/* Botão de Exclusão */}
+           <Button
+             variant="destructive"
+             onClick={handleDeleteRedemption}
+             disabled={deleteRedemptionMutation.isPending}
+             title="Excluir definitivamente este resgate"
+           >
+             {deleteRedemptionMutation.isPending ? (
+               <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+             ) : (
+               <Trash className="w-4 h-4 mr-2" />
+             )}
+             {deleteRedemptionMutation.isPending ? 'Excluindo...' : 'Excluir'}
+           </Button>
          </div>
       </div>
 
