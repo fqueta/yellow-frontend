@@ -38,6 +38,7 @@ export function useRegistrationData(startDate?: string, endDate?: string, queryO
  * @param queryOptions - Opções adicionais da query
  */
 export function usePendingPreRegistrations(limit: number = 10, queryOptions?: any) {
+  // console.log('usePendingPreRegistrations 109:', dashboardService.getPendingPreRegistrations(limit));
   return useQuery({
     queryKey: ['dashboard', 'pending-pre-registrations', limit],
     queryFn: () => dashboardService.getPendingPreRegistrations(limit),

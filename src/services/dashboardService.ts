@@ -32,7 +32,7 @@ export interface ClientRegistrationData {
  * Interface para pré-registros pendentes
  */
 export interface PendingPreRegistration {
-  id: number;
+  id: string;
   name: string;
   email: string;
   phone: string;
@@ -87,8 +87,8 @@ class DashboardService extends BaseApiService {
   async getRecentActivities(limit: number = 10): Promise<ClientActivity[]> {
     try {
       const response = await this.get<DashboardApiResponse>(this.endpoint);
-      if (response.success && response.data.recentClientActivities) {
-        return this.transformActivities(response.data.recentClientActivities.slice(0, limit));
+      if (response.success && response.data.recent_activities) {
+        return this.transformActivities(response.data.recent_activities.slice(0, limit));
       }
       console.log('recentClientActivities:', response.data);
       return this.getMockRecentActivities();
@@ -131,8 +131,9 @@ class DashboardService extends BaseApiService {
   async getPendingPreRegistrations(limit: number = 10): Promise<PendingPreRegistration[]> {
     try {
       const response = await this.get<DashboardApiResponse>(this.endpoint);
-      if (response.success && response.data.pendingPreRegistrations) {
-        return response.data.pendingPreRegistrations.slice(0, limit);
+      console.log('pendingPreRegistrations:', response.data);
+      if (response.success && response.data?.pending_pre_registrations) {
+        return response.data.pending_pre_registrations.slice(0, limit);
       }
       return this.getMockPendingPreRegistrations();
     } catch (error) {

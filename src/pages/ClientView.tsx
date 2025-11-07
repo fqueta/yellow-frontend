@@ -27,10 +27,11 @@ export default function ClientView() {
     console.log('Client data:', client);
   }
   /**
-   * Navega de volta para a listagem de clientes
+   * Navega de volta para o dashboard
+   * Usa a rota administrativa raiz (`/admin`).
    */
   const handleBack = () => {
-    navigate(`/${link_admin}/clients`);
+    navigate(`/${link_admin}`);
   };
 
   /**
@@ -266,6 +267,10 @@ export default function ClientView() {
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   Voltar para lista
                 </Button>
+                <Button onClick={handleBack} variant="outline">
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Voltar para dashboard
+                </Button>
               </div>
             </div>
           </CardContent>
@@ -281,7 +286,7 @@ export default function ClientView() {
         <div className="flex items-center space-x-4">
           <Button onClick={handleBack} variant="outline" size="sm">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Voltar
+            Voltar para dashboard
           </Button>
           <div>
             <h1 className="text-2xl font-bold">{client.name}</h1>

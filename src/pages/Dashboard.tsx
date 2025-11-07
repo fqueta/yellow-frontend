@@ -48,7 +48,7 @@ export default function Dashboard() {
   const { data: recentActivities, isLoading: activitiesLoading, error: activitiesError } = useRecentActivities(4);
   const { data: registrationData, isLoading: registrationLoading, error: registrationError } = useRegistrationData();
   const { data: pendingPreRegistrations, isLoading: pendingLoading, error: pendingError } = usePendingPreRegistrations(3);
-
+  // console.log('pendingPreRegistrations:', pendingPreRegistrations);
   // Verificar se há erro 403 (Acesso negado)
   const hasAccessError = [activitiesError, registrationError, pendingError].some(
     error => error && (error as any)?.status === 403
@@ -61,6 +61,14 @@ export default function Dashboard() {
     registrationLoading || 
     pendingLoading
   ) && !hasAccessError;
+
+  /**
+   * Abre a visualização rápida do cliente
+   * Navega para `/admin/clients/:id/view` utilizando o ID da atividade.
+   */
+  const handleQuickViewClient = (id: string | number) => {
+    navigate(`/admin/clients/${String(id)}/view`);
+  };
 
   // Se há erro de acesso, exibir apenas a mensagem
   if (hasAccessError) {
@@ -99,7 +107,7 @@ export default function Dashboard() {
   const recentClientActivities = recentActivities || [];
   const clientRegistrationData = registrationData || [];
   const pendingPreRegistrationsData = pendingPreRegistrations || [];
-  // console.log('recentActivities:', recentActivities);
+  // console.log('pendingPreRegistrationsData:', pendingPreRegistrationsData);
   // Verificação simples dos dados de registro
   // if (clientRegistrationData.length > 0) {
   //   console.log(`Dashboard: ${clientRegistrationData.length} dias de dados carregados (${clientRegistrationData[0]?.date} a ${clientRegistrationData[clientRegistrationData.length - 1]?.date})`);
@@ -216,6 +224,11 @@ export default function Dashboard() {
                         {activity.status === "inactived" && "Inativo"}
                         {activity.status === "pre_registred" && "Pré-cadastro"}
                       </Badge>
+                      <div className="flex gap-1 justify-end mt-2">
+                        <Button onClick={() => handleQuickViewClient(activity.id)} size="sm" variant="outline" className="text-xs px-2">
+                          Visualizar
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))
@@ -270,7 +283,7 @@ export default function Dashboard() {
                         {/* <Button size="sm" variant="ghost" className="text-xs px-2">
                           Rejeitar
                         </Button> */}
-                        <Button onClick={() => navigate(`/clients/${item.id}/view`)} size="sm" variant="outline" className="text-xs px-2">
+                        <Button onClick={() => navigate(`/admin/clients/${item.id}/view`)} size="sm" variant="outline" className="text-xs px-2">
                           Visualizar
                         </Button>
                       </div>
