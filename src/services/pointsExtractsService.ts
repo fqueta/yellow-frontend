@@ -45,16 +45,12 @@ class PointsExtractsService extends BaseApiService {
   /**
    * Lista todos os extratos de pontos (admin)
    * @param params - Parâmetros de filtro e paginação
+   *
+   * Nota: não aninhar `params` no objeto; passar plano para evitar
+   * `params=[object Object]` na query string.
    */
   async listPointsExtracts(params?: PointsExtractListParams): Promise<PaginatedResponse<PointsExtract>> {
-    const response = await this.get<any>(this.endpoint, { params });
-    
-    // Mapear os dados se necessário
-    // if (response.data && Array.isArray(response.data)) {;
-      
-    //   response.data = response.data.map((item: any) => this.mapApiResponseToPointsExtract(item));
-    // }
-    // console.log('d', response);
+    const response = await this.get<any>(this.endpoint, params);
     return response;
   }
 
@@ -146,30 +142,38 @@ class PointsExtractsService extends BaseApiService {
   }
 
   /**
-   * Exporta extratos de pontos
+   * Exporta extratos de pontos em formato Blob (CSV/Excel)
    * @param params - Parâmetros de filtro
+   * @returns Blob com o arquivo exportado
+   *
+   * Implementação manual de GET para retornar Blob:
+   * - Serializa `params` corretamente na URL
+   * - Usa `response.blob()` no lugar de `handleResponse(json)`
    */
   async exportPointsExtracts(params?: PointsExtractListParams): Promise<Blob> {
-    const response = await this.get(`${this.endpoint}/export`, { 
-      params,
-      responseType: 'blob'
+    const url = this.buildUrlWithParams(`${this.API_BASE_URL}${this.endpoint}/export`, params);
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: this.getHeaders(),
     });
-    return response as Blob;
+    if (!response.ok) {
+      throw new Error(`Falha ao exportar extratos: ${response.status}`);
+    }
+    return await response.blob();
   }
 
   /**
    * Obtém extratos de pontos de um usuário específico
    * @param userId - ID do usuário
    * @param params - Parâmetros de filtro e paginação
+   *
+   * Nota: passar `params` plano para serialização correta na URL.
    */
   async getUserPointsExtracts(userId: string, params?: PointsExtractListParams): Promise<PaginatedResponse<PointsExtract>> {
-    const response = await this.get<any>(`/admin/users/${userId}/points-extracts`, { params });
-    
-    // Mapear os dados se necessário - os pontos estão em response.data.points
+    const response = await this.get<any>(`/admin/users/${userId}/points-extracts`, params);
     if (response.data && response.data.points && Array.isArray(response.data.points)) {
       response.data.points = response.data.points.map((item: any) => this.mapApiResponseToPointsExtract(item));
     }
-    
     return response;
   }
 
@@ -184,7 +188,7 @@ class PointsExtractsService extends BaseApiService {
       email: string;
       cpf: string;
     };
-    stats: {
+    balance: {
       total_points: string;
       total_earned: string;
       total_spent: string;
@@ -193,12 +197,8 @@ class PointsExtractsService extends BaseApiService {
       expired_points: number;
     };
   }> {
-    const link = `/admin/users/${userId}/points-extracts`;
-    const response = await this.get<ApiResponse<any>>(link);
-    return {
-      user: response.data.user,
-      stats: response.data.stats
-    };
+    const response = await this.get<ApiResponse<any>>(`/admin/users/${userId}/points-balance`);
+    return response.data;
   }
 }
 

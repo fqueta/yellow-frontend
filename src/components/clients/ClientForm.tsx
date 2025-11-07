@@ -1,5 +1,5 @@
 import { format } from 'date-fns';
-import { CalendarIcon, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { CalendarIcon, CheckCircle, AlertCircle, Loader2, Eye, EyeOff } from 'lucide-react';
 import { useEffect, useCallback, useState } from 'react';
 import { debounce } from 'lodash';
 import { cn } from '@/lib/utils';
@@ -40,6 +40,10 @@ interface ClientFormProps {
   editingClient: any;
 }
 
+/**
+ * ClientForm: renderiza o formulário do cliente (admin) e inclui
+ * alternância de visibilidade no campo de senha para facilitar conferência.
+ */
 export function ClientForm({
   form,
   onSubmit,
@@ -61,6 +65,7 @@ export function ClientForm({
   // Estados para mensagens de erro em tempo real
   const [emailError, setEmailError] = useState<string>('')
   const [nameError, setNameError] = useState<string>('')
+  const [showPassword, setShowPassword] = useState(false)
 
   /**
     * Função para buscar CEP e preencher campos de endereço automaticamente
@@ -279,7 +284,7 @@ export function ClientForm({
                   <FormLabel className="text-sm font-medium text-gray-700">Status *</FormLabel>
                   <Select
                     onValueChange={field.onChange}
-                    defaultValue={field.value}
+                    value={field.value}
                   >
                     <FormControl>
                       <SelectTrigger className="h-11">
@@ -346,15 +351,29 @@ export function ClientForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-sm font-medium text-gray-700">Senha</FormLabel>
-                  <FormControl>
-                    <Input 
-                      placeholder="Digite a senha (opcional)" 
-                      type="password" 
-                      {...field} 
-                      value={field.value || ''}
-                      className="h-11"
-                    />
-                  </FormControl>
+                  <div className="relative">
+                    <FormControl>
+                      <Input
+                        placeholder="Digite a senha (opcional)"
+                        type={showPassword ? 'text' : 'password'}
+                        {...field}
+                        value={field.value || ''}
+                        className="h-11 pr-10"
+                      />
+                    </FormControl>
+                    <button
+                      type="button"
+                      aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
@@ -867,14 +886,14 @@ export function ClientForm({
           </AccordionItem>
         </Accordion>
 
-        <div className="flex justify-end space-x-2">
+        {/* <div className="flex justify-end space-x-2">
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancelar
           </Button>
           <Button type="submit">
             {editingClient ? 'Atualizar' : 'Cadastrar'}
           </Button>
-        </div>
+        </div> */}
     </div>
   );
 }

@@ -56,6 +56,7 @@ export interface ClientRecord {
   genero: "m" | "f" | "ni";
   status: "actived" | "inactived" | "pre_registred";
   autor?: string;
+  autor_name?: string | null;
   created_at?: string;
   updated_at?: string;
   is_alloyal?: AlloyalIntegration | null;
@@ -103,4 +104,5 @@ export interface ClientsListParams {
   search?: string;
   page?: number;
   per_page?: number;
+  excluido?: 's' | 'n';
 }

@@ -3,9 +3,9 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "./contexts/AuthContext";
-import { UserPrefsProvider } from "./contexts/UserPrefsContext";
-import { ThemeProvider } from "./contexts/ThemeContext";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { UserPrefsProvider } from "@/contexts/UserPrefsContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { AdminProtectedRoute } from "./components/auth/AdminProtectedRoute";
 import { AuthRedirect } from "./components/auth/AuthRedirect";
@@ -59,31 +59,28 @@ import AdminPointsExtracts from "./pages/AdminPointsExtracts";
 import AdminRedemptionDetails from "./pages/AdminRedemptionDetails";
 import AdminPointsExtractDetails from "./pages/AdminPointsExtractDetails";
 
-// console.log('App.tsx: Starting app initialization');
-// console.log('QueryClient available:', QueryClient);
-// console.log('QueryClientProvider available:', QueryClientProvider);
-
-// Configuração do QueryClient com opções de segurança para prevenir loops infinitos
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // Previne loops infinitos limitando tentativas de retry
+      // Configurações para consultas
       retry: (failureCount, error: any) => {
-        // Não tenta novamente para erros 4xx (cliente) ou se já tentou 2 vezes
-        if (error?.status >= 400 && error?.status < 500) return false;
-        return failureCount < 2;
+        if (
+          error?.status === 400 ||
+          error?.status === 401 ||
+          error?.status === 403 ||
+          error?.status === 404
+        ) {
+          return false;
+        }
+        return failureCount < 1;
       },
-      // Tempo que os dados ficam "frescos" antes de serem considerados obsoletos
-      staleTime: 5 * 60 * 1000, // 5 minutos
-      // Tempo que os dados ficam em cache antes de serem removidos
-      gcTime: 30 * 60 * 1000, // 30 minutos (anteriormente cacheTime)
-      // Desabilita refetch automático quando a janela ganha foco
+      // 5 minutos
+      staleTime: 5 * 60 * 1000,
+      // 30 minutos (anteriormente cacheTime)
+      gcTime: 30 * 60 * 1000,
       refetchOnWindowFocus: false,
-      // Desabilita refetch automático quando reconecta à internet
       refetchOnReconnect: false,
-      // Intervalo de refetch automático (desabilitado)
       refetchInterval: false,
-      // Configurações específicas para prevenir loops em listas vazias
       refetchOnMount: true,
     },
     mutations: {
@@ -92,10 +89,15 @@ const queryClient = new QueryClient({
     },
   },
 });
-// console.log('QueryClient instance created with security configurations:', queryClient);
 
+/**
+ * App — Provider stack and routes
+ * pt-BR: Envolve a aplicação com QueryClientProvider, ThemeProvider, AuthProvider
+ * e UserPrefsProvider, garantindo o contexto em todas as rotas e layouts.
+ * en-US: Wraps the app with QueryClientProvider, ThemeProvider, AuthProvider,
+ * and UserPrefsProvider, ensuring context availability across routes/layouts.
+ */
 const App = () => {
-  // console.log('App component rendering');
   const link_loja = "/lojaderesgatesantenamais";
   return (
     <QueryClientProvider client={queryClient}>
@@ -208,6 +210,7 @@ const App = () => {
                   </AppLayout>
                 </AdminProtectedRoute>
               } />
+              {/* Rotas de parceiros */}
               <Route path="/admin/partners" element={
                 <AdminProtectedRoute>
                   <AppLayout>
@@ -228,7 +231,9 @@ const App = () => {
                     <Partners />
                   </AppLayout>
                 </AdminProtectedRoute>
-              } />              
+              } />
+
+              {/* Rotas de produtos */}
               <Route path="/admin/products" element={
                 <AdminProtectedRoute>
                   <AppLayout>
@@ -257,6 +262,8 @@ const App = () => {
                   </AppLayout>
                 </AdminProtectedRoute>
               } />
+
+              {/* Rotas de serviços */}
               <Route path="/admin/services" element={
                 <AdminProtectedRoute>
                   <AppLayout>
@@ -271,6 +278,8 @@ const App = () => {
                   </AppLayout>
                 </AdminProtectedRoute>
               } />
+
+              {/* Categorias */}
               <Route path="/admin/categories" element={
                 <AdminProtectedRoute>
                   <AppLayout>
@@ -278,6 +287,8 @@ const App = () => {
                   </AppLayout>
                 </AdminProtectedRoute>
               } />
+
+              {/* Settings */}
               <Route path="/admin/settings/permissions" element={
                 <AdminProtectedRoute>
                   <AppLayout>
@@ -304,14 +315,14 @@ const App = () => {
                 </AdminProtectedRoute>
               } />
               <Route path="/admin/settings/metrics" element={
-              <AdminProtectedRoute>
-                <AppLayout>
-                  <PermissionGuard required="settings.metrics.view">
-                    <Metrics />
-                  </PermissionGuard>
-                </AppLayout>
-              </AdminProtectedRoute>
-            } />
+                <AdminProtectedRoute>
+                  <AppLayout>
+                    <PermissionGuard required="settings.metrics.view">
+                      <Metrics />
+                    </PermissionGuard>
+                  </AppLayout>
+                </AdminProtectedRoute>
+              } />
               <Route path="/admin/metrics-dashboard" element={
                 <AdminProtectedRoute>
                   <AppLayout>
@@ -341,8 +352,8 @@ const App = () => {
                   </AppLayout>
                 </AdminProtectedRoute>
               } />
-              
-              {/* Rotas do Módulo Financeiro */}
+
+              {/* Financeiro */}
               <Route path="/admin/financial" element={
                 <AdminProtectedRoute>
                   <AppLayout>
@@ -369,8 +380,8 @@ const App = () => {
                   </AppLayout>
                 </AdminProtectedRoute>
               } />
-              
-              {/* Rotas de Administração de Pontos */}
+
+              {/* Administração de pontos */}
               <Route path="/admin/redemptions" element={
                 <AdminProtectedRoute>
                   <AppLayout>
@@ -397,8 +408,8 @@ const App = () => {
                   </AppLayout>
                 </AdminProtectedRoute>
               } />
-              
-              {/* Rotas de Detalhes de Pontos */}
+
+              {/* Detalhes de pontos */}
               <Route path="/admin/redemptions/:id" element={
                 <AdminProtectedRoute>
                   <AppLayout>
@@ -425,8 +436,8 @@ const App = () => {
                   </AppLayout>
                 </AdminProtectedRoute>
               } />
-              
-              {/* Rotas de Ordens de Serviço */}
+
+              {/* Ordens de Serviço */}
               <Route path="/admin/service-orders" element={
                 <AdminProtectedRoute>
                   <AppLayout>
@@ -462,12 +473,12 @@ const App = () => {
                   </AppLayout>
                 </AdminProtectedRoute>
               } />
-              
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+
+              {/* Catch-all */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
-            </TooltipProvider>
+          </TooltipProvider>
           </UserPrefsProvider>
         </AuthProvider>
       </ThemeProvider>

@@ -1,9 +1,12 @@
 import { ClientRecord, CreateClientInput, UpdateClientInput, ClientsListParams } from '@/types/clients';
 import { clientsService } from '@/services/clientsService';
 import { useGenericApi } from './useGenericApi';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from '@/hooks/use-toast';
 
 /**
  * Função para obter os hooks de clientes
+ * Fornece CRUD e utilitários com base em React Query
  */
 function getClientsApi() {
   return useGenericApi<ClientRecord, CreateClientInput, UpdateClientInput, ClientsListParams>({
@@ -42,6 +45,33 @@ export function useUpdateClient(mutationOptions?: any) {
 export function useDeleteClient(mutationOptions?: any) {
   const api = getClientsApi();
   return api.useDelete(mutationOptions);
+}
+
+/**
+ * Hook para restaurar cliente da lixeira
+ * Envia PUT para `/admin/clients/{id}` (endpoint base `/clients/{id}`)
+ * Invalida o cache da lista de clientes e exibe toast de sucesso/erro.
+ */
+export function useRestoreClient() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => clientsService.restoreClient(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      toast({
+        title: 'Cliente restaurado',
+        description: 'O cliente foi restaurado com sucesso.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Erro ao restaurar',
+        description: error?.message || 'Falha ao restaurar o cliente.',
+        variant: 'destructive',
+      });
+    },
+  });
 }
 
 // Exporta função para uso avançado

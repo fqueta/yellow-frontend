@@ -54,6 +54,9 @@ class UserPointsService extends BaseApiService {
   /**
    * Obtém o extrato de pontos do usuário logado
    * @param params - Parâmetros de filtro e paginação
+   * @returns Lista paginada do extrato do usuário
+   *
+   * Nota: passar `params` plano para serialização correta.
    */
   async getCurrentUserPointsExtracts(params?: UserPointsExtractParams): Promise<{
     data: UserPointsExtract[];
@@ -62,7 +65,7 @@ class UserPointsService extends BaseApiService {
     per_page: number;
     total: number;
   }> {
-    const response = await this.get<any>(`${this.endpoint}/extracts`, { params });
+    const response = await this.get<any>(`${this.endpoint}/extracts`, params);
     return response;
   }
 

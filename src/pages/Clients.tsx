@@ -56,6 +56,7 @@ import { ClientRecord, CreateClientInput } from '@/types/clients';
 import { ClientForm } from '@/components/clients/ClientForm';
 import { ClientsTable } from '@/components/clients/ClientsTable';
 import { useDebounce } from '@/hooks/useDebounce';
+import { Switch } from "@/components/ui/switch";
 interface ApiDeleteResponse {
   exec: boolean;
   message: string;
@@ -209,6 +210,10 @@ type ClientFormData = z.infer<typeof clientSchema>;
 // Brazilian states for the select dropdown
 const brazilianStates = getBrazilianStates();
 
+/**
+ * Página de Clientes
+ * Lista, busca e filtra clientes. Inclui filtro de lixeira via `excluido=s`.
+ */
 export default function Clients() {
   // State for search, dialogs, and client operations
   const [searchTerm, setSearchTerm] = useState("");
@@ -219,23 +224,46 @@ export default function Clients() {
   const [clientToDelete, setClientToDelete] = useState<ClientRecord | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(100);
+  // Filtro de lixeira (excluido=s)
+  const [showTrash, setShowTrash] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const debouncedSearchTerm = useDebounce(searchTerm, 400);
   // React Query: fetch clients with pagination and debounced search
-  const clientsQuery = useClientsList({
-    page: currentPage,
-    per_page: pageSize,
-    search: debouncedSearchTerm,
-  });
+  /**
+   * Força refetch ao alternar lixeira e evita dados frescos impedirem nova chamada.
+   * - staleTime: 0 para considerar dados sempre "stale" e refetch na montagem
+   * - refetchOnMount: 'always' para garantir nova requisição
+   * - keepPreviousData: mantém UI responsiva entre alternâncias
+   */
+  const clientsQuery = useClientsList(
+    {
+      page: currentPage,
+      per_page: pageSize,
+      search: debouncedSearchTerm,
+      excluido: showTrash ? 's' : undefined,
+    },
+    {
+      staleTime: 0,
+      refetchOnMount: 'always',
+      keepPreviousData: true,
+    }
+  );
+  
+  /**
+   * Refaz a busca quando 'showTrash' muda para garantir que a API seja chamada.
+   */
+  useEffect(() => {
+    clientsQuery.refetch();
+  }, [showTrash]);
   // console.log('clientsQuery:', clientsQuery);
   // Compute total pages from API response
   const totalPages = clientsQuery?.data?.last_page || 1;
   // Reset to first page when search or status filter changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearchTerm, statusFilter]);
+  }, [debouncedSearchTerm, statusFilter, showTrash]);
   const createClientMutation = useCreateClient();
   const updateClientMutation = useUpdateClient();
   const deleteClientMutation = useDeleteClient();
@@ -661,6 +689,15 @@ export default function Clients() {
                 </SelectContent>
               </Select>
             </div>
+            {/* Toggle Lixeira */}
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={showTrash}
+                onCheckedChange={setShowTrash}
+                aria-label="Mostrar registros na lixeira"
+              />
+              <span className="text-sm">Lixeira</span>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -714,6 +751,11 @@ export default function Clients() {
               onEdit={handleEditClient}
               onDelete={handleDeleteClient}
               isLoading={clientsQuery.isLoading}
+              /**
+               * Passa flag de lixeira para feedback visual na tabela
+               * Pass trashEnabled to show a banner when viewing deleted items
+               */
+              trashEnabled={showTrash}
             />
           )}
           {/* Pagination */}

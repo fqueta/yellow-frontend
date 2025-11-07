@@ -109,7 +109,7 @@ const LandingPage = ({ linkLoja }: PointsStoreProps) => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
-                  {permission_id <= 2 && (
+                  {permission_id <= 5 && (
                     <>
                       <DropdownMenuLabel>Painel Administrativo</DropdownMenuLabel>
                       <DropdownMenuSeparator />

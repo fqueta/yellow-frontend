@@ -54,23 +54,50 @@ class ClientsService extends BaseApiService {
     return super.delete<ApiDeleteResponse>(`/clients/${id}`);
   }
 
-  // Métodos para compatibilidade com o hook genérico
+  /**
+   * Restaura cliente enviado para a lixeira
+   * Envia uma requisição PUT para `/admin/clients/{id}` (via base + endpoint `/clients/{id}`)
+   * e define `excluido: 'n'` para reativar o registro.
+   * @param id - ID do cliente a restaurar
+   */
+  async restoreClient(id: string): Promise<ClientRecord> {
+    // Tipagem flexível para atender à API de restauração
+    return this.put<ClientRecord>(`/clients/${id}`, { excluido: 'n' } as any);
+  }
+
+  // --- Métodos genéricos para compatibilidade com useGenericApi ---
+  /**
+   * Lista clientes (wrapper genérico)
+   */
   async list(params?: ClientsListParams): Promise<PaginatedResponse<ClientRecord>> {
     return this.listClients(params);
   }
 
+  /**
+   * Obtém cliente por ID (wrapper genérico)
+   */
   async getById(id: string): Promise<ClientRecord> {
     return this.getClient(id);
   }
 
+  /**
+   * Cria cliente (wrapper genérico)
+   */
   async create(data: CreateClientInput): Promise<ClientRecord> {
     return this.createClient(data);
   }
 
+  /**
+   * Atualiza cliente (wrapper genérico)
+   */
   async update(id: string, data: UpdateClientInput): Promise<ClientRecord> {
     return this.updateClient(id, data);
   }
 
+  /**
+   * Exclui cliente (wrapper genérico)
+   * Retorna a resposta da API para manter compatibilidade com chamadas existentes.
+   */
   async delete(id: string): Promise<ApiDeleteResponse> {
     return this.deleteClient(id);
   }

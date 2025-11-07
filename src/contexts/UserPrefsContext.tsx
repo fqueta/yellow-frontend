@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useAuth } from './AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface UserPrefs {
   sidebarOpen: boolean;
@@ -20,6 +20,11 @@ const DEFAULT_PREFS: UserPrefs = {
   sidebarOpen: true,
 };
 
+/**
+ * UserPrefsProvider
+ * pt-BR: Gerencia preferências do usuário (ex.: estado da sidebar) e persiste em localStorage.
+ * en-US: Manages user preferences (e.g., sidebar state) and persists to localStorage.
+ */
 export function UserPrefsProvider({ children }: UserPrefsProviderProps) {
   const { user } = useAuth();
   const [prefs, setPrefs] = useState<UserPrefs>(DEFAULT_PREFS);

@@ -28,9 +28,13 @@ import {
   Trash2, 
   Eye,
   Package,
-  AlertTriangle
+  AlertTriangle,
+  Loader2
 } from "lucide-react";
 import type { Product } from "@/types/products";
+import { useUpdateProduct } from "@/hooks/products";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "@/hooks/use-toast";
 
 interface ProductsTableProps {
   products: Product[];
@@ -54,6 +58,66 @@ export default function ProductsTable({
   const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
   const link_admin = '/admin';
+
+  const updateProductMutation = useUpdateProduct();
+  const { user } = useAuth();
+  /**
+   * Determina se o usuário pode editar o estoque.
+   * Rule: only users with permission_id <= 5.
+   */
+  const canEditStock = (user?.permission_id ?? Infinity) <= 5;
+
+  /**
+   * Estado para controlar edição inline do estoque na tabela.
+   * - editingStockId: linha atualmente em edição.
+   * - stockDraft: valor temporário do estoque para salvar.
+   */
+  const [editingStockId, setEditingStockId] = useState<string | null>(null);
+  const [stockDraft, setStockDraft] = useState<number>(0);
+
+  /**
+   * Inicia edição de estoque para um produto da listagem.
+   * @param product Produto alvo para edição
+   */
+  const handleStartEditStock = (product: Product) => {
+    setEditingStockId(product.id);
+    setStockDraft(Number(product.stock) || 0);
+  };
+
+  /**
+   * Atualiza o valor digitado do estoque (com piso em 0).
+   * @param value Novo valor numérico
+   */
+  const handleChangeStock = (value: number) => {
+    setStockDraft(Math.max(0, Number.isNaN(value) ? 0 : value));
+  };
+
+  /**
+   * Ajusta o estoque incrementalmente (por exemplo, +1 ou -1).
+   * @param delta Incremento a aplicar
+   */
+  const handleAdjustStock = (delta: number) => {
+    setStockDraft((prev) => Math.max(0, (Number(prev) || 0) + delta));
+  };
+
+  /**
+   * Salva o novo estoque via API e atualiza a listagem.
+   * @param productId ID do produto que está sendo editado
+   */
+  const handleSaveStock = async (productId: string) => {
+    try {
+      await updateProductMutation.mutateAsync({
+        id: productId,
+        data: { stock: Math.max(0, Number(stockDraft) || 0) },
+      });
+      toast({ title: 'Estoque atualizado', description: 'Alteração salva com sucesso.' });
+      setEditingStockId(null);
+      onRefetch();
+    } catch (err: any) {
+      toast({ title: 'Erro ao atualizar estoque', description: err?.message || 'Tente novamente mais tarde.', variant: 'destructive' });
+    }
+  };
+
   /**
    * Navega para a página de visualização do produto
    */
@@ -210,9 +274,36 @@ export default function ProductsTable({
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="text-sm font-medium">
-                        {product.stock?.toLocaleString('pt-BR') || '0'} {product.unit || ''}
-                      </div>
+                      {canEditStock ? (
+                        editingStockId === product.id ? (
+                          <div className="flex items-center gap-2">
+                            <Input
+                              type="number"
+                              min={0}
+                              value={stockDraft}
+                              onChange={(e) => handleChangeStock(Number(e.target.value))}
+                              className="w-20 h-8"
+                            />
+                            <Button variant="outline" size="sm" onClick={() => handleAdjustStock(-1)}>-</Button>
+                            <Button variant="outline" size="sm" onClick={() => handleAdjustStock(1)}>+</Button>
+                            <Button size="sm" onClick={() => handleSaveStock(product.id)} disabled={updateProductMutation.isPending}>
+                              {updateProductMutation.isPending && (<Loader2 className="mr-2 h-4 w-4 animate-spin" />)}
+                              Salvar
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <div className="text-sm font-medium">
+                              {product.stock?.toLocaleString('pt-BR') || '0'} {product.unit || ''}
+                            </div>
+                            <Button variant="outline" size="sm" onClick={() => handleStartEditStock(product)}>Editar</Button>
+                          </div>
+                        )
+                      ) : (
+                        <div className="text-sm font-medium">
+                          {product.stock?.toLocaleString('pt-BR') || '0'} {product.unit || ''}
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Badge variant={product.active ? "default" : "destructive"}>

@@ -158,10 +158,10 @@ export default function Products() {
             Gerencie todos os produtos do estoque
           </p>
         </div>
-        <Button onClick={handleNewProduct}>
+        {/* <Button onClick={handleNewProduct}>
           <Plus className="mr-2 h-4 w-4" />
           Novo Produto
-        </Button>
+        </Button> */}
       </div>
 
       {/* Stats Cards */}

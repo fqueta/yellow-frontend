@@ -25,9 +25,19 @@ import { useUsersList } from "@/hooks/users";
 import { useRecentActivities, useRegistrationData, usePendingPreRegistrations } from "@/hooks/useDashboard";
 import { ClientRegistrationChart } from "@/components/ClientRegistrationChart";
 import { VisitorTrendChart } from "@/components/VisitorTrendChart";
+import { useAuth } from "@/contexts/AuthContext";
 
+/**
+ * Dashboard
+ * Página principal que exibe cards de resumo e gráficos.
+ * Regra de visibilidade: oculta o card "Parceiros" para usuários
+ * com `permission_id` maior ou igual a 5.
+ */
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const userPermission = Number(user?.permission_id ?? 0);
+  const canShowPartners = userPermission < 5;
   // Hooks para buscar dados das entidades
   const { data: clientsData, isLoading: clientsLoading } = useClientsList({ limit: 1 });
   const { data: partnersData, isLoading: partnersLoading } = usePartnersList({ limit: 1 });
@@ -124,83 +134,7 @@ export default function Dashboard() {
 
 
 
-      {/* Resumo das Entidades do Projeto */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Handshake className="h-5 w-5" />
-              Parceiros
-            </CardTitle>
-            <CardDescription>Gestão de parceiros comerciais</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-2xl font-bold">
-                  {partnersLoading ? "..." : stats.partnersCount}
-                </div>
-                <p className="text-xs text-muted-foreground">Total cadastrados</p>
-              </div>
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/admin/partners">
-                  Ver todos
-                </Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Clientes
-            </CardTitle>
-            <CardDescription>Total de clientes cadastrados</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-2xl font-bold">
-                  {clientsLoading ? "..." : stats.clientsCount}
-                </div>
-                <p className="text-xs text-muted-foreground">Total cadastrados</p>
-              </div>
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/admin/clients">
-                  Ver todos
-                </Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <UserCheck className="h-5 w-5" />
-              Usuários
-            </CardTitle>
-            <CardDescription>Usuários do sistema</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-2xl font-bold">
-                  {usersLoading ? "..." : stats.usersCount}
-                </div>
-                <p className="text-xs text-muted-foreground">Usuários ativos</p>
-              </div>
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/admin/settings/users">
-                  Gerenciar
-                </Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      
       {/* Seção de Gráficos e Tendências */}
       <div className="space-y-6">
         {/* <div>
@@ -347,7 +281,87 @@ export default function Dashboard() {
             </div>
           </CardContent>
         </Card>
-      </div>      
+      </div>  
+      {/* Resumo das Entidades do Projeto */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {canShowPartners && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Handshake className="h-5 w-5" />
+                Parceiros
+              </CardTitle>
+              <CardDescription>Gestão de parceiros comerciais</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-2xl font-bold">
+                    {partnersLoading ? "..." : stats.partnersCount}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Total cadastrados</p>
+                </div>
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/admin/partners">
+                    Ver todos
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Clientes
+            </CardTitle>
+            <CardDescription>Total de clientes cadastrados</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-2xl font-bold">
+                  {clientsLoading ? "..." : stats.clientsCount}
+                </div>
+                <p className="text-xs text-muted-foreground">Total cadastrados</p>
+              </div>
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/admin/clients">
+                  Ver todos
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+          {canShowPartners && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <UserCheck className="h-5 w-5" />
+              Usuários
+            </CardTitle>
+            <CardDescription>Usuários do sistema</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-2xl font-bold">
+                  {usersLoading ? "..." : stats.usersCount}
+                </div>
+                <p className="text-xs text-muted-foreground">Usuários ativos</p>
+              </div>
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/admin/settings/users">
+                  Gerenciar
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+          )}
+      </div>    
     </div>
   );
 }
