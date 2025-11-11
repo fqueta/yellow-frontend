@@ -140,7 +140,7 @@
   .toast, .sonner, .shadcn-toast, [role="status"], [data-sonner-toast] { display: none !important; }
 
   /* Corrige alturas mínimas que geram espaços em branco */
-  .min-h-[400px], .min-h-screen, .h-screen, .min-h-[100vh], .h-[100vh] { min-height: auto !important; height: auto !important; }
+.min-h-\[400px\], .min-h-screen, .h-screen, .min-h-\[100vh\], .h-\[100vh\] { min-height: auto !important; height: auto !important; }
 
   /* Evita cortes por overflow dos containers */
   .overflow-hidden, .overflow-auto, .overflow-scroll, .overflow-x-auto, .overflow-y-auto { overflow: visible !important; }

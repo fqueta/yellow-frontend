@@ -15,6 +15,23 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
     strictPort: false,
   },
+  build: {
+    // pt-BR: Ajusta aviso de tamanho e cria chunks menores para vendors.
+    // en-US: Adjusts warning limit and creates smaller vendor chunks.
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('/react')) return 'react';
+            if (id.includes('zod')) return 'validation';
+            if (id.includes('@hookform')) return 'forms';
+            if (id.includes('lucide-react')) return 'icons';
+          }
+        },
+      },
+    },
+  },
   plugins: [
     react(),
     mode === 'development' &&
