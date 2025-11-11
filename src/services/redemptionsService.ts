@@ -64,15 +64,6 @@ class RedemptionsService extends BaseApiService {
   }
 
   /**
-   * Exclui um resgate (admin)
-   * Endpoint: DELETE /admin/redemptions/{id}
-   * @param id - ID do resgate a ser excluído
-   */
-  async deleteRedemption(id: string): Promise<void> {
-    await this.delete<void>(`/admin/redemptions/${id}`);
-  }
-
-  /**
    * Extorna um resgate (admin)
    * Endpoint correto: PATCH /admin/redemptions/{id}/refund
    * @param id - ID do resgate a ser extornado
@@ -81,6 +72,15 @@ class RedemptionsService extends BaseApiService {
   async refundRedemption(id: string, notes?: string): Promise<Redemption> {
     const response = await this.patch<ApiResponse<Redemption>>(`/admin/redemptions/${id}/refund`, { notes });
     return response.data;
+  }
+
+  /**
+   * Exclui definitivamente um resgate (admin)
+   * Executa DELETE em `/admin/redemptions/{id}`.
+   * @param id - ID do resgate a excluir
+   */
+  async deleteRedemption(id: string): Promise<void> {
+    await this.delete<void>(`/admin/redemptions/${id}`);
   }
 }
 

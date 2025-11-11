@@ -29,6 +29,18 @@ class ProductsService extends BaseApiService {
   }
 
   /**
+   * Lista produtos disponíveis na loja (Point Store)
+   * Faz requisição GET para o endpoint de vitrine: '/point-store/products'.
+   * Aceita filtros e paginação similares ao endpoint administrativo.
+   * Retorna o corpo da resposta como está para permitir diferentes formatos
+   * (lista simples, ApiResponse com data ou resposta paginada).
+   */
+  async listStoreProducts(params?: ProductListParams): Promise<any> {
+    const response = await this.get<any>('/point-store/products', params);
+    return response;
+  }
+
+  /**
    * Obtém um produto por ID
    * @param id - ID do produto
    */

@@ -113,7 +113,7 @@ export default function Dashboard() {
   //   console.log(`Dashboard: ${clientRegistrationData.length} dias de dados carregados (${clientRegistrationData[0]?.date} a ${clientRegistrationData[clientRegistrationData.length - 1]?.date})`);
   // }
   
-
+  //console.log('clientRegistrationData:', clientRegistrationData);
   return (
     <div className="space-y-6">
       {/* Header */}

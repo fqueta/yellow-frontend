@@ -2,11 +2,10 @@ import { ClientRecord, CreateClientInput, UpdateClientInput, ClientsListParams }
 import { clientsService } from '@/services/clientsService';
 import { useGenericApi } from './useGenericApi';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 /**
  * Função para obter os hooks de clientes
- * Fornece CRUD e utilitários com base em React Query
  */
 function getClientsApi() {
   return useGenericApi<ClientRecord, CreateClientInput, UpdateClientInput, ClientsListParams>({
@@ -47,32 +46,30 @@ export function useDeleteClient(mutationOptions?: any) {
   return api.useDelete(mutationOptions);
 }
 
+// Exporta função para uso avançado
+export const useClientsApi = getClientsApi;
+
 /**
- * Hook para restaurar cliente da lixeira
- * Envia PUT para `/admin/clients/{id}` (endpoint base `/clients/{id}`)
- * Invalida o cache da lista de clientes e exibe toast de sucesso/erro.
+ * Hook para restaurar cliente (soft delete)
+ * Realiza PATCH em `/clients/{id}/restore` e atualiza caches relacionados.
  */
-export function useRestoreClient() {
+export function useRestoreClient(mutationOptions?: any) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => clientsService.restoreClient(id),
-    onSuccess: () => {
+    mutationFn: (id: string) => clientsService.restore(id),
+    onSuccess: (data, id) => {
+      // Invalida lista e detalhe do cliente restaurado
       queryClient.invalidateQueries({ queryKey: ['clients'] });
-      toast({
-        title: 'Cliente restaurado',
-        description: 'O cliente foi restaurado com sucesso.',
-      });
+      queryClient.invalidateQueries({ queryKey: ['clients', 'list'] });
+      queryClient.invalidateQueries({ queryKey: ['clients', 'detail', id] });
+      toast.success('Cliente restaurado com sucesso!');
+      mutationOptions?.onSuccess?.(data, id, undefined);
     },
-    onError: (error: any) => {
-      toast({
-        title: 'Erro ao restaurar',
-        description: error?.message || 'Falha ao restaurar o cliente.',
-        variant: 'destructive',
-      });
+    onError: (error: Error) => {
+      toast.error(`Erro ao restaurar cliente: ${error.message}`);
+      mutationOptions?.onError?.(error, undefined as any, undefined);
     },
+    ...mutationOptions,
   });
 }
-
-// Exporta função para uso avançado
-export const useClientsApi = getClientsApi;

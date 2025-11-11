@@ -41,6 +41,7 @@ export function ClientsTable({ clients, onEdit, onDelete, isLoading, trashEnable
     const user = usersList.find(user => user.id === autorId);
     return user?.name || 'Não identificado';
   };
+  console.log('trashEnabled:', trashEnabled);
   
   // Função para formatar o status
   const getStatusBadge = (status: string) => {

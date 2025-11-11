@@ -20,9 +20,6 @@
     display: none !important;
   }
 
-  /* Ocultar notificações específicas por aria-label */
-  [aria-label="Notifications (F8)"] { display: none !important; }
-
   /* Remove sombras e bordas desnecessárias */
   .shadow,
   .shadow-sm,
@@ -39,18 +36,10 @@
     margin: 0 !important;
   }
   /* Zera margens/paddings do container principal para não sobrar espaço no topo */
-  #root, main, .content, .page-content, .content-wrapper, .page-wrapper, .layout-content {
+  main, .content, .page-content, .content-wrapper, .page-wrapper, .layout-content {
     padding-top: 0 !important;
     margin-top: 0 !important;
     min-height: auto !important;
-  }
-  /* Evita quebra antes/apos o primeiro elemento da página */
-  #root > *:first-child,
-  main > *:first-child,
-  .content > *:first-child,
-  .page-content > *:first-child {
-    margin-top: 0 !important;
-    page-break-before: avoid !important;
   }
 
   /* Remove espaçamentos desnecessários */
@@ -85,14 +74,6 @@
     widows: 3;
   }
 
-  /* Evita quebra após títulos e headers de seção */
-  h1, h2, h3, h4, .section-title, header, .card-header {
-    page-break-after: avoid !important;
-    page-break-before: avoid !important;
-  }
-  /* Evita que hr abra página nova */
-  hr, .divider { page-break-after: avoid !important; page-break-before: avoid !important; }
-
   h1 { font-size: 18pt !important; }
   h2 { font-size: 16pt !important; }
   h3 { font-size: 14pt !important; }
@@ -112,22 +93,27 @@
   /* Evita problemas de sticky/fixed em impressão */
   .sticky, .fixed { position: static !important; top: auto !important; }
 
-  /* Oculta elementos específicos globais da UI (não esconder headers de seções) */
-  .site-header, .app-header, .sidebar, .app-footer, .app-nav, nav, aside, footer { display: none !important; }
+  /* Oculta elementos específicos da página de service order */
+  .service-order-actions,
+  .quick-actions-card,
+  .history-card { display: none !important; }
 
   /* ===== Página A4 com margem ligeiramente menor para aproveitar espaço ===== */
-  @page { size: A4 portrait; margin: 8mm; }
+  @page { size: A4 portrait; margin: 10mm; }
 
   /* ===== Grid: manter múltiplas colunas (lado a lado) ===== */
+  /* Volta o comportamento de grid e preserva colunas declaradas */
   .grid { display: grid !important; break-inside: avoid !important; }
   .grid > * { width: auto !important; }
+  /* Tailwind classes comuns para duas colunas */
   .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
   .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
   .lg\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  /* Ajuste de gaps para caber melhor no A4 */
   .gap-6 { gap: 1rem !important; }
   .gap-4 { gap: 0.75rem !important; }
 
-  /* Permite fluxo dentro de cartões longos */
+  /* Evita quebra no meio de cartões muito longos: permitir que o conteúdo flua */
   .card, .rounded-md, .rounded-lg { page-break-inside: auto !important; break-inside: auto !important; }
 
   /* Quebras controladas */
@@ -137,6 +123,9 @@
   /* Melhorias gerais de conteúdo */
   img { max-width: 100% !important; height: auto !important; }
   code { border: 1px solid #ddd !important; padding: 2px 4px !important; }
+
+  /* Oculta navegação/comuns da UI */
+  header, nav, aside, footer, .sidebar, .app-header, .app-footer, .app-nav { display: none !important; }
 
   /* Oculta paginação, controles e barras flutuantes */
   .pagination,

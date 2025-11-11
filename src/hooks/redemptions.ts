@@ -80,20 +80,25 @@ export function useRefundRedemption(mutationOptions?: any) {
   });
 }
 
+/**
+ * Hook para excluir um resgate (admin)
+ * Executa DELETE e invalida caches relacionados.
+ */
 export function useDeleteRedemption(mutationOptions?: any) {
   const queryClient = useQueryClient();
-  /**
-   * Hook de exclusão de resgate (admin)
-   * Invalida listas e o item específico após excluir.
-   */
+
   return useMutation({
     mutationFn: (id: string) => redemptionsService.deleteRedemption(id),
     onSuccess: (_data, id) => {
+      // Atualiza listagens e remove o detalhe do resgate
       queryClient.invalidateQueries({ queryKey: ['redemptions'] });
       queryClient.invalidateQueries({ queryKey: ['user-redemptions'] });
       queryClient.invalidateQueries({ queryKey: ['all-redemptions'] });
-      queryClient.invalidateQueries({ queryKey: ['redemption', id] });
-      queryClient.refetchQueries({ queryKey: ['all-redemptions'] });
+      queryClient.removeQueries({ queryKey: ['redemption', id] });
+      mutationOptions?.onSuccess?.(_data, id, undefined);
+    },
+    onError: (error: Error) => {
+      mutationOptions?.onError?.(error, undefined as any, undefined);
     },
     ...mutationOptions,
   });

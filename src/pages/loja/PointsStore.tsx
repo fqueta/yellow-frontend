@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { toast } from '@/hooks/use-toast';
-import { useProductsList } from '@/hooks/products';
+import { useStoreProductsList } from '@/hooks/products';
 import { useCategoriesList } from '@/hooks/categories';
 import { useAuth } from '@/contexts/AuthContext';
 import { Product, PointsStoreProps } from '@/types/products';
@@ -83,12 +83,14 @@ const PointsStore: React.FC<PointsStoreProps> = ({ linkLoja }) => {
     avatar: authUser?.foto_perfil || authUser?.avatar || '' // Usar ícone User quando não há avatar
   };
 
-  // Buscar produtos da API com limite de 100
-  const { data: productsData, isLoading: productsLoading, error: productsError, refetch: refetchProducts } = useProductsList({
+  // Buscar produtos da vitrine da loja via endpoint '/point-store/products'
+  // GET /point-store/products
+  const { data: productsData, isLoading: productsLoading, error: productsError, refetch: refetchProducts } = useStoreProductsList({
     limit: 100,
     // entidade: 'produtos'
   });
-  const products: Product[] | any = productsData?.data || [];
+  // Normaliza resposta: aceita array simples ou objeto paginado com 'data'
+  const products: Product[] | any = Array.isArray(productsData) ? productsData : (productsData?.data || []);
 
   // Buscar categorias da API com limite de 5
   const { data: categoriesData, isLoading: categoriesLoading, error: categoriesError, refetch: refetchCategories } = useCategoriesList({ 

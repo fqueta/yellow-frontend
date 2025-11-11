@@ -111,6 +111,23 @@ class AuthService {
     return this.handleResponse<User>(response);
   }
 
+  /**
+   * getProfile
+   * pt-BR: Busca o perfil detalhado do usuário em `/user/profile`,
+   * retornando o objeto `data` que contém campos básicos e `meta`.
+   * en-US: Fetches detailed user profile from `/user/profile`,
+   * returns the `data` object including basic fields and `meta`.
+   */
+  async getProfile(): Promise<{ id: string; name: string; email: string; avatar: string | null; meta?: Record<string, any> }> {
+    const response = await fetch(`${API_BASE_URL}/user/profile`, {
+      method: 'GET',
+      headers: this.getHeaders(true),
+    });
+
+    const payload = await this.handleResponse<{ message?: string; data: { id: string; name: string; email: string; avatar: string | null; meta?: Record<string, any> } }>(response);
+    return payload.data;
+  }
+
   async updateProfile(data: Partial<User> | FormData): Promise<User> {
     const headers: HeadersInit = {
       'Accept': 'application/json',

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -11,13 +11,64 @@ import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../../components/ui/dialog';
 import { toast } from '../../hooks/use-toast';
 import { Edit, Save, X, Eye, EyeOff } from 'lucide-react';
+import { authService } from '@/services/authService';
+import { useCep } from '@/hooks/useCep';
+import { cepApplyMask, cepRemoveMask } from '@/lib/masks/cep-apply-mask';
+import { cpfApplyMask } from '@/lib/masks/cpf-apply-mask';
+import { phoneApplyMask, phoneRemoveMask } from '@/lib/masks/phone-apply-mask';
 
-// Schema de validacao para o perfil
+/**
+ * formatDisplayPhone
+ * pt-BR: Aplica máscara de telefone para exibição; retorna "Não informado" se vazio.
+ * en-US: Applies phone mask for display; returns "Não informado" if empty.
+ */
+const formatDisplayPhone = (value?: string) => {
+  const digits = (value || '').replace(/\D/g, '');
+  return digits ? phoneApplyMask(digits) : 'Não informado';
+};
+
+/**
+ * formatDisplayCpf
+ * pt-BR: Aplica máscara de CPF para exibição; retorna "Não informado" se vazio.
+ * en-US: Applies CPF mask for display; returns "Não informado" if empty.
+ */
+const formatDisplayCpf = (value?: string) => {
+  const digits = (value || '').replace(/\D/g, '');
+  return digits ? cpfApplyMask(digits) : 'Não informado';
+};
+
+/**
+ * formatDisplayCep
+ * pt-BR: Aplica máscara de CEP para exibição; retorna "Não informado" se vazio.
+ * en-US: Applies CEP mask for display; returns "Não informado" if empty.
+ */
+const formatDisplayCep = (value?: string) => {
+  const digits = (value || '').replace(/\D/g, '');
+  return digits ? cepApplyMask(digits) : 'Não informado';
+};
+
+/**
+ * displayOrUnknown
+ * pt-BR: Retorna o texto se for string não vazia; senão "Não informado".
+ * en-US: Returns text if non-empty string; otherwise "Não informado".
+ */
+const displayOrUnknown = (value?: unknown) => {
+  return typeof value === 'string' && value.trim().length > 0 ? value : 'Não informado';
+};
+
+// Schema de validação do perfil (alinhado ao ClientArea)
 const profileSchema = z.object({
   name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
-  email: z.string().email('Email invalido'),
+  email: z.string().email('Email inválido'),
   phone: z.string().optional(),
-  bio: z.string().optional(),
+  company: z.string().optional(),
+  cpf: z.string().optional(),
+  birth_date: z.string().optional(),
+  gender: z.string().optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  zip_code: z.string().optional(),
 });
 
 // Schema de validacao para alteracao de senha
@@ -42,6 +93,10 @@ const UserProfiles: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [profileSnapshot, setProfileSnapshot] = useState<ProfileFormData | null>(null);
+
+  // ViaCEP helpers
+  const { fetchCep, isValidCep, clearAddressData } = useCep();
 
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -54,13 +109,21 @@ const UserProfiles: React.FC = () => {
     formState: { errors, isSubmitting },
     reset,
     setValue,
+    getValues,
   } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
       name: user?.name || '',
       email: user?.email || '',
-      phone: user?.phone || '',
-      bio: user?.bio || '',
+      phone: user?.phone ? phoneApplyMask(user.phone) : '',
+      company: user?.company || '',
+      cpf: user?.cpf ? cpfApplyMask(user.cpf.replace(/\D/g, '')) : user?.cpf || '',
+      birth_date: user?.birth_date || '',
+      gender: user?.gender || '',
+      address: user?.address || '',
+      city: user?.city || '',
+      state: user?.state || '',
+      zip_code: user?.zip_code ? cepApplyMask(user.zip_code) : '',
     },
   });
 
@@ -75,11 +138,19 @@ const UserProfiles: React.FC = () => {
   });
 
   /**
-   * Funcao para submeter as alteracoes do perfil
+   * handleSubmit profile
+   * pt-BR: Sanitiza telefone/CEP e exclui e-mail/CPF do payload antes de enviar.
+   * en-US: Sanitizes phone/CEP and excludes email/CPF from payload before sending.
    */
   const onSubmit = async (data: ProfileFormData) => {
     try {
-      await updateProfile(data);
+      const { email: _email, cpf: _cpf, ...editableProfile } = data;
+      const payload = {
+        ...editableProfile,
+        phone: editableProfile.phone ? phoneRemoveMask(editableProfile.phone) : '',
+        zip_code: editableProfile.zip_code ? cepRemoveMask(editableProfile.zip_code) : '',
+      };
+      await updateProfile(payload);
       setIsEditing(false);
       toast({
         title: 'Sucesso',
@@ -122,17 +193,103 @@ const UserProfiles: React.FC = () => {
   };
 
   /**
-   * Funcao para cancelar a edicao
-   */
+   * handleCancelEdit
+   * pt-BR: Restaura os dados do formulário a partir do snapshot atual.
+   * en-US: Restores form data from current snapshot when canceling.
+  */
   const handleCancelEdit = () => {
+    // pt-BR: Primeiro restaura o snapshot pré-edição, depois sai do modo de edição.
+    // en-US: Restore pre-edit snapshot first, then exit edit mode.
+    if (profileSnapshot) {
+      reset(profileSnapshot);
+    } else {
+      reset({
+        name: user?.name || '',
+        email: user?.email || '',
+        phone: user?.phone ? phoneApplyMask(user.phone) : '',
+        company: user?.company || '',
+        cpf: user?.cpf ? cpfApplyMask(user.cpf.replace(/\D/g, '')) : user?.cpf || '',
+        birth_date: user?.birth_date || '',
+        gender: user?.gender || '',
+        address: user?.address || '',
+        city: user?.city || '',
+        state: user?.state || '',
+        zip_code: user?.zip_code ? cepApplyMask(user.zip_code) : '',
+      });
+    }
     setIsEditing(false);
-    reset({
-      name: user?.name || '',
-      email: user?.email || '',
-      phone: user?.phone || '',
-      bio: user?.bio || '',
-    });
   };
+
+  /**
+   * handlePhoneChange
+   * pt-BR: Aplica máscara de telefone conforme o usuário digita.
+   * en-US: Applies phone mask as the user types.
+   */
+  const handlePhoneChange = (value: string) => {
+    const masked = phoneApplyMask(value);
+    setValue('phone', masked, { shouldValidate: true });
+  };
+
+  /**
+   * handleCepChange
+   * pt-BR: Aplica máscara ao CEP e preenche endereço via ViaCEP se válido.
+   * en-US: Masks CEP and auto-fills address via ViaCEP if valid.
+   */
+  const handleCepChange = async (value: string) => {
+    const masked = cepApplyMask(value);
+    setValue('zip_code', masked, { shouldValidate: true });
+
+    if (isValidCep(masked)) {
+      try {
+        const addr = await fetchCep(masked);
+        if (addr) {
+          setValue('address', addr.endereco || '');
+          setValue('city', addr.cidade || '');
+          setValue('state', addr.uf || '');
+        }
+      } catch (error) {
+        console.error('Erro ao buscar CEP:', error);
+      }
+    } else {
+      clearAddressData?.();
+    }
+  };
+
+  /**
+   * useEffect: Carrega metadados do perfil para preencher endereço/cidade/estado/CEP
+   * pt-BR: Busca dados do perfil no backend e aplica máscaras para exibição.
+   * en-US: Fetches profile meta from backend and applies masks for display.
+   */
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const profile = await authService.getProfile();
+        const meta = profile?.meta || {} as Record<string, unknown>;
+
+        const current = getValues();
+        const str = (v: unknown) => (typeof v === 'string' && v.trim().length > 0 ? v : '');
+
+        reset({
+          ...current,
+          name: typeof profile?.name === 'string' ? profile.name : current.name,
+          email: typeof profile?.email === 'string' ? profile.email : current.email,
+          phone: str(meta.phone) ? phoneApplyMask(String(meta.phone)) : current.phone,
+          company: str(meta.company) || current.company,
+          birth_date: str(meta.birth_date) || current.birth_date,
+          gender: str(meta.gender) || current.gender,
+          address: str(meta.address) || current.address,
+          city: str(meta.city) || current.city,
+          state: str(meta.state) || current.state,
+          zip_code: str(meta.zip_code) ? cepApplyMask(String(meta.zip_code)) : current.zip_code,
+          cpf: current.cpf,
+        });
+      } catch (error) {
+        console.error('Erro ao carregar perfil:', error);
+      }
+    };
+    loadProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /**
    * Funcao para fechar o modal de alteracao de senha
@@ -187,7 +344,7 @@ const UserProfiles: React.FC = () => {
                 <CardDescription>Atualize suas informacoes pessoais</CardDescription>
               </div>
               {!isEditing ? (
-                <Button onClick={() => setIsEditing(true)} variant="outline" size="sm">
+                <Button onClick={() => { setProfileSnapshot(getValues()); setIsEditing(true); }} variant="outline" size="sm">
                   <Edit className="h-4 w-4 mr-2" />
                   Editar
                 </Button>
@@ -242,12 +399,12 @@ const UserProfiles: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email *</Label>
+                  <Label htmlFor="email">Email * (não editável)</Label>
                   <Input
                     id="email"
                     type="email"
                     {...register('email')}
-                    disabled={!isEditing}
+                    disabled
                     className={!isEditing ? 'bg-muted' : ''}
                   />
                   {errors.email && (
@@ -257,29 +414,157 @@ const UserProfiles: React.FC = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="phone">Telefone</Label>
-                  <Input
-                    id="phone"
-                    {...register('phone')}
-                    disabled={!isEditing}
-                    className={!isEditing ? 'bg-muted' : ''}
-                    placeholder="(11) 99999-9999"
-                  />
+                  {isEditing ? (
+                    <Input
+                      id="phone"
+                      {...register('phone')}
+                      disabled={!isEditing}
+                      className={!isEditing ? 'bg-muted' : ''}
+                      placeholder="(11) 99999-9999"
+                      onChange={(e) => handlePhoneChange(e.target.value)}
+                    />
+                  ) : (
+                    <p className="text-sm text-foreground">
+                      {formatDisplayPhone(getValues('phone') || user?.phone)}
+                    </p>
+                  )}
                   {errors.phone && (
                     <p className="text-sm text-destructive">{errors.phone.message}</p>
                   )}
                 </div>
 
+
+                <div className="space-y-2">
+                  <Label htmlFor="company">Empresa</Label>
+                  {isEditing ? (
+                    <Input
+                      id="company"
+                      {...register('company')}
+                      disabled={!isEditing}
+                      className={!isEditing ? 'bg-muted' : ''}
+                      placeholder="Nome da empresa"
+                    />
+                  ) : (
+                    <p className="text-sm text-foreground">
+                      {displayOrUnknown(getValues('company'))}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="cpf">CPF (não editável)</Label>
+                  <p className="text-sm text-foreground">
+                    {formatDisplayCpf(getValues('cpf') || user?.cpf)}
+                  </p>
+                  <p className="text-xs text-gray-500">Seu CPF não pode ser alterado.</p>
+                </div>
+
+                {/* CEP posicionado imediatamente após CPF para facilitar o autocomplete */}
+                <div className="space-y-2">
+                  <Label htmlFor="zip_code">CEP</Label>
+                  {isEditing ? (
+                    <Input
+                      id="zip_code"
+                      {...register('zip_code')}
+                      disabled={!isEditing}
+                      className={!isEditing ? 'bg-muted' : ''}
+                      placeholder="Digite seu CEP"
+                      onChange={(e) => handleCepChange(e.target.value)}
+                    />
+                  ) : (
+                    <p className="text-sm text-foreground">
+                      {formatDisplayCep(getValues('zip_code') || user?.zip_code)}
+                    </p>
+                  )}
+                </div>
+
                 <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="bio">Bio</Label>
-                  <Input
-                    id="bio"
-                    {...register('bio')}
-                    disabled={!isEditing}
-                    className={!isEditing ? 'bg-muted' : ''}
-                    placeholder="Conte um pouco sobre voce..."
-                  />
-                  {errors.bio && (
-                    <p className="text-sm text-destructive">{errors.bio.message}</p>
+                  <Label htmlFor="address">Endereço</Label>
+                  {isEditing ? (
+                    <Input
+                      id="address"
+                      {...register('address')}
+                      disabled={!isEditing}
+                      className={!isEditing ? 'bg-muted' : ''}
+                      placeholder="Rua, número, complemento"
+                    />
+                  ) : (
+                    <p className="text-sm text-foreground">
+                      {displayOrUnknown(getValues('address'))}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="city">Cidade</Label>
+                  {isEditing ? (
+                    <Input
+                      id="city"
+                      {...register('city')}
+                      disabled={!isEditing}
+                      className={!isEditing ? 'bg-muted' : ''}
+                    />
+                  ) : (
+                    <p className="text-sm text-foreground">
+                      {displayOrUnknown(getValues('city'))}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="state">Estado</Label>
+                  {isEditing ? (
+                    <Input
+                      id="state"
+                      {...register('state')}
+                      disabled={!isEditing}
+                      className={!isEditing ? 'bg-muted' : ''}
+                    />
+                  ) : (
+                    <p className="text-sm text-foreground">
+                      {displayOrUnknown(getValues('state'))}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="birth_date">Data de Nascimento</Label>
+                  {isEditing ? (
+                    <Input
+                      id="birth_date"
+                      type="date"
+                      {...register('birth_date')}
+                      disabled={!isEditing}
+                      className={!isEditing ? 'bg-muted' : ''}
+                    />
+                  ) : (
+                    <p className="text-sm text-foreground">
+                      {displayOrUnknown(getValues('birth_date'))}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="gender">Gênero</Label>
+                  {isEditing ? (
+                    // pt-BR: Usa select com opções iguais ao ClientArea.
+                    // en-US: Use a select with options matching ClientArea.
+                    <select
+                      id="gender"
+                      {...register('gender')}
+                      disabled={!isEditing}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <option value="">Selecione</option>
+                      <option value="masculino">Masculino</option>
+                      <option value="feminino">Feminino</option>
+                      <option value="outro">Outro</option>
+                      <option value="prefiro_nao_informar">Prefiro não informar</option>
+                    </select>
+                  ) : (
+                    <p className="text-sm text-foreground">
+                      {displayOrUnknown(getValues('gender'))}
+                    </p>
                   )}
                 </div>
               </div>

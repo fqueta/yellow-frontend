@@ -10,6 +10,11 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { authService } from '@/services/authService';
+import { useCep } from '@/hooks/useCep';
+import { cepApplyMask, cepRemoveMask } from '@/lib/masks/cep-apply-mask';
+import { cpfApplyMask } from '@/lib/masks/cpf-apply-mask';
+import { phoneApplyMask, phoneRemoveMask } from '@/lib/masks/phone-apply-mask';
 import MyRedemptionsContent from '@/components/loja/MyRedemptionsContent';
 import { PointsStoreProps } from '@/types/products';
 import { formatPoints } from '@/lib/utils';
@@ -38,6 +43,29 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const { fetchCep, isValidCep, clearAddressData } = useCep();
+  // Snapshot dos dados atuais exibidos no Perfil para restaurar ao cancelar edição
+  const [profileSnapshot, setProfileSnapshot] = useState<any | null>(null);
+
+  /**
+   * formatDisplayPhone / formatDisplayCpf / formatDisplayCep
+   * pt-BR: Formata valores para exibição no Perfil com máscaras.
+   * en-US: Formats values for Profile display using masks.
+   */
+  const formatDisplayPhone = (value?: string) => {
+    const digits = (value || '').replace(/\D/g, '');
+    return digits ? phoneApplyMask(digits) : 'Não informado';
+  };
+
+  const formatDisplayCpf = (value?: string) => {
+    const digits = (value || '').replace(/\D/g, '');
+    return digits ? cpfApplyMask(digits) : 'Não informado';
+  };
+
+  const formatDisplayCep = (value?: string) => {
+    const digits = (value || '').replace(/\D/g, '');
+    return digits ? cepApplyMask(digits) : 'Não informado';
+  };
 
   // Estados para edição do perfil
   const [profileData, setProfileData] = useState({
@@ -64,6 +92,8 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
 
   /**
    * Função para atualizar o perfil do usuário
+   * pt-BR: Restringe alterações de e-mail e CPF (não enviados ao backend).
+   * en-US: Restricts changes to email and CPF (excluded from payload).
    */
   const handleUpdateProfile = async () => {
     if (!profileData.name.trim()) {
@@ -77,7 +107,15 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
 
     setIsUpdatingProfile(true);
     try {
-      const success = await updateProfile(profileData);
+      // Excluir campos não editáveis e remover máscaras antes de enviar ao backend
+      const { email: _email, cpf: _cpf, ...editableProfile } = profileData;
+      const payload = {
+        ...editableProfile,
+        phone: phoneRemoveMask(editableProfile.phone || ''),
+        zip_code: cepRemoveMask(editableProfile.zip_code || ''),
+      };
+
+      const success = await updateProfile(payload);
       if (success) {
         setIsEditingProfile(false);
         toast({
@@ -167,25 +205,89 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
   };
 
   /**
-   * Função para cancelar a edição do perfil
+   * handleCancelEdit
+   * pt-BR: Cancela a edição e restaura o conteúdo atual exibido no Perfil.
+   * en-US: Cancels editing and restores the current Profile display content.
    */
   const handleCancelEdit = () => {
-    setProfileData({
-      name: user?.name || '',
-      email: user?.email || '',
-      phone: user?.phone || '',
-      bio: user?.bio || '',
-      company: user?.company || '',
-      cpf: user?.cpf || '',
-      birth_date: user?.birth_date || '',
-      gender: user?.gender || '',
-      address: user?.address || '',
-      city: user?.city || '',
-      state: user?.state || '',
-      zip_code: user?.zip_code || ''
-    });
+    if (profileSnapshot) {
+      setProfileData(profileSnapshot);
+    }
     setIsEditingProfile(false);
   };
+
+  /**
+   * handlePhoneChange
+   * pt-BR: Aplica máscara no telefone conforme o usuário digita.
+   * en-US: Applies phone mask as the user types.
+   */
+  const handlePhoneChange = (value: string) => {
+    const masked = phoneApplyMask(value);
+    setProfileData({ ...profileData, phone: masked });
+  };
+
+  /**
+   * handleCepChange
+   * pt-BR: Aplica máscara ao CEP e, se válido, busca endereço pela API ViaCEP.
+   * en-US: Masks CEP and, if valid, fetches address from ViaCEP API.
+   */
+  const handleCepChange = async (value: string) => {
+    const masked = cepApplyMask(value);
+    setProfileData(prev => ({ ...prev, zip_code: masked }));
+
+    // Se for um CEP válido, busca endereço e preenche os campos
+    if (isValidCep(masked)) {
+      const addr = await fetchCep(masked);
+      if (addr) {
+        setProfileData(prev => ({
+          ...prev,
+          address: addr.endereco || prev.address,
+          city: addr.cidade || prev.city,
+          state: addr.uf || prev.state,
+        }));
+      }
+    } else {
+      clearAddressData();
+    }
+  };
+
+  /**
+   * useEffect: Carrega perfil via GET /user/profile
+   * pt-BR: Obtém dados de perfil (inclusive meta) e atualiza `profileData`.
+   * en-US: Fetches profile (including meta) and updates `profileData`.
+   */
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const data = await authService.getProfile();
+        const meta = data?.meta || {};
+        setProfileData(prev => ({
+          ...prev,
+          name: data?.name ?? prev.name,
+          email: data?.email ?? prev.email,
+          phone: meta?.phone ?? prev.phone,
+          bio: meta?.bio ?? prev.bio,
+          company: meta?.company ?? prev.company,
+          // CPF não fornecido no endpoint do perfil; mantém o valor existente
+          cpf: prev.cpf,
+          birth_date: meta?.birth_date ?? prev.birth_date,
+          gender: meta?.gender ?? prev.gender,
+          address: meta?.address ?? prev.address,
+          city: meta?.city ?? prev.city,
+          state: meta?.state ?? prev.state,
+          zip_code: meta?.zip_code ?? prev.zip_code,
+        }));
+      } catch (error) {
+        console.error('Erro ao carregar perfil:', error);
+        toast({
+          title: 'Erro',
+          description: 'Não foi possível carregar seu perfil.',
+          variant: 'destructive',
+        });
+      }
+    };
+    loadProfile();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-orange-50 to-pink-50">
@@ -250,16 +352,20 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
                     <User className="w-5 h-5 text-teal-600" />
                     <span>Informações Pessoais</span>
                   </CardTitle>
-                  {/* {!isEditingProfile && (
+                  {!isEditingProfile && (
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setIsEditingProfile(true)}
+                      onClick={() => {
+                        // Guardar snapshot do conteúdo atual do Perfil antes de editar
+                        setProfileSnapshot(profileData);
+                        setIsEditingProfile(true);
+                      }}
                       className="border-2 border-purple-300 text-purple-600 hover:bg-purple-50 transition-all transform hover:scale-105"
                     >
                       Editar Perfil
                     </Button>
-                  )} */}
+                  )}
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -270,56 +376,56 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
                       <div className="space-y-4">
                         <div>
                           <Label className="text-sm font-medium text-gray-500">Nome Completo</Label>
-                          <p className="text-lg font-medium">{user?.name || 'Não informado'}</p>
+                          <p className="text-lg font-medium">{profileData?.name || 'Não informado'}</p>
                         </div>
                         <div>
                           <Label className="text-sm font-medium text-gray-500">E-mail</Label>
-                          <p className="text-lg">{user?.email || 'Não informado'}</p>
+                          <p className="text-lg">{profileData?.email || 'Não informado'}</p>
                         </div>
                         <div>
-                          <Label className="text-sm font-medium text-gray-500">Telefone</Label>
-                          <p className="text-lg">{user?.phone || 'Não informado'}</p>
+                      <Label className="text-sm font-medium text-gray-500">Telefone</Label>
+                      <p className="text-lg">{formatDisplayPhone(profileData?.phone)}</p>
                         </div>
                         <div>
-                          <Label className="text-sm font-medium text-gray-500">CPF</Label>
-                          <p className="text-lg">{user?.cpf || 'Não informado'}</p>
+                      <Label className="text-sm font-medium text-gray-500">CPF</Label>
+                      <p className="text-lg">{formatDisplayCpf(profileData?.cpf)}</p>
                         </div>
                         <div>
                           <Label className="text-sm font-medium text-gray-500">Data de Nascimento</Label>
-                          <p className="text-lg">{user?.birth_date ? new Date(user.birth_date).toLocaleDateString('pt-BR') : 'Não informado'}</p>
+                          <p className="text-lg">{profileData?.birth_date ? new Date(profileData.birth_date).toLocaleDateString('pt-BR') : 'Não informado'}</p>
                         </div>
                         <div>
                           <Label className="text-sm font-medium text-gray-500">Empresa</Label>
-                          <p className="text-lg">{user?.company || 'Não informado'}</p>
+                          <p className="text-lg">{profileData?.company || 'Não informado'}</p>
                         </div>
                       </div>
                       <div className="space-y-4">
                         <div>
                           <Label className="text-sm font-medium text-gray-500">Gênero</Label>
-                          <p className="text-lg">{user?.gender || 'Não informado'}</p>
+                          <p className="text-lg">{profileData?.gender || 'Não informado'}</p>
                         </div>
                         <div>
                           <Label className="text-sm font-medium text-gray-500">Endereço</Label>
-                          <p className="text-lg">{user?.address || 'Não informado'}</p>
+                          <p className="text-lg">{profileData?.address || 'Não informado'}</p>
                         </div>
                         <div>
                           <Label className="text-sm font-medium text-gray-500">Cidade</Label>
-                          <p className="text-lg">{user?.city || 'Não informado'}</p>
+                          <p className="text-lg">{profileData?.city || 'Não informado'}</p>
                         </div>
                         <div>
                           <Label className="text-sm font-medium text-gray-500">Estado</Label>
-                          <p className="text-lg">{user?.state || 'Não informado'}</p>
+                          <p className="text-lg">{profileData?.state || 'Não informado'}</p>
                         </div>
                         <div>
-                          <Label className="text-sm font-medium text-gray-500">CEP</Label>
-                          <p className="text-lg">{user?.zip_code || 'Não informado'}</p>
+                      <Label className="text-sm font-medium text-gray-500">CEP</Label>
+                      <p className="text-lg">{formatDisplayCep(profileData?.zip_code)}</p>
                         </div>
                       </div>
                     </div>
-                    {user?.bio && (
+                    {profileData?.bio && (
                       <div className="mt-4">
                         <Label className="text-sm font-medium text-gray-500">Biografia</Label>
-                        <p className="text-lg">{user.bio}</p>
+                        <p className="text-lg">{profileData.bio}</p>
                       </div>
                     )}
                   </div>
@@ -337,31 +443,47 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="email">E-mail</Label>
+                        <Label htmlFor="email">E-mail (não editável)</Label>
                         <Input
                           id="email"
                           type="email"
                           value={profileData.email}
                           onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
                           placeholder="Digite seu e-mail"
+                          disabled
+                          title="Este campo não pode ser alterado"
                         />
+                        <p className="text-xs text-gray-500">Seu e-mail atual não pode ser alterado.</p>
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="phone">Telefone</Label>
                         <Input
                           id="phone"
                           value={profileData.phone}
-                          onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
+                          onChange={(e) => handlePhoneChange(e.target.value)}
                           placeholder="Digite seu telefone"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="cpf">CPF</Label>
+                        <Label htmlFor="cpf">CPF (não editável)</Label>
                         <Input
                           id="cpf"
-                          value={profileData.cpf}
-                          onChange={(e) => setProfileData({ ...profileData, cpf: e.target.value })}
+                          value={cpfApplyMask((profileData.cpf || '').replace(/\D/g, '')) || profileData.cpf}
+                          onChange={() => { /* Campo bloqueado */ }}
                           placeholder="Digite seu CPF"
+                          disabled
+                          title="Este campo não pode ser alterado"
+                        />
+                        <p className="text-xs text-gray-500">Seu CPF não pode ser alterado.</p>
+                      </div>
+                      {/* CEP posicionado imediatamente após CPF para facilitar o autocomplete de endereço */}
+                      <div className="space-y-2">
+                        <Label htmlFor="zip_code">CEP</Label>
+                        <Input
+                          id="zip_code"
+                          value={profileData.zip_code}
+                          onChange={(e) => handleCepChange(e.target.value)}
+                          placeholder="Digite seu CEP"
                         />
                       </div>
                       <div className="space-y-2">
@@ -422,15 +544,6 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
                           value={profileData.state}
                           onChange={(e) => setProfileData({ ...profileData, state: e.target.value })}
                           placeholder="Digite seu estado"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="zip_code">CEP</Label>
-                        <Input
-                          id="zip_code"
-                          value={profileData.zip_code}
-                          onChange={(e) => setProfileData({ ...profileData, zip_code: e.target.value })}
-                          placeholder="Digite seu CEP"
                         />
                       </div>
                     </div>

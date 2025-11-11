@@ -35,6 +35,26 @@ export function useProductsList(params?: ProductListParams, queryOptions?: any) 
   return api.useList(params, safeQueryOptions);
 }
 
+/**
+ * Hook para listar produtos da loja (Point Store)
+ * Usa o endpoint público/cliente GET '/point-store/products'.
+ * Suporta filtros e opções de query e evita retries em erros 4xx.
+ */
+export function useStoreProductsList(params?: ProductListParams, queryOptions?: any) {
+  return useQuery({
+    queryKey: ['point-store', 'products', params || {}],
+    queryFn: () => productsService.listStoreProducts(params),
+    retry: (failureCount: number, error: any) => {
+      if (error?.status >= 400 && error?.status < 500) return false;
+      return failureCount < 1;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutos
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    ...queryOptions
+  });
+}
+
 export function useProduct(id: string, queryOptions?: any) {
   const api = getProductsApi();
   return api.useGetById(id, queryOptions);

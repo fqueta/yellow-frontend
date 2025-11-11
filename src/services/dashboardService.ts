@@ -47,7 +47,7 @@ export interface DashboardApiResponse {
   success: boolean;
   data: {
     recentClientActivities: ClientActivity[];
-    clientRegistrationData: ClientRegistrationData[];
+    registration_data: ClientRegistrationData[];
     pendingPreRegistrations: PendingPreRegistration[];
     totals: {
       actived: number;
@@ -110,17 +110,18 @@ class DashboardService extends BaseApiService {
   async getRegistrationData(startDate?: string, endDate?: string): Promise<ClientRegistrationData[]> {
     try {
       const response = await this.get<DashboardApiResponse>(this.endpoint);
-      if (response.success && response.data.clientRegistrationData) {
-        return response.data.clientRegistrationData;
+      // console.log('clientRegistrationData.....:', response.data);
+      if (response.success && response.data.registration_data) {
+        return response.data.registration_data;
       }
-      return this.getMockRegistrationData();
+      // return this.getMockRegistrationData();
     } catch (error) {
       // Se for erro 403, propagar o erro para o componente
       if ((error as any)?.status === 403) {
         throw error;
       }
       console.warn('Erro ao buscar dados de cadastro, usando dados mock:', error);
-      return this.getMockRegistrationData();
+      // return this.getMockRegistrationData();
     }
   }
 

@@ -270,7 +270,7 @@ export default function ProductsTable({
                     </TableCell>
                     <TableCell>
                       <div className="text-sm font-medium">
-                        {product.points?.toLocaleString('pt-BR') || '0'} Pontos
+                        {product.points?.toLocaleString('pt-BR') || '0'}
                       </div>
                     </TableCell>
                     <TableCell>

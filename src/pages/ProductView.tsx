@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useProduct, useUpdateProduct } from '@/hooks/products';
-import { useAuth } from '@/contexts/AuthContext';
 // import type { Product } from '@/types/products';
 import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
@@ -23,39 +22,6 @@ export default function ProductView() {
   const { data: productData, isLoading, error } = useProduct(id!);
   const product = productData as any;
   const [copied, setCopied] = useState(false);
-  const updateProductMutation = useUpdateProduct();
-  const [stockValue, setStockValue] = useState<number>(product?.stock ?? 0);
-  const { user } = useAuth();
-
-  /**
-   * Determina se o usuário pode editar o estoque.
-   * Regra: apenas usuários com permission_id <= 5.
-   */
-  const canEditStock = (user?.permission_id ?? Infinity) <= 5;
-
-  /**
-   * Atualiza o estado local `stockValue` quando o produto for carregado
-   * para refletir o estoque atual antes da edição.
-   */
-  useEffect(() => {
-    if (product?.stock !== undefined) {
-      setStockValue(product.stock);
-    }
-  }, [product?.stock]);
-
-  /**
-   * Manipulador para salvar a nova quantidade de estoque no servidor.
-   * Usa o hook `useUpdateProduct` para enviar apenas o campo `stock`.
-   */
-  const handleStockSave = async () => {
-    if (!id) return;
-    try {
-      await updateProductMutation.mutateAsync({ id, data: { stock: Math.max(0, Number(stockValue) || 0) } });
-      toast({ title: 'Estoque atualizado', description: 'A quantidade de estoque foi salva com sucesso.' });
-    } catch (err: any) {
-      toast({ title: 'Erro ao atualizar estoque', description: err?.message || 'Tente novamente mais tarde.', variant: 'destructive' });
-    }
-  };
   // console.log('product', product);
   /**
    * Navega de volta para a listagem de produtos
