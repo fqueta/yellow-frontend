@@ -62,6 +62,7 @@ import {
 } from '@/hooks/pointsExtracts';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import '@/styles/print.css';
 
 // Removido dados mockados - agora usando dados da API
 
@@ -92,12 +93,19 @@ const AdminPointsExtracts: React.FC = () => {
 
   // Hooks da API
   const { data: extractsResponse, isLoading, error, refetch } = usePointsExtracts(apiParams);
-  const { data: stats, isLoading: isLoadingStats } = usePointsExtractStats();
+  // Params específicos para estatísticas (somente filtros relevantes)
+  const statsParams = {
+    search: apiParams.search,
+    type: apiParams.type,
+    dateFrom: apiParams.dateFrom,
+    dateTo: apiParams.dateTo,
+  };
+  const { data: stats, isLoading: isLoadingStats } = usePointsExtractStats(statsParams);
   const createAdjustmentMutation = useCreateAdjustment();
   const exportMutation = useExportPointsExtracts();
   // console.log('extractsResponse',extractsResponse);
   const extracts = extractsResponse?.data || [];
-  console.log('extracts',extracts);
+  // console.log('extracts',extracts);
   const pagination = {
     current_page: extractsResponse?.current_page || 1,
     last_page: extractsResponse?.last_page || 1,
@@ -107,6 +115,7 @@ const AdminPointsExtracts: React.FC = () => {
 
   // Função para obter o ícone do tipo de transação
   const getTransactionIcon = (type: PointsTransactionType) => {
+    // console.log('type',type);
     switch (type) {
       case 'earned':
         return <TrendingUp className="w-4 h-4 text-green-600" />;
@@ -217,6 +226,44 @@ const AdminPointsExtracts: React.FC = () => {
     refetch();
   };
 
+  /**
+   * Gera uma legenda textual com os filtros aplicados
+   * pt-BR: Monta um texto compacto com tipo, período e busca.
+   * en-US: Builds a compact text with type, period and search.
+   */
+  const buildFilterLegend = (
+    typeValue: string,
+    searchValue: string,
+    dateFrom?: string,
+    dateTo?: string,
+  ): string => {
+    const parts: string[] = [];
+
+    // Tipo de transação
+    if (typeValue && typeValue !== 'all') {
+      const typeLabel = POINTS_TRANSACTION_TYPES[typeValue as keyof typeof POINTS_TRANSACTION_TYPES]?.label || typeValue;
+      parts.push(`Tipo: ${typeLabel}`);
+    }
+
+    // Período de datas
+    if (dateFrom && dateTo) {
+      parts.push(`Período: ${format(new Date(dateFrom), 'dd/MM/yyyy')} a ${format(new Date(dateTo), 'dd/MM/yyyy')}`);
+    } else if (dateFrom) {
+      parts.push(`Período: a partir de ${format(new Date(dateFrom), 'dd/MM/yyyy')}`);
+    } else if (dateTo) {
+      parts.push(`Período: até ${format(new Date(dateTo), 'dd/MM/yyyy')}`);
+    }
+
+    // Busca
+    if (searchValue && searchValue.trim().length > 0) {
+      parts.push(`Busca: "${searchValue.trim()}"`);
+    }
+
+    return parts.join(' | ');
+  };
+
+  const filterLegend = buildFilterLegend(typeFilter, searchTerm, dateFromFilter, dateToFilter);
+
   return (
     <div className="space-y-6">
       {/* Cabeçalho */}
@@ -224,13 +271,15 @@ const AdminPointsExtracts: React.FC = () => {
         <div>
           <div className="flex items-center justify-between gap-3">
   <h1 className="text-3xl font-bold tracking-tight">Extratos de Pontos</h1>
-  <PrintButton className="ml-auto" label="Imprimir extratos" />
 </div>
           <p className="text-muted-foreground">
             Acompanhe todas as movimentações de pontos dos clientes
           </p>
         </div>
-        <div className="flex gap-2">
+        {/* Área de ações à direita (inclui botão de impressão) */}
+        <div className="flex gap-2 items-center justify-end w-full sm:w-auto">
+          {/* Botão de imprimir extratos alinhado à direita */}
+          <PrintButton className="ml-auto" label="Imprimir extratos" />
           {/* <Button variant="outline" onClick={handleExport}>
             <Download className="w-4 h-4 mr-2" />
             Exportar
@@ -246,71 +295,8 @@ const AdminPointsExtracts: React.FC = () => {
         </div>
       </div>
 
-      {/* Estatísticas */}
-      {isLoadingStats ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          {[...Array(5)].map((_, i) => (
-            <Card key={i}>
-              <CardContent className="p-4">
-                <div className="text-center">
-                  <div className="h-8 w-16 bg-gray-200 rounded animate-pulse mx-auto mb-2" />
-                  <div className="h-4 w-24 bg-gray-200 rounded animate-pulse mx-auto" />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : stats ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-blue-600">{stats.totalTransactions.toLocaleString()}</p>
-                <p className="text-sm text-gray-600">Total Transações</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-green-600">{stats.totalEarned.toLocaleString()}</p>
-                <p className="text-sm text-gray-600">Pontos Ganhos</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-blue-600">{stats.totalRedeemed.toLocaleString()}</p>
-                <p className="text-sm text-gray-600">Pontos Resgatados</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-red-600">{stats.totalExpired.toLocaleString()}</p>
-                <p className="text-sm text-gray-600">Pontos Expirados</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-purple-600">{stats.activeUsers.toLocaleString()}</p>
-                <p className="text-sm text-gray-600">Usuários Ativos</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      ) : (
-        <div className="text-center py-4 text-gray-500">
-          Erro ao carregar estatísticas
-        </div>
-      )}
-
-      {/* Filtros */}
-      <Card>
+      {/* Filtros (não imprimir) */}
+      <Card className="no-print">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Filter className="w-5 h-5" />
@@ -370,6 +356,78 @@ const AdminPointsExtracts: React.FC = () => {
         </CardContent>
       </Card>
 
+      {/* Legenda dos filtros aplicada (visível na impressão se houver filtros) */}
+      {filterLegend && (
+        <div className="text-sm text-gray-600">
+          Filtros aplicados: {filterLegend}
+        </div>
+      )}
+
+      {/* Estatísticas - movidas abaixo dos filtros e refletindo filtros */}
+      {isLoadingStats ? (
+        // Ajuste de impressão: manter os cards de estatísticas em linha na página impressa
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 print-stats-grid">
+          {[...Array(5)].map((_, i) => (
+            <Card key={i}>
+              <CardContent className="p-4">
+                <div className="text-center">
+                  <div className="h-8 w-16 bg-gray-200 rounded animate-pulse mx-auto mb-2" />
+                  <div className="h-4 w-24 bg-gray-200 rounded animate-pulse mx-auto" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : stats ? (
+        // Ajuste de impressão: manter os cards de estatísticas em linha na página impressa
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 print-stats-grid">
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-blue-600">{stats.totalTransactions.toLocaleString()}</p>
+                <p className="text-sm text-gray-600">Total Transações</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-green-600">{stats.totalEarned.toLocaleString()}</p>
+                <p className="text-sm text-gray-600">Pontos Ganhos</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-blue-600">{stats.totalRedeemed.toLocaleString()}</p>
+                <p className="text-sm text-gray-600">Pontos Resgatados</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-red-600">{stats.totalExpired.toLocaleString()}</p>
+                <p className="text-sm text-gray-600">Pontos Expirados</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-purple-600">{stats.activeUsers.toLocaleString()}</p>
+                <p className="text-sm text-gray-600">Usuários Ativos</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
+        <div className="text-center py-4 text-gray-500">
+          Erro ao carregar estatísticas
+        </div>
+      )}
+
       {/* Tabela de Extratos */}
       <Card>
         <CardHeader>
@@ -394,7 +452,7 @@ const AdminPointsExtracts: React.FC = () => {
                   <TableHead>Saldo Anterior</TableHead>
                   <TableHead>Saldo Atual</TableHead>
                   <TableHead>Data</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
+                  <TableHead className="text-right print-hidden">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -452,7 +510,7 @@ const AdminPointsExtracts: React.FC = () => {
                       <TableCell>
                         <div className="max-w-xs">
                           <p className="text-sm truncate" title={extract.description}>
-                            {extract.description}
+                            {extract.description.replace(/Resgate de produto: /, 'Resgate de: ')}
                           </p>
                           {extract.reference && (
                             <p className="text-xs text-gray-500">Ref: {extract.reference}</p>
@@ -482,7 +540,7 @@ const AdminPointsExtracts: React.FC = () => {
                           </div>
                         )}
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right print-hidden">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="h-8 w-8 p-0">
@@ -495,7 +553,7 @@ const AdminPointsExtracts: React.FC = () => {
                               <Eye className="mr-2 h-4 w-4" />
                               Ver detalhes
                             </DropdownMenuItem>
-                            {extract.reference && (
+                            {/* {extract.reference && (
                               <DropdownMenuItem onClick={() => {
                                 if (extract.reference?.startsWith('R')) {
                                   toast({
@@ -512,7 +570,7 @@ const AdminPointsExtracts: React.FC = () => {
                                 <User className="mr-2 h-4 w-4" />
                                 Ver referência
                               </DropdownMenuItem>
-                            )}
+                            )} */}
                             {extract.createdBy && (
                               <DropdownMenuItem disabled>
                                 <User className="mr-2 h-4 w-4" />

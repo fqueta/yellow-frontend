@@ -33,11 +33,16 @@ export function usePointsExtract(id: string, queryOptions?: any) {
 
 /**
  * Hook para obter estatísticas dos extratos
+ *
+ * pt-BR: Aceita filtros (mesmos da listagem) para que os cards
+ * reflitam os resultados filtrados.
+ * en-US: Accepts filters (same as list) so the stats cards
+ * reflect the filtered results.
  */
-export function usePointsExtractStats(queryOptions?: any) {
+export function usePointsExtractStats(params?: PointsExtractListParams, queryOptions?: any) {
   return useQuery<PointsExtractStats>({
-    queryKey: ['points-extracts-stats'],
-    queryFn: () => pointsExtractsService.getPointsExtractStats(),
+    queryKey: ['points-extracts-stats', params],
+    queryFn: () => pointsExtractsService.getPointsExtractStats(params),
     ...queryOptions
   });
 }

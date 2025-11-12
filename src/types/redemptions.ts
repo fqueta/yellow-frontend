@@ -160,8 +160,8 @@ export const REDEMPTION_STATUSES = {
 
 // Mapeamento de tipos de transação para exibição
 export const POINTS_TRANSACTION_TYPES = {
-  earned: { label: 'Ganhos', color: 'green' },
-  redeemed: { label: 'Resgatados', color: 'blue' },
+  // earned: { label: 'Ganhos', color: 'green' },
+  // redeemed: { label: 'Resgatados', color: 'blue' },
   // expired: { label: 'Expirados', color: 'red' },
   // bonus: { label: 'Bônus', color: 'purple' },
   // refund: { label: 'Reembolso', color: 'orange' },
@@ -172,4 +172,11 @@ export const POINTS_TRANSACTION_TYPES = {
   // ajuste: { label: 'Ajuste', color: 'gray' },
   // reembolso: { label: 'Reembolso', color: 'orange' },
   // expiracao: { label: 'Expiração', color: 'red' }
+} as const;
+
+// Mapeamento de tipos de transação para lista da tabela
+export const POINTS_TRANSACTION_TYPES_LIST = {
+  earned: { label: 'Ganhos', color: 'green' },
+  redeemed: { label: 'Resgatados', color: 'blue' },
+  
 } as const;

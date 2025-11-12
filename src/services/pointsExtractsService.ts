@@ -126,9 +126,14 @@ class PointsExtractsService extends BaseApiService {
 
   /**
    * Obtém estatísticas dos extratos de pontos
+   *
+   * pt-BR: Permite passar os mesmos filtros da listagem para obter
+   * estatísticas filtradas (tipo, período, busca, etc.).
+   * en-US: Accepts list filters to return filtered stats
+   * (type, date range, search, etc.).
    */
-  async getPointsExtractStats(): Promise<PointsExtractStats> {
-    const response = await this.get<ApiResponse<PointsExtractStats>>(`${this.endpoint}/stats`);
+  async getPointsExtractStats(params?: PointsExtractListParams): Promise<PointsExtractStats> {
+    const response = await this.get<ApiResponse<PointsExtractStats>>(`${this.endpoint}/stats`, params);
     return response.data;
   }
 

@@ -39,7 +39,8 @@ import { toast } from '@/hooks/use-toast';
 import { 
   PointsExtract, 
   PointsTransactionType,
-  POINTS_TRANSACTION_TYPES 
+  POINTS_TRANSACTION_TYPES, 
+  POINTS_TRANSACTION_TYPES_LIST
 } from '@/types/redemptions';
 import { 
   usePointsExtract, 
@@ -324,8 +325,9 @@ const AdminPointsExtractDetails: React.FC = () => {
           <div className="space-y-6">
             {/* Cabeçalho */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 ">
-              <div className="flex items-center gap-4">
-                <Button variant="outline" onClick={handleGoBack}>
+            <div className="flex items-center gap-4">
+                {/* Botão Voltar oculto na impressão para evitar espaço em branco no topo */}
+                <Button variant="outline" onClick={handleGoBack} className="print-hidden">
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Voltar
                 </Button>
@@ -391,7 +393,7 @@ const AdminPointsExtractDetails: React.FC = () => {
                           <p className="mt-1 text-sm">{extract.description}</p>
                         </div>
                         
-                        {extract.reference && (
+                        {/* {extract.reference && (
                           <div>
                             <label className="text-sm font-medium text-gray-500">Referência</label>
                             <div className="flex items-center gap-2 mt-1">
@@ -407,7 +409,7 @@ const AdminPointsExtractDetails: React.FC = () => {
                               </Button>
                             </div>
                           </div>
-                        )}
+                        )} */}
                       </div>
                       
                       <div className="space-y-4">
@@ -467,11 +469,11 @@ const AdminPointsExtractDetails: React.FC = () => {
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead>Tipo</TableHead>
+                            {/* <TableHead className="print-hidden">Tipo</TableHead> */}
                             <TableHead>Pontos</TableHead>
                             <TableHead>Descrição</TableHead>
                             <TableHead>Data</TableHead>
-                            <TableHead className="text-right print:hidden">Ações</TableHead>
+                            {/* <TableHead className="text-right print:hidden">Ações</TableHead> */}
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -498,11 +500,11 @@ const AdminPointsExtractDetails: React.FC = () => {
                               <TableRow key={transaction.id}>
                                 <TableCell>
                                   <div className="flex items-center gap-3">
-                                    <div className={`p-2 rounded-full ${getTransactionColor(transaction.type)}`}>
+                                    <div className={`p-2 rounded-full ${getTransactionColor(transaction.type)} print:hidden`}>
                                       {getTransactionIcon(transaction.type)}
                                     </div>
                                     <div>
-                                      <p className="font-medium">{POINTS_TRANSACTION_TYPES[transaction.type]?.label || transaction.type || 'Tipo desconhecido'}</p>
+                                      <p className="font-medium">{POINTS_TRANSACTION_TYPES_LIST[transaction.type]?.label || transaction.type || 'Tipo desconhecido'}</p>
                                       <div className="flex items-center gap-2">
                                         <span className={`text-sm font-medium ${
                                           transaction.points > 0 ? 'text-green-600' : 'text-red-600'
@@ -529,7 +531,7 @@ const AdminPointsExtractDetails: React.FC = () => {
                                     {transaction.createdAt ? format(new Date(transaction.createdAt), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : 'Data não disponível'}
                                   </span>
                                 </TableCell>
-                                <TableCell className="text-right print:hidden">
+                                {/* <TableCell className="text-right print:hidden">
                                   <Button 
                                     variant="ghost" 
                                     size="sm"
@@ -537,7 +539,7 @@ const AdminPointsExtractDetails: React.FC = () => {
                                   >
                                     <Eye className="w-4 h-4" />
                                   </Button>
-                                </TableCell>
+                                </TableCell> */}
                               </TableRow>
                             ))
                           )}
@@ -683,7 +685,7 @@ const AdminPointsExtractDetails: React.FC = () => {
                         Gerar Relatório
                       </Button>
                       
-                      {extract.reference && (
+                      {/* {extract.reference && (
                         <Button 
                           variant="outline" 
                           className="w-full justify-start"
@@ -692,7 +694,7 @@ const AdminPointsExtractDetails: React.FC = () => {
                           <Eye className="w-4 h-4 mr-2" />
                           Ver Referência
                         </Button>
-                      )}
+                      )} */}
                     </div>
                   </CardContent>
                 </Card>

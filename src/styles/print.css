@@ -102,16 +102,47 @@
   @page { size: A4 portrait; margin: 10mm; }
 
   /* ===== Grid: manter múltiplas colunas (lado a lado) ===== */
-  /* Volta o comportamento de grid e preserva colunas declaradas */
-  .grid { display: grid !important; break-inside: avoid !important; }
-  .grid > * { width: auto !important; }
+  /* Volta o comportamento de grid e permite quebra entre páginas */
+  .grid { display: grid !important; break-inside: auto !important; page-break-inside: auto !important; }
+  .grid > * { width: auto !important; break-inside: auto !important; page-break-inside: auto !important; }
   /* Tailwind classes comuns para duas colunas */
   .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
   .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
   .lg\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  /* Força os cards de stats a ficarem em linha na impressão */
+  .print-stats-grid { 
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important; 
+    align-items: stretch !important;
+    column-gap: 0.5rem !important;
+    row-gap: 0 !important;
+  }
+  /* Variante para páginas com 8 cards de estatísticas (Resgates) */
+  .print-stats-grid-8 {
+    grid-template-columns: repeat(8, minmax(0, 1fr)) !important;
+    align-items: stretch !important;
+    column-gap: 0.5rem !important;
+    row-gap: 0 !important;
+  }
+  /* Compactação específica para o grid de 8 stats (Resgates) */
+  .print-stats-grid-8 .p-4 { padding: 0.5rem !important; }
+  .print-stats-grid-8 .text-2xl { font-size: 1.1rem !important; }
+  .print-stats-grid-8 .text-sm { font-size: 0.7rem !important; }
   /* Ajuste de gaps para caber melhor no A4 */
   .gap-6 { gap: 1rem !important; }
   .gap-4 { gap: 0.75rem !important; }
+  /* Reduz espaçamentos verticais padrão entre blocos */
+  .space-y-6 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.75rem !important; }
+
+  /* Compacta paddings comuns para caber ao menos uma linha da tabela na primeira página */
+  .p-6 { padding: 0.75rem !important; }
+  .p-4 { padding: 0.5rem !important; }
+  .px-6 { padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
+  .py-4 { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; }
+
+  /* Compacta especificamente os cards de estatísticas */
+  .print-stats-grid .p-4 { padding: 0.5rem !important; }
+  .print-stats-grid .text-2xl { font-size: 1.15rem !important; }
+  .print-stats-grid .text-sm { font-size: 0.7rem !important; }
 
   /* Evita quebra no meio de cartões muito longos: permitir que o conteúdo flua */
   .card, .rounded-md, .rounded-lg { page-break-inside: auto !important; break-inside: auto !important; }

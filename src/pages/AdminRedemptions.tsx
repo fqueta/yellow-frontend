@@ -53,6 +53,8 @@ import {
 } from '@/types/redemptions';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { PrintButton } from '@/components/ui/PrintButton';
+import '@/styles/print.css';
 
 
 
@@ -264,20 +266,77 @@ const AdminRedemptions: React.FC = () => {
             Acompanhe e gerencie todos os resgates realizados pelos clientes
           </p>
         </div>
-        {/* <div className="flex gap-2">
-          <Button variant="outline" onClick={handleExport}>
-            <Download className="w-4 h-4 mr-2" />
-            Exportar
-          </Button>
-          <Button onClick={() => refetch()}>
-            <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-            Atualizar
-          </Button>
-        </div> */}
+        <div className="flex gap-2">
+          {/* Botão de impressão visível apenas no modo normal (oculto na impressão via CSS) */}
+          <PrintButton className="ml-auto" label="Imprimir resgates" />
+        </div>
       </div>
 
-      {/* Estatísticas */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+      {/* Filtros (não imprimir) */}
+      <Card className="no-print">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Filter className="w-5 h-5" />
+            Filtros
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Buscar</label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Input
+                  placeholder="Nome, email, produto ou ID..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Status</label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos os status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os status</SelectItem>
+                  {Object.entries(REDEMPTION_STATUSES).map(([key, value]) => (
+                    <SelectItem key={key} value={key}>
+                      {value.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Categoria</label>
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todas as categorias" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as categorias</SelectItem>
+                  {categories.map(category => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Estatísticas - agora abaixo dos filtros */}
+      {/* Ajuste de impressão: manter os cards de estatísticas em uma linha na página impressa */}
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 print-stats-grid-8">
         <Card>
           <CardContent className="p-4">
             <div className="text-center">
@@ -344,68 +403,6 @@ const AdminRedemptions: React.FC = () => {
         </Card>
       </div>
 
-      {/* Filtros */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="w-5 h-5" />
-            Filtros
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Buscar</label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  placeholder="Nome, email, produto ou ID..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Status</label>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todos os status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os status</SelectItem>
-                  {Object.entries(REDEMPTION_STATUSES).map(([key, value]) => (
-                    <SelectItem key={key} value={key}>
-                      {value.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-
-            
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Categoria</label>
-              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todas as categorias" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas as categorias</SelectItem>
-                  {categories.map(category => (
-                    <SelectItem key={category} value={category}>
-                      {category}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Tabela de Resgates */}
       <Card>
         <CardHeader>
@@ -429,7 +426,7 @@ const AdminRedemptions: React.FC = () => {
                   <TableHead>Data</TableHead>
                   <TableHead>Status</TableHead>
                   {/* <TableHead>Entrega</TableHead> */}
-                  <TableHead className="text-right">Ações</TableHead>
+                  <TableHead className="text-right print-hidden">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -495,7 +492,7 @@ const AdminRedemptions: React.FC = () => {
                           </span>
                         )}
                       </TableCell> */}
-                      <TableCell className="text-right">
+                      <TableCell className="text-right print-hidden">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="h-8 w-8 p-0">
