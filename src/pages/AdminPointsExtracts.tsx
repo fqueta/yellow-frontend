@@ -235,10 +235,10 @@ const AdminPointsExtracts: React.FC = () => {
             <Download className="w-4 h-4 mr-2" />
             Exportar
           </Button> */}
-          <Button variant="outline" onClick={handleCreateAdjustment}>
+          {/* <Button variant="outline" onClick={handleCreateAdjustment}>
             <Plus className="w-4 h-4 mr-2" />
             Criar Ajuste
-          </Button>
+          </Button> */}
           {/* <Button onClick={handleRefresh} disabled={isLoading}>
             <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
             Atualizar
