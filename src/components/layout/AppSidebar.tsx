@@ -26,6 +26,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { buildMenuFromDTO, filterMenuByViewAccess, defaultMenu } from "@/lib/menu";
 
+/**
+ * AppSidebar
+ * pt-BR: Sidebar do painel administrativo. A logo no cabeçalho agora
+ * redireciona para a LandingPage (rota '/').
+ * en-US: Admin panel sidebar. Header logo now navigates to the LandingPage ('/').
+ */
+
 export function AppSidebar() {
   const { state } = useSidebar();
   const { menu: apiMenu, logout } = useAuth();
@@ -48,7 +55,7 @@ export function AppSidebar() {
   return (
     <Sidebar className={collapsed ? "w-14" : "w-64"} collapsible="icon">
       <SidebarHeader className="border-b border-border print:hidden">
-        <div className="flex items-center gap-2 px-4 py-3">
+        <Link to="/" className="flex items-center gap-2 px-4 py-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <Wrench className="h-4 w-4" />
           </div>
@@ -58,7 +65,7 @@ export function AppSidebar() {
               <span className="text-xs text-muted-foreground">Gestão & Orçamentos</span>
             </div>
           )}
-        </div>
+        </Link>
       </SidebarHeader>
 
       <SidebarContent>
