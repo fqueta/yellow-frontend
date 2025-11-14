@@ -89,12 +89,56 @@ export function useDeleteRedemption(mutationOptions?: any) {
 
   return useMutation({
     mutationFn: (id: string) => redemptionsService.deleteRedemption(id),
+    /**
+     * Ao excluir um resgate:
+     * - Remove o item dos caches das listagens de forma otimista (evita reaparecer ao voltar para a lista)
+     * - Invalida as queries para garantir sincronização com o servidor
+     * - Remove o cache do detalhe específico
+     * - Opcionalmente força refetch das listagens ativas
+     */
     onSuccess: (_data, id) => {
-      // Atualiza listagens e remove o detalhe do resgate
+      // Remover otimisticamente o item das listagens em cache
+      queryClient.setQueriesData({ queryKey: ['all-redemptions'] }, (oldData: any) => {
+        if (!oldData) return oldData;
+        try {
+          const next = { ...oldData };
+          if (Array.isArray(next.data)) {
+            next.data = next.data.filter((r: any) => String(r?.id) !== String(id));
+            if (typeof next.total === 'number') {
+              next.total = Math.max(0, next.total - 1);
+            }
+          }
+          return next;
+        } catch {
+          return oldData;
+        }
+      });
+      queryClient.setQueriesData({ queryKey: ['user-redemptions'] }, (oldData: any) => {
+        if (!oldData) return oldData;
+        try {
+          const next = { ...oldData };
+          if (Array.isArray(next.data)) {
+            next.data = next.data.filter((r: any) => String(r?.id) !== String(id));
+            if (typeof next.total === 'number') {
+              next.total = Math.max(0, next.total - 1);
+            }
+          }
+          return next;
+        } catch {
+          return oldData;
+        }
+      });
+
+      // Invalida e remove caches relacionados
       queryClient.invalidateQueries({ queryKey: ['redemptions'] });
       queryClient.invalidateQueries({ queryKey: ['user-redemptions'] });
       queryClient.invalidateQueries({ queryKey: ['all-redemptions'] });
       queryClient.removeQueries({ queryKey: ['redemption', id] });
+
+      // Garante atualização imediata das listagens ativas
+      queryClient.refetchQueries({ queryKey: ['all-redemptions'] });
+      queryClient.refetchQueries({ queryKey: ['user-redemptions'] });
+
       mutationOptions?.onSuccess?.(_data, id, undefined);
     },
     onError: (error: Error) => {

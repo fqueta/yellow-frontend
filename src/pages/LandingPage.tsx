@@ -17,6 +17,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { PointsStoreProps } from "@/types/products";
 import { GenericApiService } from "@/services/GenericApiService";
 import { toast } from "@/hooks/use-toast";
+import { WhatsAppFloatingButton } from "@/components/ui/WhatsAppFloatingButton";
 /**
  * Landing page component for Yellow Benefits Club
  * Features modern design with Yellow brand colors (yellow and purple)
@@ -394,6 +395,9 @@ const LandingPage = ({ linkLoja }: PointsStoreProps) => {
           </div>
         </div>
       </footer>
+
+      {/* Botão flutuante do WhatsApp no canto inferior direito */}
+      <WhatsAppFloatingButton />
     </div>
   );
 };

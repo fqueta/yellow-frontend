@@ -83,6 +83,17 @@ const AdminRedemptions: React.FC = () => {
 
     category: categoryFilter !== 'all' ? categoryFilter : undefined,
     search: searchTerm || undefined
+  },
+  /**
+   * Força refetch ao montar a página de lista.
+   * pt-BR: Garante que, ao voltar após excluir um resgate, a listagem
+   * não exiba o item removido a partir do cache antigo.
+   * en-US: Ensures the list refetches on mount so deleted items won’t
+   * appear from stale cache when navigating back from details.
+   */
+  {
+    refetchOnMount: 'always',
+    staleTime: 0,
   });
 
   const redemptions = (redemptionsData as any)?.data || [];
