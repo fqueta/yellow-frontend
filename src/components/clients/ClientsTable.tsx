@@ -41,7 +41,7 @@ export function ClientsTable({ clients, onEdit, onDelete, isLoading, trashEnable
     const user = usersList.find(user => user.id === autorId);
     return user?.name || 'Não identificado';
   };
-  console.log('trashEnabled:', trashEnabled);
+  // console.log('trashEnabled:', trashEnabled);
   
   // Função para formatar o status
   const getStatusBadge = (status: string) => {
@@ -95,7 +95,7 @@ export function ClientsTable({ clients, onEdit, onDelete, isLoading, trashEnable
             <TableHead>Email</TableHead>
             <TableHead>Proprietário</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead className="text-right">Ações</TableHead>
+            <TableHead className="text-right print:hidden">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -119,7 +119,7 @@ export function ClientsTable({ clients, onEdit, onDelete, isLoading, trashEnable
                 </div>
                 {getStatusBadge(client.status)}
               </TableCell>
-              <TableCell className="text-right">
+              <TableCell className="text-right print:hidden">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button className="flex h-8 w-8 items-center justify-center rounded-md border hover:bg-muted">

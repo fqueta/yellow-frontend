@@ -42,8 +42,10 @@ import { useToast } from "@/hooks/use-toast";
 import * as z from "zod";
 import { 
   Plus, 
-  Search
+  Search,
+  Printer
 } from "lucide-react";
+import "@/styles/print.css";
 import { getBrazilianStates } from '@/lib/qlib';
 import { 
   useClientsList, 
@@ -593,18 +595,32 @@ export default function Clients() {
     });
   }, [clientsQuery.data, searchTerm, statusFilter]);
 
+  /**
+   * handlePrint
+   * pt-BR: Aciona a impressão da página usando `window.print()`.
+   * en-US: Triggers the page print using `window.print()`.
+   */
+  const handlePrint = useCallback(() => {
+    window.print();
+  }, []);
+
   return (
     <div className="container mx-auto py-6 space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Clientes</h1>
-        <Button onClick={handleNewClient}>
-          <Plus className="mr-2 h-4 w-4" /> Novo Cliente
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button className="no-print" variant="outline" onClick={handlePrint}>
+            <Printer className="mr-2 h-4 w-4" /> Imprimir
+          </Button>
+          <Button onClick={handleNewClient}>
+            <Plus className="mr-2 h-4 w-4" /> Novo Cliente
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 print-stats-grid-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Total de Clientes</CardTitle>

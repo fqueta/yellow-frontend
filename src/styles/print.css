@@ -116,6 +116,16 @@
     column-gap: 0.5rem !important;
     row-gap: 0 !important;
   }
+  /* Variante específica para páginas com 4 cards (Clientes) */
+  .print-stats-grid-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    align-items: stretch !important;
+    column-gap: 0.5rem !important;
+    row-gap: 0 !important;
+  }
+  .print-stats-grid-4 .p-4 { padding: 0.5rem !important; }
+  .print-stats-grid-4 .text-2xl { font-size: 1.15rem !important; }
+  .print-stats-grid-4 .text-sm { font-size: 0.7rem !important; }
   /* Variante para páginas com 8 cards de estatísticas (Resgates) */
   .print-stats-grid-8 {
     grid-template-columns: repeat(8, minmax(0, 1fr)) !important;
