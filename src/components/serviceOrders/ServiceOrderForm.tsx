@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { phoneApplyMask } from '@/lib/masks/phone-apply-mask';
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -472,7 +473,7 @@ export default function ServiceOrderForm({
                          <p className="text-sm text-blue-600">Cliente proprietário da aeronave</p>
                          <p className="font-medium text-blue-900">{selectedAircraft.client.name}</p>
                          <p className="font-medium text-blue-900">{selectedAircraft.client.email}</p>
-                         <p className="font-medium text-blue-900">{selectedAircraft.client.config.celular}</p>
+                         <p className="font-medium text-blue-900">{phoneApplyMask(String(selectedAircraft.client.config.celular))}</p>
                        </div>
                      </div>
                    </CardContent>

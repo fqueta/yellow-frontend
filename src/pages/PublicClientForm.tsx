@@ -17,6 +17,7 @@ import {
 import { toast } from 'sonner';
 import { mascaraCpf } from '@/lib/qlib';
 import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import { phoneApplyMask, phoneRemoveMask } from '@/lib/masks/phone-apply-mask';
 // import { useGenericApi } from '@/hooks/useGenericApi';
 import { 
   activeClientsService, 
@@ -89,6 +90,16 @@ export default function PublicClientForm() {
   });
 
   /**
+   * handlePhoneChange
+   * pt-BR: Aplica máscara de telefone conforme o usuário digita.
+   * en-US: Applies phone mask as the user types.
+   */
+  const handlePhoneChange = (value: string, onChange: (v: string) => void) => {
+    const masked = phoneApplyMask(value);
+    onChange(masked);
+  };
+
+  /**
    * Função para submeter o formulário completo
    */
   const onSubmit = async (data: FormData) => {
@@ -104,7 +115,7 @@ export default function PublicClientForm() {
         name: data.name,
         cpf: data.cpf.replace(/\D/g, ''), // Remove máscara do CPF
         email: data.email,
-        phone: data.phone,
+        phone: phoneRemoveMask(data.phone),
         termsAccepted: data.termsAccepted,
         privacyAccepted: data.privacyAccepted,
         password: data.password
@@ -274,9 +285,11 @@ export default function PublicClientForm() {
                         <FormLabel className="text-purple-700 font-medium">Número de telefone*</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="Número de telefone"
+                            placeholder="+DDI (DDD) número"
                             className="border-gray-300 focus:border-purple-500 focus:ring-purple-500"
                             {...field}
+                            onChange={(e) => handlePhoneChange(e.target.value, field.onChange)}
+                            maxLength={25}
                           />
                         </FormControl>
                         <FormMessage className="text-red-500 text-xs" />

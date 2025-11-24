@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { usePartner } from '@/hooks/partners';
 import { PartnerRecord } from '@/types/partners';
+import { phoneApplyMask } from '@/lib/masks/phone-apply-mask';
 
 /**
  * Formata CPF para exibição
@@ -24,16 +25,14 @@ function formatCNPJ(cnpj: string | null): string {
 }
 
 /**
- * Formata telefone para exibição
+ * formatDisplayPhone
+ * pt-BR: Formata o telefone para exibição com suporte a DDI, usando a máscara padronizada.
+ * en-US: Formats phone for display with DDI support, using the standardized mask.
  */
-function formatPhone(phone: string): string {
-  const cleaned = phone.replace(/\D/g, '');
-  if (cleaned.length === 11) {
-    return cleaned.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
-  } else if (cleaned.length === 10) {
-    return cleaned.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
-  }
-  return phone;
+function formatDisplayPhone(phone: string): string {
+  if (!phone) return 'Não informado';
+  const digits = phone.replace(/\D/g, '');
+  return digits ? phoneApplyMask(digits) : 'Não informado';
 }
 
 /**
@@ -243,7 +242,7 @@ export default function PartnerView() {
                 <label className="text-sm font-medium text-muted-foreground">Celular</label>
                 <p className="text-sm flex items-center">
                   <Phone className="mr-2 h-4 w-4" />
-                  {formatPhone(partner.config.celular)}
+              {formatDisplayPhone(partner.config.celular)}
                 </p>
               </div>
             )}
@@ -253,7 +252,7 @@ export default function PartnerView() {
                 <label className="text-sm font-medium text-muted-foreground">Telefone Residencial</label>
                 <p className="text-sm flex items-center">
                   <Phone className="mr-2 h-4 w-4" />
-                  {formatPhone(partner.config.telefone_residencial)}
+              {formatDisplayPhone(partner.config.telefone_residencial)}
                 </p>
               </div>
             )}
@@ -263,7 +262,7 @@ export default function PartnerView() {
                 <label className="text-sm font-medium text-muted-foreground">Telefone Comercial</label>
                 <p className="text-sm flex items-center">
                   <Phone className="mr-2 h-4 w-4" />
-                  {formatPhone(partner.config.telefone_comercial)}
+              {formatDisplayPhone(partner.config.telefone_comercial)}
                 </p>
               </div>
             )}

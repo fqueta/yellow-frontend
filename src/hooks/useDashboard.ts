@@ -6,10 +6,17 @@ import { dashboardService, DashboardData, ClientActivity, ClientRegistrationData
  * @param limit - Número máximo de atividades a retornar
  * @param queryOptions - Opções adicionais da query
  */
-export function useRecentActivities(limit: number = 10, queryOptions?: any) {
+/**
+ * Hook para buscar atividades recentes de clientes com filtro de período
+ * @param limit - Número máximo de atividades a retornar
+ * @param startDate - Data inicial do filtro (yyyy-mm-dd)
+ * @param endDate - Data final do filtro (yyyy-mm-dd)
+ * @param queryOptions - Opções adicionais da query
+ */
+export function useRecentActivities(limit: number = 10, startDate?: string, endDate?: string, queryOptions?: any) {
   return useQuery({
-    queryKey: ['dashboard', 'recent-activities', limit],
-    queryFn: () => dashboardService.getRecentActivities(limit),
+    queryKey: ['dashboard', 'recent-activities', limit, startDate, endDate],
+    queryFn: () => dashboardService.getRecentActivities(limit, startDate, endDate),
     staleTime: 5 * 60 * 1000, // 5 minutos
     refetchInterval: 30 * 1000, // Atualiza a cada 30 segundos
     ...queryOptions,
@@ -37,11 +44,15 @@ export function useRegistrationData(startDate?: string, endDate?: string, queryO
  * @param limit - Número máximo de pré-registros a retornar
  * @param queryOptions - Opções adicionais da query
  */
-export function usePendingPreRegistrations(limit: number = 10, queryOptions?: any) {
-  // console.log('usePendingPreRegistrations 109:', dashboardService.getPendingPreRegistrations(limit));
+export function usePendingPreRegistrations(limit: number = 10, startDate?: string, endDate?: string, queryOptions?: any) {
+  /**
+   * Busca pré-registros pendentes com suporte a filtro de período.
+   * pt-BR: Inclui `startDate` e `endDate` na chave e na requisição.
+   * en-US: Includes `startDate` and `endDate` in the query key and request.
+   */
   return useQuery({
-    queryKey: ['dashboard', 'pending-pre-registrations', limit],
-    queryFn: () => dashboardService.getPendingPreRegistrations(limit),
+    queryKey: ['dashboard', 'pending-pre-registrations', limit, startDate, endDate],
+    queryFn: () => dashboardService.getPendingPreRegistrations(limit, startDate, endDate),
     staleTime: 5 * 60 * 1000, // 5 minutos
     refetchInterval: 30 * 1000, // Atualiza a cada 30 segundos
     ...queryOptions,
@@ -52,10 +63,16 @@ export function usePendingPreRegistrations(limit: number = 10, queryOptions?: an
  * Hook para buscar todos os dados do dashboard de uma vez
  * @param queryOptions - Opções adicionais da query
  */
-export function useDashboardData(queryOptions?: any) {
+/**
+ * Hook para buscar todos os dados do dashboard com filtro de período
+ * @param startDate - Data inicial do filtro (yyyy-mm-dd)
+ * @param endDate - Data final do filtro (yyyy-mm-dd)
+ * @param queryOptions - Opções adicionais da query
+ */
+export function useDashboardData(startDate?: string, endDate?: string, queryOptions?: any) {
   return useQuery({
-    queryKey: ['dashboard', 'all-data'],
-    queryFn: () => dashboardService.getDashboardData(),
+    queryKey: ['dashboard', 'all-data', startDate, endDate],
+    queryFn: () => dashboardService.getDashboardData(startDate, endDate),
     staleTime: 5 * 60 * 1000, // 5 minutos
     refetchInterval: 30 * 1000, // Atualiza a cada 30 segundos
     ...queryOptions,

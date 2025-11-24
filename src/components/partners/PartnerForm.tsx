@@ -9,6 +9,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Button } from '@/components/ui/button';
 import { Eye, EyeOff } from 'lucide-react';
 import { CreatePartnerInput } from '@/types/partners';
+import { phoneApplyMask } from '@/lib/masks/phone-apply-mask';
 
 interface PartnerFormProps {
   form: UseFormReturn<CreatePartnerInput>;
@@ -214,9 +215,19 @@ export function PartnerForm({ form, isLoading = false }: PartnerFormProps) {
 
             <div>
               <Label htmlFor="config.celular">Celular</Label>
+              {/* handlePartnerCellphoneChange
+               * pt-BR: Aplica máscara com DDI no campo Celular do parceiro.
+               * en-US: Applies phone mask with country code to partner's Cellular field.
+               */}
               <Input
                 id="config.celular"
                 {...register('config.celular')}
+                onChange={(e) => {
+                  const masked = phoneApplyMask(e.target.value);
+                  e.target.value = masked;
+                }}
+                placeholder="+DDI (DDD) número"
+                maxLength={25}
                 disabled={isLoading}
               />
             </div>
@@ -225,18 +236,38 @@ export function PartnerForm({ form, isLoading = false }: PartnerFormProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="config.telefone_residencial">Telefone Residencial</Label>
+              {/* handlePartnerHomePhoneChange
+               * pt-BR: Aplica máscara com DDI no campo Telefone Residencial do parceiro.
+               * en-US: Applies phone mask with country code to partner's Home Phone field.
+               */}
               <Input
                 id="config.telefone_residencial"
                 {...register('config.telefone_residencial')}
+                onChange={(e) => {
+                  const masked = phoneApplyMask(e.target.value);
+                  e.target.value = masked;
+                }}
+                placeholder="+DDI (DDD) número"
+                maxLength={25}
                 disabled={isLoading}
               />
             </div>
 
             <div>
               <Label htmlFor="config.telefone_comercial">Telefone Comercial</Label>
+              {/* handlePartnerBusinessPhoneChange
+               * pt-BR: Aplica máscara com DDI no campo Telefone Comercial do parceiro.
+               * en-US: Applies phone mask with country code to partner's Business Phone field.
+               */}
               <Input
                 id="config.telefone_comercial"
                 {...register('config.telefone_comercial')}
+                onChange={(e) => {
+                  const masked = phoneApplyMask(e.target.value);
+                  e.target.value = masked;
+                }}
+                placeholder="+DDI (DDD) número"
+                maxLength={25}
                 disabled={isLoading}
               />
             </div>

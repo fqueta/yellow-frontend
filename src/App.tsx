@@ -132,7 +132,13 @@ const App = () => {
                 </AuthRedirect>
               } />
               <Route path="/form-client-active/:cpf" element={<PublicClientForm />} />
-              <Route path="/public-client-form" element={<PublicClientForm />} />
+              <Route path="/public-client-form" element={
+                // pt-BR: Se o usuário estiver logado, redireciona para a Área do Cliente da loja.
+                // en-US: If user is logged in, redirect to the store Client Area.
+                <AuthRedirect redirectTo={`${link_loja}/area-cliente`}>
+                  <PublicClientForm />
+                </AuthRedirect>
+              } />
               
               {/* Rotas da loja - protegidas */}
               <Route path={link_loja} element={

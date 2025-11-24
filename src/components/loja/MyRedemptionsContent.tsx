@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Package, Calendar, Star, Gift, CheckCircle, Clock, XCircle, Search, Filter, Loader2 } from 'lucide-react';
+import { Package, Calendar, Star, Gift, CheckCircle, Clock, XCircle, Search, Filter, Loader2, Phone } from 'lucide-react';
 import { useUserRedemptions } from '@/hooks/redemptions';
 import { Redemption as RedemptionType, REDEMPTION_STATUSES } from '@/types/redemptions';
 import { PointsStoreProps } from '@/types/products';
+import { phoneApplyMask } from '@/lib/masks/phone-apply-mask';
 
 // Usando o tipo Redemption do arquivo de tipos
 type Redemption = RedemptionType;
@@ -121,6 +122,16 @@ const MyRedemptionsContent: React.FC<MyRedemptionsContentProps & PointsStoreProp
       color: 'text-gray-600 bg-gray-100',
       icon: Clock
     };
+  };
+
+  /**
+   * formatDisplayPhone
+   * pt-BR: Aplica máscara com DDI ao telefone para exibição amigável.
+   * en-US: Applies international phone mask for friendly display.
+   */
+  const formatDisplayPhone = (value?: string) => {
+    const digits = (value || '').replace(/\D/g, '');
+    return digits ? phoneApplyMask(digits) : 'Não informado';
   };
 
   /**
@@ -340,6 +351,15 @@ const MyRedemptionsContent: React.FC<MyRedemptionsContentProps & PointsStoreProp
                           <p className="text-gray-600 font-medium">Pontos Utilizados</p>
                           <p className="text-gray-900 font-semibold">{redemption.pointsUsed.toLocaleString()}</p>
                         </div>
+                        {redemption.userPhone && (
+                          <div>
+                            <p className="text-gray-600 font-medium">Telefone</p>
+                            <p className="text-gray-900 flex items-center">
+                              <Phone className="w-4 h-4 mr-1" />
+                              {formatDisplayPhone(redemption.userPhone)}
+                            </p>
+                          </div>
+                        )}
                         {redemption.trackingCode && (
                           <div>
                             <p className="text-gray-600 font-medium">Código de Rastreamento</p>

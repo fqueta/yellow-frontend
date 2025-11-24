@@ -46,6 +46,8 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
   const { fetchCep, isValidCep, clearAddressData } = useCep();
   // Snapshot dos dados atuais exibidos no Perfil para restaurar ao cancelar edição
   const [profileSnapshot, setProfileSnapshot] = useState<any | null>(null);
+  // Mapa de erros de validação retornados pela API
+  const [profileErrors, setProfileErrors] = useState<Record<string, string>>({});
 
   /**
    * formatDisplayPhone / formatDisplayCpf / formatDisplayCep
@@ -95,6 +97,18 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
    * pt-BR: Restringe alterações de e-mail e CPF (não enviados ao backend).
    * en-US: Restricts changes to email and CPF (excluded from payload).
    */
+  /**
+   * pt-BR: Submete atualização de perfil, tratando erros de validação (422).
+   * - Limpa erros anteriores.
+   * - Envia payload sem campos não editáveis e sem máscaras.
+   * - Em sucesso: fecha edição e limpa erros.
+   * - Em erro 422: popula `profileErrors` e agrega mensagens para o toast.
+   * en-US: Submits profile update, handling validation errors (422).
+   * - Clears previous errors.
+   * - Sends payload without non-editable fields and masks.
+   * - On success: closes editing and clears errors.
+   * - On 422 error: populates `profileErrors` and aggregates messages for the toast.
+   */
   const handleUpdateProfile = async () => {
     if (!profileData.name.trim()) {
       toast({
@@ -106,6 +120,8 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
     }
 
     setIsUpdatingProfile(true);
+    // Limpa erros antes de submeter novamente
+    setProfileErrors({});
     try {
       // Excluir campos não editáveis e remover máscaras antes de enviar ao backend
       const { email: _email, cpf: _cpf, ...editableProfile } = profileData;
@@ -118,18 +134,71 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
       const success = await updateProfile(payload);
       if (success) {
         setIsEditingProfile(false);
+        setProfileErrors({});
         toast({
           title: 'Sucesso',
           description: 'Perfil atualizado com sucesso!',
           variant: 'default'
         });
       }
-    } catch (error) {
-      toast({
-        title: 'Erro',
-        description: 'Erro ao atualizar perfil. Tente novamente.',
-        variant: 'destructive'
-      });
+    } catch (error: any) {
+      // Trata erro 422 com mensagens de validação por campo
+      let description = 'Erro ao atualizar perfil. Tente novamente.';
+      const status = error?.status;
+      const body = error?.body;
+      const messagesSource = body?.messages ?? body?.errors;
+      if (status === 422 && messagesSource) {
+        // Normaliza para objeto chave -> primeira mensagem
+        const fieldErrors: Record<string, string> = {};
+        const normalizeToObject = (src: any): Record<string, any[]> | null => {
+          if (!src) return null;
+          if (typeof src === 'object' && !Array.isArray(src)) return src as Record<string, any[]>;
+          if (Array.isArray(src)) {
+            const obj: Record<string, any[]> = {};
+            src.forEach((item) => {
+              if (typeof item === 'string') {
+                obj.general = obj.general ? [...obj.general, item] : [item];
+              } else if (item && typeof item === 'object') {
+                const field = (item.field || item.name || item.key || 'general') as string;
+                const msg = item.message || item.msg || item.error || JSON.stringify(item);
+                obj[field] = obj[field] ? [...obj[field], msg] : [msg];
+              }
+            });
+            return obj;
+          }
+          if (typeof src === 'string') {
+            try {
+              const parsed = JSON.parse(src);
+              return normalizeToObject(parsed);
+            } catch {
+              return { general: [src] };
+            }
+          }
+          return null;
+        };
+
+        const obj = normalizeToObject(messagesSource) || {};
+        Object.entries(obj).forEach(([field, msgs]) => {
+          const firstMsg = Array.isArray(msgs) ? String(msgs[0]) : String(msgs);
+          fieldErrors[field] = firstMsg;
+        });
+        setProfileErrors(fieldErrors);
+
+        // Feedback visual: mensagens inline por campo (sem novo toast para evitar duplicidade)
+        description = body?.error || 'Dados inválidos';
+      } else if (error?.message) {
+        description = error.message;
+      }
+
+      // Evita duplicidade de toast: o AuthContext já exibiu um toast.
+      // Aqui só mostramos toast se não for 422 (sem mensagens por campo).
+      if (status !== 422) {
+        toast({
+          title: 'Erro ao atualizar perfil',
+          description,
+          variant: 'destructive'
+        });
+      }
     } finally {
       setIsUpdatingProfile(false);
     }
@@ -463,6 +532,9 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
                           onChange={(e) => handlePhoneChange(e.target.value)}
                           placeholder="Digite seu telefone"
                         />
+                        {profileErrors.phone && (
+                          <p className="text-sm text-red-600 mt-1">{profileErrors.phone}</p>
+                        )}
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="cpf">CPF (não editável)</Label>
@@ -485,6 +557,9 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
                           onChange={(e) => handleCepChange(e.target.value)}
                           placeholder="Digite seu CEP"
                         />
+                        {profileErrors.zip_code && (
+                          <p className="text-sm text-red-600 mt-1">{profileErrors.zip_code}</p>
+                        )}
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="birth_date">Data de Nascimento</Label>
@@ -494,6 +569,9 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
                           value={profileData.birth_date}
                           onChange={(e) => setProfileData({ ...profileData, birth_date: e.target.value })}
                         />
+                        {profileErrors.birth_date && (
+                          <p className="text-sm text-red-600 mt-1">{profileErrors.birth_date}</p>
+                        )}
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="gender">Gênero</Label>
@@ -509,6 +587,9 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
                           <option value="outro">Outro</option>
                           <option value="prefiro_nao_informar">Prefiro não informar</option>
                         </select>
+                        {profileErrors.gender && (
+                          <p className="text-sm text-red-600 mt-1">{profileErrors.gender}</p>
+                        )}
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="company">Empresa</Label>
@@ -518,6 +599,9 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
                           onChange={(e) => setProfileData({ ...profileData, company: e.target.value })}
                           placeholder="Digite sua empresa"
                         />
+                        {profileErrors.company && (
+                          <p className="text-sm text-red-600 mt-1">{profileErrors.company}</p>
+                        )}
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="address">Endereço</Label>
@@ -527,6 +611,9 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
                           onChange={(e) => setProfileData({ ...profileData, address: e.target.value })}
                           placeholder="Digite seu endereço"
                         />
+                        {profileErrors.address && (
+                          <p className="text-sm text-red-600 mt-1">{profileErrors.address}</p>
+                        )}
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="city">Cidade</Label>
@@ -536,6 +623,9 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
                           onChange={(e) => setProfileData({ ...profileData, city: e.target.value })}
                           placeholder="Digite sua cidade"
                         />
+                        {profileErrors.city && (
+                          <p className="text-sm text-red-600 mt-1">{profileErrors.city}</p>
+                        )}
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="state">Estado</Label>
@@ -545,6 +635,9 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
                           onChange={(e) => setProfileData({ ...profileData, state: e.target.value })}
                           placeholder="Digite seu estado"
                         />
+                        {profileErrors.state && (
+                          <p className="text-sm text-red-600 mt-1">{profileErrors.state}</p>
+                        )}
                       </div>
                     </div>
                     
@@ -558,6 +651,9 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
                         rows={3}
                         className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                       />
+                      {profileErrors.bio && (
+                        <p className="text-sm text-red-600 mt-1">{profileErrors.bio}</p>
+                      )}
                     </div>
                     
                     <div className="flex space-x-2 pt-4">

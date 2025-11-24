@@ -35,6 +35,28 @@ export function ClientRegistrationChart({
   title = "Evolução dos Cadastros", 
   description = "Acompanhamento diário dos cadastros por status" 
 }: ClientRegistrationChartProps) {
+  /**
+   * computeMaxValue
+   * pt-BR: Calcula o maior valor entre as séries para ajustar o eixo Y
+   *        e evitar colapso quando todos os valores são zero.
+   * en-US: Computes the max value across series to adjust Y axis
+   *        and avoid collapse when all values are zero.
+   */
+  const computeMaxValue = () => {
+    if (!data || data.length === 0) return 0;
+    return Math.max(
+      ...data.map((item) => Math.max(item.actived, item.inactived, item.pre_registred))
+    );
+  };
+  const maxValue = computeMaxValue();
+  /**
+   * hasNoData
+   * pt-BR: Indica se todas as séries têm valor zero no período,
+   *        para exibir um aviso acima do gráfico.
+   * en-US: Indicates whether all series are zero in the range,
+   *        to show a notice above the chart.
+   */
+  const hasNoData = maxValue === 0;
   // Calcular totais para cada status
   const totals = data.reduce(
     (acc, item) => ({
@@ -91,6 +113,9 @@ export function ClientRegistrationChart({
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent>
+        {hasNoData && (
+          <p className="text-sm text-muted-foreground mb-2">Sem dados no período</p>
+        )}
         {/* Gráfico usando Recharts */}
         <div className="h-96 w-full mb-6">
           <ResponsiveContainer width="100%" height="100%">
@@ -121,6 +146,7 @@ export function ClientRegistrationChart({
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
+                domain={[0, (dataMax: number) => (dataMax === 0 ? 1 : dataMax + 1)]}
               />
               <Tooltip 
                 contentStyle={{

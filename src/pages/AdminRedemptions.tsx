@@ -15,7 +15,8 @@ import {
   MoreHorizontal,
   Calendar,
   User,
-  Gift
+  Gift,
+  Phone
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -55,6 +56,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { PrintButton } from '@/components/ui/PrintButton';
 import '@/styles/print.css';
+import { phoneApplyMask } from '@/lib/masks/phone-apply-mask';
 
 
 
@@ -66,6 +68,9 @@ const AdminRedemptions: React.FC = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<RedemptionStatus | 'all'>('all');
+  // Filtros de período (date range)
+  const [dateFromFilter, setDateFromFilter] = useState<string>('');
+  const [dateToFilter, setDateToFilter] = useState<string>('');
 
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -80,7 +85,9 @@ const AdminRedemptions: React.FC = () => {
     page: currentPage,
     per_page: itemsPerPage,
     status: statusFilter !== 'all' ? statusFilter : undefined,
-
+    // Período enviado para API
+    dateFrom: dateFromFilter || undefined,
+    dateTo: dateToFilter || undefined,
     category: categoryFilter !== 'all' ? categoryFilter : undefined,
     search: searchTerm || undefined
   },
@@ -139,6 +146,17 @@ const AdminRedemptions: React.FC = () => {
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
+  };
+
+  /**
+   * formatDisplayPhone
+   * pt-BR: Formata telefone para exibição com DDI usando a máscara padrão.
+   * en-US: Formats phone for display with DDI using the standard mask.
+   */
+  const formatDisplayPhone = (phone?: string) => {
+    if (!phone) return '';
+    const digits = String(phone).replace(/\D/g, '');
+    return digits ? phoneApplyMask(digits) : '';
   };
 
 
@@ -260,12 +278,55 @@ const AdminRedemptions: React.FC = () => {
   const categories = Array.from(new Set(redemptions.map((r: any) => r.productCategory)));
 
   /**
+   * buildFilterLegend
+   * pt-BR: Constrói a legenda dos filtros aplicados (status, categoria, período, busca).
+   * en-US: Builds legend text for applied filters (status, category, period, search).
+   */
+  const buildFilterLegend = (
+    statusValue: RedemptionStatus | 'all',
+    categoryValue: string,
+    searchValue: string,
+    dateFrom?: string,
+    dateTo?: string,
+  ): string => {
+    const parts: string[] = [];
+
+    if (statusValue && statusValue !== 'all') {
+      const statusLabel = REDEMPTION_STATUSES[statusValue]?.label || statusValue;
+      parts.push(`Status: ${statusLabel}`);
+    }
+    if (categoryValue && categoryValue !== 'all') {
+      parts.push(`Categoria: ${categoryValue}`);
+    }
+    if (dateFrom && dateTo) {
+      parts.push(`Período: ${format(new Date(dateFrom), 'dd/MM/yyyy')} a ${format(new Date(dateTo), 'dd/MM/yyyy')}`);
+    } else if (dateFrom) {
+      parts.push(`Período: a partir de ${format(new Date(dateFrom), 'dd/MM/yyyy')}`);
+    } else if (dateTo) {
+      parts.push(`Período: até ${format(new Date(dateTo), 'dd/MM/yyyy')}`);
+    }
+    if (searchValue && searchValue.trim().length > 0) {
+      parts.push(`Busca: "${searchValue.trim()}"`);
+    }
+
+    return parts.join(' | ');
+  };
+
+  const filterLegend = buildFilterLegend(
+    statusFilter,
+    categoryFilter,
+    searchTerm,
+    dateFromFilter,
+    dateToFilter,
+  );
+
+  /**
    * Reset page to 1 when filters or search change
    * Reseta a página quando filtros ou busca mudarem para evitar páginas vazias
    */
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter, categoryFilter]);
+  }, [searchTerm, statusFilter, categoryFilter, dateFromFilter, dateToFilter]);
 
   return (
     <div className="space-y-6">
@@ -292,7 +353,7 @@ const AdminRedemptions: React.FC = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Buscar</label>
               <div className="relative">
@@ -323,6 +384,26 @@ const AdminRedemptions: React.FC = () => {
               </Select>
             </div>
             
+            {/* Data Inicial */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Data Inicial</label>
+              <Input
+                type="date"
+                value={dateFromFilter}
+                onChange={(e) => setDateFromFilter(e.target.value)}
+              />
+            </div>
+
+            {/* Data Final */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Data Final</label>
+              <Input
+                type="date"
+                value={dateToFilter}
+                onChange={(e) => setDateToFilter(e.target.value)}
+              />
+            </div>
+
 
             
             <div className="space-y-2">
@@ -344,6 +425,12 @@ const AdminRedemptions: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+
+      {filterLegend && (
+        <div className="text-sm text-gray-600">
+          Filtros aplicados: {filterLegend}
+        </div>
+      )}
 
       {/* Estatísticas - agora abaixo dos filtros */}
       {/* Ajuste de impressão: manter os cards de estatísticas em uma linha na página impressa */}
@@ -458,6 +545,11 @@ const AdminRedemptions: React.FC = () => {
                         <div className="flex flex-col">
                           <span className="font-medium">{redemption.userName}</span>
                           <span className="text-sm text-gray-500">{redemption.userEmail}</span>
+                          {redemption.userPhone && (
+                            <span className="text-sm text-gray-500 flex items-center gap-1">
+                              <Phone className="w-3 h-3" /> {formatDisplayPhone(redemption.userPhone)}
+                            </span>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>

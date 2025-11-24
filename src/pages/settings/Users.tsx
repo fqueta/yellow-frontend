@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { format } from 'date-fns';
 import { MaskedInputField } from '@/components/lib/MaskedInputField';
+import { phoneApplyMask } from '@/lib/masks/phone-apply-mask';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -243,11 +244,15 @@ export default function Users() {
         cpf: data.cpf || '',
         cnpj: data.cnpj || '',
         razao: data.razao || '',
+        /**
+         * pt-BR: Sanitiza campos de telefone removendo a máscara/DDD/DDI antes de enviar.
+         * en-US: Sanitizes phone fields by removing mask/area/country codes before sending.
+         */
         config: {
           nome_fantasia: data.config?.nome_fantasia || '',
-          celular: data.config?.celular || '',
-          telefone_residencial: data.config?.telefone_residencial || '',
-          telefone_comercial: data.config?.telefone_comercial || '',
+          celular: data.config?.celular ? data.config.celular.replace(/\D/g, '') : '',
+          telefone_residencial: data.config?.telefone_residencial ? data.config.telefone_residencial.replace(/\D/g, '') : '',
+          telefone_comercial: data.config?.telefone_comercial ? data.config.telefone_comercial.replace(/\D/g, '') : '',
           rg: data.config?.rg || '',
           nascimento: data.config?.nascimento || '',
           escolaridade: data.config?.escolaridade || '',
@@ -668,19 +673,47 @@ export default function Users() {
                     />
                   </>
                 )}
-                <MaskedInputField 
+                {/* handleUserPhones
+                 * pt-BR: Aplica máscara com DDI nos campos de telefone do usuário.
+                 * en-US: Applies phone mask with country code to user phone fields.
+                 */}
+                <FormField
+                  control={form.control}
                   name="config.celular"
-                  control={form.control}
-                  label="Celular"
-                  mask="(99) 99999-9999"
-                  placeholder="(00) 00000-0000"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Celular</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          value={field.value || ''}
+                          onChange={(e) => field.onChange(phoneApplyMask(e.target.value))}
+                          placeholder="+DDI (DDD) número"
+                          maxLength={25}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-                <MaskedInputField 
-                  name="config.telefone_residencial"
+                <FormField
                   control={form.control}
-                  label="Telefone Residencial"
-                  mask="(99) 9999-9999"
-                  placeholder="(00) 0000-0000"
+                  name="config.telefone_residencial"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Telefone Residencial</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          value={field.value || ''}
+                          onChange={(e) => field.onChange(phoneApplyMask(e.target.value))}
+                          placeholder="+DDI (DDD) número"
+                          maxLength={25}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
                 <FormField
                   control={form.control}

@@ -83,12 +83,22 @@ class DashboardService extends BaseApiService {
   /**
    * Obtém atividades recentes de clientes
    * @param limit - Número máximo de atividades a retornar
+   * @param startDate - Data inicial do filtro (yyyy-mm-dd)
+   * @param endDate - Data final do filtro (yyyy-mm-dd)
    */
-  async getRecentActivities(limit: number = 10): Promise<ClientActivity[]> {
+  async getRecentActivities(limit: number = 10, startDate?: string, endDate?: string): Promise<ClientActivity[]> {
     try {
-      const response = await this.get<DashboardApiResponse>(this.endpoint);
-      if (response.success && response.data.recent_activities) {
-        return this.transformActivities(response.data.recent_activities.slice(0, limit));
+      const response = await this.get<DashboardApiResponse>(this.endpoint, {
+        limit,
+        start_date: startDate,
+        end_date: endDate,
+      });
+      // Aceita diferentes chaves que o backend pode retornar
+      const recentApi = (response as any)?.data?.recent_activities
+        || (response as any)?.data?.recentClientActivities
+        || (response as any)?.data?.recent_client_activities;
+      if (response.success && Array.isArray(recentApi)) {
+        return this.transformActivities(recentApi.slice(0, limit));
       }
       console.log('recentClientActivities:', response.data);
       return this.getMockRecentActivities();
@@ -109,19 +119,34 @@ class DashboardService extends BaseApiService {
    */
   async getRegistrationData(startDate?: string, endDate?: string): Promise<ClientRegistrationData[]> {
     try {
-      const response = await this.get<DashboardApiResponse>(this.endpoint);
+      /**
+       * getRegistrationData
+       * pt-BR: Busca dados de cadastro por período. Remove `limit` (não definido)
+       *        para evitar erro e queda no fallback de zeros.
+       * en-US: Fetches registration data by period. Removes undefined `limit`
+       *        to prevent error and zero-series fallback.
+       */
+      const response = await this.get<DashboardApiResponse>(this.endpoint, {
+        start_date: startDate,
+        end_date: endDate,
+      });
       // console.log('clientRegistrationData.....:', response.data);
-      if (response.success && response.data.registration_data) {
-        return response.data.registration_data;
+      const regApi = (response as any)?.data?.registration_data
+        || (response as any)?.data?.clientRegistrationData
+        || (response as any)?.data?.registrations;
+      if (response.success && Array.isArray(regApi)) {
+        return regApi;
       }
-      // return this.getMockRegistrationData();
+      // Fallback: retorna série de 14 dias com zeros para manter o gráfico visível
+      return this.generateZeroSeries(startDate, endDate);
     } catch (error) {
       // Se for erro 403, propagar o erro para o componente
       if ((error as any)?.status === 403) {
         throw error;
       }
       console.warn('Erro ao buscar dados de cadastro, usando dados mock:', error);
-      // return this.getMockRegistrationData();
+      // Fallback em erro: 14 dias com zeros
+      return this.generateZeroSeries(startDate, endDate);
     }
   }
 
@@ -129,9 +154,17 @@ class DashboardService extends BaseApiService {
    * Obtém pré-registros pendentes
    * @param limit - Número máximo de pré-registros a retornar
    */
-  async getPendingPreRegistrations(limit: number = 10): Promise<PendingPreRegistration[]> {
+  async getPendingPreRegistrations(limit: number = 10, startDate?: string, endDate?: string): Promise<PendingPreRegistration[]> {
+    /**
+     * Obtém pré-registros pendentes com filtro opcional por período
+     * pt-BR: Aceita `startDate` e `endDate` (yyyy-mm-dd) para refletir o filtro na requisição.
+     * en-US: Accepts `startDate` and `endDate` (yyyy-mm-dd) to reflect filters in the request.
+     */
     try {
-      const response = await this.get<DashboardApiResponse>(this.endpoint);
+      const response = await this.get<DashboardApiResponse>(this.endpoint, {
+        start_date: startDate,
+        end_date: endDate,
+      });
       console.log('pendingPreRegistrations:', response.data);
       if (response.success && response.data?.pending_pre_registrations) {
         return response.data.pending_pre_registrations.slice(0, limit);
@@ -150,14 +183,17 @@ class DashboardService extends BaseApiService {
   /**
    * Obtém todos os dados do dashboard
    */
-  async getDashboardData(): Promise<DashboardData> {
+  async getDashboardData(startDate?: string, endDate?: string): Promise<DashboardData> {
     try {
-      const response = await this.get<DashboardApiResponse>(this.endpoint);
+      const response = await this.get<DashboardApiResponse>(this.endpoint, {
+        start_date: startDate,
+        end_date: endDate,
+      });
       if (response.success && response.data) {
         return {
-          recentActivities: this.transformActivities(response.data.recentClientActivities || []),
-          registrationData: response.data.clientRegistrationData || [],
-          pendingPreRegistrations: response.data.pendingPreRegistrations || [],
+          recentActivities: this.transformActivities((response as any)?.data?.recentClientActivities || (response as any)?.data?.recent_activities || []),
+          registrationData: (response as any)?.data?.clientRegistrationData || (response as any)?.data?.registration_data || [],
+          pendingPreRegistrations: (response as any)?.data?.pendingPreRegistrations || (response as any)?.data?.pending_pre_registrations || [],
           totals: response.data.totals
         };
       }
@@ -289,6 +325,43 @@ class DashboardService extends BaseApiService {
       { date: "2025-09-28", actived: 0, inactived: 0, pre_registred: 0 },
       { date: "2025-09-29", actived: 3, inactived: 0, pre_registred: 0 },
     ];
+  }
+
+  /**
+   * generateZeroSeries
+   * pt-BR: Gera uma série contínua de datas com valores zero,
+   *        cobrindo o intervalo informado ou, se ausente, os últimos 14 dias.
+   * en-US: Generates a continuous date series with zero values,
+   *        covering the provided range or, if missing, the last 14 days.
+   */
+  private generateZeroSeries(startDate?: string, endDate?: string): ClientRegistrationData[] {
+    const toISO = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    let start: Date;
+    let end: Date;
+
+    if (startDate && endDate) {
+      const [sy, sm, sd] = startDate.split('-').map(Number);
+      const [ey, em, ed] = endDate.split('-').map(Number);
+      start = new Date(sy, (sm || 1) - 1, sd || 1);
+      end = new Date(ey, (em || 1) - 1, ed || 1);
+    } else {
+      end = new Date();
+      start = new Date();
+      start.setDate(end.getDate() - 13);
+    }
+
+    // Garantir que start <= end
+    if (start > end) {
+      const tmp = start; start = end; end = tmp;
+    }
+
+    const series: ClientRegistrationData[] = [];
+    const cursor = new Date(start);
+    while (cursor <= end) {
+      series.push({ date: toISO(cursor), actived: 0, inactived: 0, pre_registred: 0 });
+      cursor.setDate(cursor.getDate() + 1);
+    }
+    return series;
   }
 
   /**

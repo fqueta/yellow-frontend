@@ -24,6 +24,7 @@ import {
   Trash
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -35,6 +36,7 @@ import {
   TableHeader, 
   TableRow 
 } from '@/components/ui/table';
+import { phoneApplyMask } from '@/lib/masks/phone-apply-mask';
 import {
   Select,
   SelectContent,
@@ -68,6 +70,9 @@ const AdminRedemptionDetails: React.FC = () => {
   const [newStatus, setNewStatus] = useState<RedemptionStatus>('processing');
   const [statusComment, setStatusComment] = useState('');
   const [trackingCode, setTrackingCode] = useState('');
+  // Filtros de período para histórico
+  const [dateFromFilter, setDateFromFilter] = useState('');
+  const [dateToFilter, setDateToFilter] = useState('');
   
   // Hook para buscar dados do resgate
   const { data: redemption, isLoading, error } = useRedemption(id || '', {
@@ -262,6 +267,44 @@ const AdminRedemptionDetails: React.FC = () => {
     });
   };
 
+  /**
+   * Filtra o histórico de status pelo período selecionado.
+   * pt-BR: Retorna somente entradas com `createdAt` entre `dateFromFilter` e `dateToFilter`.
+   * en-US: Returns entries with `createdAt` between `dateFromFilter` and `dateToFilter`.
+   */
+  const filteredStatusHistory = React.useMemo(() => {
+    if (!statusHistory || statusHistory.length === 0) return [] as StatusHistory[];
+
+    const from = dateFromFilter ? new Date(`${dateFromFilter}T00:00:00`) : null;
+    const to = dateToFilter ? new Date(`${dateToFilter}T23:59:59`) : null;
+
+    return statusHistory.filter((entry) => {
+      const entryDate = new Date(entry.createdAt);
+      const afterFrom = from ? entryDate >= from : true;
+      const beforeTo = to ? entryDate <= to : true;
+      return afterFrom && beforeTo;
+    });
+  }, [statusHistory, dateFromFilter, dateToFilter]);
+
+  /**
+   * Gera legenda textual com o período aplicado.
+   * pt-BR: Monta texto com datas inicial/final.
+   * en-US: Builds text with start/end dates.
+   */
+  const buildPeriodLegend = (dateFrom?: string, dateTo?: string): string => {
+    if (dateFrom && dateTo) {
+      return `Período: ${format(new Date(dateFrom), 'dd/MM/yyyy')} a ${format(new Date(dateTo), 'dd/MM/yyyy')}`;
+    }
+    if (dateFrom) {
+      return `Período: a partir de ${format(new Date(dateFrom), 'dd/MM/yyyy')}`;
+    }
+    if (dateTo) {
+      return `Período: até ${format(new Date(dateTo), 'dd/MM/yyyy')}`;
+    }
+    return '';
+  };
+  const periodLegend = buildPeriodLegend(dateFromFilter, dateToFilter);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -418,7 +461,7 @@ const AdminRedemptionDetails: React.FC = () => {
                     {redemption.userPhone && (
                       <div className="flex items-center gap-2">
                         <Phone className="w-4 h-4 text-gray-400" />
-                        <span>{redemption.userPhone}</span>
+                        <span>{phoneApplyMask(String(redemption.userPhone))}</span>
                       </div>
                     )}
                   </div>
@@ -457,14 +500,41 @@ const AdminRedemptionDetails: React.FC = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
+              {/* Filtros de período (igual aos extratos de pontos) */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Data Inicial</label>
+                  <Input
+                    type="date"
+                    value={dateFromFilter}
+                    onChange={(e) => setDateFromFilter(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Data Final</label>
+                  <Input
+                    type="date"
+                    value={dateToFilter}
+                    onChange={(e) => setDateToFilter(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* Legenda dos filtros aplicados */}
+              {periodLegend && (
+                <div className="text-sm text-gray-600 mb-2">
+                  Filtros aplicados: {periodLegend}
+                </div>
+              )}
+
               <div className="space-y-4">
-                {statusHistory.map((entry, index) => (
+                {filteredStatusHistory.map((entry, index) => (
                   <div key={entry.id} className="flex gap-4">
                     <div className="flex flex-col items-center">
                       <div className={`p-2 rounded-full ${getStatusColor(entry.status)}`}>
                         {getStatusIcon(entry.status)}
                       </div>
-                      {index < statusHistory.length - 1 && (
+                      {index < filteredStatusHistory.length - 1 && (
                         <div className="w-px h-8 bg-gray-200 mt-2" />
                       )}
                     </div>

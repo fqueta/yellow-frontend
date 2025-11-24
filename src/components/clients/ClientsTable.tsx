@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { ClientRecord } from '@/types/clients';
 import { useUsersList } from '@/hooks/users';
 import { useRestoreClient } from '@/hooks/clients';
+import { phoneApplyMask } from '@/lib/masks/phone-apply-mask';
 
 interface ClientsTableProps {
   clients: ClientRecord[];
@@ -43,6 +44,17 @@ export function ClientsTable({ clients, onEdit, onDelete, isLoading, trashEnable
   };
   // console.log('trashEnabled:', trashEnabled);
   
+  /**
+   * formatDisplayPhone
+   * pt-BR: Formata o telefone do cliente com máscara e DDI. Prioriza `config.celular`, depois `config.telefone_residencial`. Retorna "Não informado" se vazio.
+   * en-US: Formats the client's phone with mask and country code. Prioritizes `config.celular`, then `config.telefone_residencial`. Returns "Não informado" when absent.
+   */
+  const formatDisplayPhone = (client: ClientRecord): string => {
+    const raw = client?.config?.celular || client?.config?.telefone_residencial || '';
+    const digits = String(raw);
+    return digits ? phoneApplyMask(digits) : 'Não informado';
+  };
+
   // Função para formatar o status
   const getStatusBadge = (status: string) => {
     const statusMap = {
@@ -88,16 +100,17 @@ export function ClientsTable({ clients, onEdit, onDelete, isLoading, trashEnable
         </div>
       )}
       <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Nome</TableHead>
-            <TableHead>CPF</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Proprietário</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="text-right print:hidden">Ações</TableHead>
-          </TableRow>
-        </TableHeader>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Nome</TableHead>
+          <TableHead>CPF</TableHead>
+          <TableHead>Email</TableHead>
+          <TableHead>Telefone</TableHead>
+          <TableHead>Proprietário</TableHead>
+          <TableHead>Status</TableHead>
+          <TableHead className="text-right print:hidden">Ações</TableHead>
+        </TableRow>
+      </TableHeader>
         <TableBody>
           {clientsList.map((client) => (
             <TableRow 
@@ -111,6 +124,7 @@ export function ClientsTable({ clients, onEdit, onDelete, isLoading, trashEnable
                 {client.tipo_pessoa === 'pf' ? (client.cpf || 'Não informado') : (client.cnpj || 'Não informado')}
               </TableCell>
               <TableCell>{client.email || 'Não informado'}</TableCell>
+              <TableCell>{formatDisplayPhone(client)}</TableCell>
               <TableCell>{client.autor_name || 'Não identificado'}</TableCell>
               <TableCell>
                 {/* Debug temporário */}

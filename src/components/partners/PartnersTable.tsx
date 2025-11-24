@@ -5,6 +5,7 @@ import { MoreHorizontal, Pencil, Trash2, Eye } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { PartnerRecord } from '@/types/partners';
 import { Mail, Phone } from 'lucide-react';
+import { phoneApplyMask } from '@/lib/masks/phone-apply-mask';
 
 interface PartnersTableProps {
   partners: PartnerRecord[];
@@ -48,7 +49,7 @@ export function PartnersTable({ partners, onEdit, onDelete, onView, isLoading }:
             <TableCell className="font-medium">{partner.name}</TableCell>
             <TableCell>
               {partner.email && <div className="flex items-center gap-1"><Mail className="h-3 w-3" /> {partner.email}</div>}
-              {partner.config?.celular && <div className="flex items-center gap-1"><Phone className="h-3 w-3" /> {partner.config.celular}</div>}
+              {partner.config?.celular && <div className="flex items-center gap-1"><Phone className="h-3 w-3" /> {phoneApplyMask(String(partner.config.celular))}</div>}
             </TableCell>
             <TableCell>
               {partner.tipo_pessoa === 'pf' ? partner.cpf : partner.cnpj}

@@ -183,6 +183,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
+  /**
+   * updateProfile
+   * pt-BR: Atualiza dados do usuário e trata erros da API.
+   * - Em sucesso: atualiza estado e exibe toast de confirmação.
+   * - Em erro: exibe toast com mensagem e RELANÇA o erro para que o chamador
+   *   possa exibir feedback detalhado (ex.: mensagens por campo na UI).
+   * en-US: Updates user profile and handles API errors.
+   * - On success: updates state and shows confirmation toast.
+   * - On error: shows toast and RE-THROWS the error so caller can render
+   *   detailed feedback (e.g., per-field validation messages in the UI).
+   */
   const updateProfile = async (data: Partial<User> | FormData): Promise<boolean> => {
     try {
       const updatedUser = await authService.updateProfile(data);
@@ -194,14 +205,44 @@ export function AuthProvider({ children }: AuthProviderProps) {
       });
       
       return true;
-    } catch (error) {
+    } catch (error: any) {
+      /**
+       * pt-BR: Para erros 422, agrega mensagens por campo com rótulos traduzidos.
+       * en-US: For 422 errors, aggregate per-field messages with translated labels.
+       */
+      let description = error instanceof Error ? error.message : "Erro desconhecido";
+      if (error?.status === 422 && error?.body?.messages && typeof error.body.messages === 'object') {
+        const labelMap: Record<string, string> = {
+          name: 'Nome Completo',
+          phone: 'Telefone',
+          zip_code: 'CEP',
+          company: 'Empresa',
+          bio: 'Biografia',
+          birth_date: 'Data de Nascimento',
+          gender: 'Gênero',
+          address: 'Endereço',
+          city: 'Cidade',
+          state: 'Estado',
+          email: 'E-mail',
+          cpf: 'CPF',
+        };
+        const human = (key: string) => labelMap[key] || key;
+        const aggregated = Object.entries(error.body.messages)
+          .map(([field, msgs]) => {
+            const first = Array.isArray(msgs) ? String(msgs[0]) : String(msgs);
+            return `${human(field)}: ${first}`;
+          })
+          .join(' | ');
+        description = aggregated || (error.body.error ?? description);
+      }
+
       toast({
         title: "Erro ao atualizar perfil",
-        description: error instanceof Error ? error.message : "Erro desconhecido",
+        description,
         variant: "destructive",
       });
-      
-      return false;
+      // Importante: relançar para que camadas de UI possam detalhar o erro
+      throw error;
     }
   };
 

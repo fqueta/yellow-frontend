@@ -29,6 +29,7 @@ import {
 import { Calendar } from '@/components/ui/calendar';
 import { Textarea } from '@/components/ui/textarea';
 import { MaskedInputField } from '@/components/lib/MaskedInputField';
+import { phoneApplyMask } from '@/lib/masks/phone-apply-mask';
 import { useCep } from '@/hooks/useCep';
 import { SmartDocumentInput } from '@/components/lib/SmartDocumentInput';
 import { ImageUpload } from '@/components/lib/ImageUpload';
@@ -508,12 +509,29 @@ export function ClientForm({
             <AccordionContent className="pb-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
                 <div className="relative">
-                  <MaskedInputField
-                    name="config.celular"
+                  {/* handleCellularChange
+                   * pt-BR: Aplica máscara com DDI no campo Celular conforme digitação.
+                   * en-US: Applies phone mask with country code to the Cellular field on input.
+                   */}
+                  <FormField
                     control={form.control}
-                    label="Celular"
-                    mask="(dd) ddddd-dddd"
-                    placeholder="(00) 00000-0000"
+                    name="config.celular"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium text-gray-700">Celular</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            value={field.value || ''}
+                            onChange={(e) => field.onChange(phoneApplyMask(e.target.value))}
+                            placeholder="+DDI (DDD) número"
+                            maxLength={25}
+                            className="h-11"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
                   {form.watch('config.celular') && form.watch('config.celular').replace(/\D/g, '').length >= 10 && (
                     <div className="absolute right-3 top-9 flex items-center">
@@ -522,12 +540,29 @@ export function ClientForm({
                   )}
                 </div>
                 <div className="relative">
-                  <MaskedInputField
-                    name="config.telefone_residencial"
+                  {/* handleHomePhoneChange
+                   * pt-BR: Aplica máscara com DDI no campo Telefone Residencial conforme digitação.
+                   * en-US: Applies phone mask with country code to the Home Phone field on input.
+                   */}
+                  <FormField
                     control={form.control}
-                    label="Telefone Residencial"
-                    mask="(dd) dddd-dddd"
-                    placeholder="(00) 0000-0000"
+                    name="config.telefone_residencial"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium text-gray-700">Telefone Residencial</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            value={field.value || ''}
+                            onChange={(e) => field.onChange(phoneApplyMask(e.target.value))}
+                            placeholder="+DDI (DDD) número"
+                            maxLength={25}
+                            className="h-11"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
                   {form.watch('config.telefone_residencial') && form.watch('config.telefone_residencial').replace(/\D/g, '').length >= 10 && (
                     <div className="absolute right-3 top-9 flex items-center">

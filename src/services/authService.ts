@@ -26,8 +26,28 @@ class AuthService {
       let errorMessage = 'Erro na requisição';
       let errorBody: any = null;
       try {
-        errorBody = await response.json();
-        errorMessage = errorBody?.message || errorMessage;
+        const contentType = response.headers.get('content-type') || '';
+        /**
+         * pt-BR: Faz parsing de JSON ou texto conforme o Content-Type.
+         * en-US: Parse JSON or text based on Content-Type.
+         */
+        if (contentType.includes('application/json')) {
+          errorBody = await response.json();
+        } else {
+          const text = await response.text();
+          try {
+            // Alguns backends enviam JSON em texto puro
+            errorBody = JSON.parse(text);
+          } catch {
+            errorBody = { error: text };
+          }
+        }
+
+        /**
+         * pt-BR: Extrai mensagem amigável do corpo de erro (formatos variados).
+         * en-US: Extract friendly error message from error body (various shapes).
+         */
+        errorMessage = this.extractErrorMessage(errorBody) || errorMessage;
       } catch {
         // ignore json parse errors
       }
@@ -37,6 +57,89 @@ class AuthService {
       throw error;
     }
     return response.json();
+  }
+
+  /**
+   * pt-BR: Extrai uma mensagem amigável de diferentes formatos de erro.
+   * - Prioriza `error` e `message`.
+   * - Agrega mensagens em `messages` ou `errors` (objeto, array ou string JSON).
+   * en-US: Extracts friendly message from various error shapes.
+   * - Prioritize `error` and `message`.
+   * - Aggregate messages in `messages` or `errors` (object, array, or JSON string).
+   */
+  private extractErrorMessage(body: any): string {
+    if (!body) return '';
+    if (typeof body === 'string') return body;
+    if (body.error) return body.error;
+    if (body.message) return body.message;
+
+    const source = body.messages ?? body.errors;
+    if (!source) return '';
+
+    const asObject = this.normalizeMessagesToObject(source);
+    if (asObject && typeof asObject === 'object') {
+      const parts = Object.entries(asObject).map(([field, msgs]) => {
+        const first = Array.isArray(msgs) ? String(msgs[0]) : String(msgs);
+        return `${field}: ${first}`;
+      });
+      return parts.join(' | ');
+    }
+
+    // Fallback: se for array de strings/objetos, agrega genericamente
+    if (Array.isArray(source)) {
+      return source
+        .map((item: any) => {
+          if (typeof item === 'string') return item;
+          if (item && typeof item === 'object') {
+            const field = item.field || item.name || item.key || 'campo';
+            const msg = item.message || item.msg || item.error || JSON.stringify(item);
+            return `${field}: ${msg}`;
+          }
+          return String(item);
+        })
+        .join(' | ');
+    }
+
+    if (typeof source === 'string') {
+      try {
+        const parsed = JSON.parse(source);
+        return this.extractErrorMessage({ messages: parsed });
+      } catch {
+        return source;
+      }
+    }
+    return '';
+  }
+
+  /**
+   * pt-BR: Normaliza `messages`/`errors` para um objeto chave->mensagens.
+   * en-US: Normalize `messages`/`errors` to an object field->messages.
+   */
+  private normalizeMessagesToObject(source: any): Record<string, any[]> | null {
+    if (!source) return null;
+    if (typeof source === 'object' && !Array.isArray(source)) return source;
+    if (Array.isArray(source)) {
+      const obj: Record<string, any[]> = {};
+      source.forEach((item) => {
+        if (typeof item === 'string') {
+          obj.general = obj.general ? [...obj.general, item] : [item];
+        } else if (item && typeof item === 'object') {
+          const field = item.field || item.name || item.key || 'general';
+          const msg = item.message || item.msg || item.error || JSON.stringify(item);
+          obj[field] = obj[field] ? [...obj[field], msg] : [msg];
+        }
+      });
+      return obj;
+    }
+    if (typeof source === 'string') {
+      try {
+        const parsed = JSON.parse(source);
+        return this.normalizeMessagesToObject(parsed);
+      } catch {
+        return { general: [source] };
+      }
+    }
+    return null;
   }
 
   async login(credentials: LoginCredentials): Promise<AuthResponse> {

@@ -14,6 +14,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { toast } from "sonner";
+import { phoneApplyMask } from '@/lib/masks/phone-apply-mask';
 import { 
   ArrowLeft, 
   Edit, 
@@ -468,17 +469,15 @@ function ClientDetailsCard({ client }: { client: any }) {
     }
   };
 
-  const formatPhone = (phone: string) => {
+  /**
+   * formatDisplayPhone
+   * pt-BR: Formata o telefone para exibição com suporte a DDI, usando a máscara padronizada.
+   * en-US: Formats phone for display with DDI support, using the standardized mask.
+   */
+  const formatDisplayPhone = (phone: string) => {
     if (!phone) return "-";
-    // Remove caracteres não numéricos
-    const cleaned = phone.replace(/\D/g, '');
-    // Formata como (XX) XXXXX-XXXX ou (XX) XXXX-XXXX
-    if (cleaned.length === 11) {
-      return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7)}`;
-    } else if (cleaned.length === 10) {
-      return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 6)}-${cleaned.slice(6)}`;
-    }
-    return phone;
+    const digits = phone.replace(/\D/g, '');
+    return digits ? phoneApplyMask(digits) : "-";
   };
 
   return (
@@ -579,19 +578,19 @@ function ClientDetailsCard({ client }: { client: any }) {
                 <div className="flex items-center gap-2 text-sm">
                   <Phone className="h-4 w-4 text-gray-500" />
                   <span className="text-gray-600">Celular:</span>
-                  <span>{formatPhone(client.config?.celular)}</span>
+                    <span>{formatDisplayPhone(client.config?.celular)}</span>
                 </div>
                 
                 <div className="flex items-center gap-2 text-sm">
                   <Phone className="h-4 w-4 text-gray-500" />
                   <span className="text-gray-600">Tel. Residencial:</span>
-                  <span>{formatPhone(client.config?.telefone_residencial)}</span>
+                    <span>{formatDisplayPhone(client.config?.telefone_residencial)}</span>
                 </div>
                 
                 <div className="flex items-center gap-2 text-sm">
                   <Phone className="h-4 w-4 text-gray-500" />
                   <span className="text-gray-600">Tel. Comercial:</span>
-                  <span>{formatPhone(client.config?.telefone_comercial)}</span>
+                    <span>{formatDisplayPhone(client.config?.telefone_comercial)}</span>
                 </div>
                 
                 <div className="flex items-start gap-2 text-sm">

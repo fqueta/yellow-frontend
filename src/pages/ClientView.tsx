@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useClientById } from '@/hooks/clients';
 import { ClientRecord } from '@/types/clients';
+import { phoneApplyMask } from '@/lib/masks/phone-apply-mask';
 
 
 
@@ -78,17 +79,14 @@ export default function ClientView() {
   };
 
   /**
-   * Formata telefone para exibição
+   * formatDisplayPhone
+   * pt-BR: Formata o telefone para exibição com suporte a DDI, usando a máscara padronizada.
+   * en-US: Formats phone for display with DDI support, using the standardized mask.
    */
-  const formatPhone = (phone: string) => {
+  const formatDisplayPhone = (phone: string) => {
     if (!phone) return 'Não informado';
-    if (phone.length === 11) {
-      return phone.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
-    }
-    if (phone.length === 10) {
-      return phone.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
-    }
-    return phone;
+    const digits = phone.replace(/\D/g, '');
+    return digits ? phoneApplyMask(digits) : 'Não informado';
   };
 
   if (isLoadingClient) {
@@ -401,7 +399,7 @@ export default function ClientView() {
                 <label className="text-sm font-medium text-muted-foreground">Celular</label>
                 <p className="text-sm flex items-center">
                   <Phone className="mr-2 h-4 w-4" />
-                  {formatPhone(client.config.celular)}
+              {formatDisplayPhone(client.config.celular)}
                 </p>
               </div>
             )}
@@ -411,7 +409,7 @@ export default function ClientView() {
                 <label className="text-sm font-medium text-muted-foreground">Telefone Residencial</label>
                 <p className="text-sm flex items-center">
                   <Phone className="mr-2 h-4 w-4" />
-                  {formatPhone(client.config.telefone_residencial)}
+              {formatDisplayPhone(client.config.telefone_residencial)}
                 </p>
               </div>
             )}

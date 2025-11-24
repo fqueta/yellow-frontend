@@ -10,6 +10,7 @@ import { Redemption } from '@/types/redemptions';
 import { formatDate } from '@/lib/utils';
 import { PointsStoreProps } from '@/types/products';
 import { zerofill } from '@/lib/qlib';
+import { phoneApplyMask } from '@/lib/masks/phone-apply-mask';
 /**
  * Página de detalhes do resgate na área do cliente
  * Exibe informações completas sobre um resgate específico
@@ -295,7 +296,7 @@ const RedemptionDetails: React.FC<PointsStoreProps> = ({ linkLoja }) => {
                 {redemption.userPhone && (
                   <div className="flex items-center">
                     <Phone className="w-4 h-4 mr-2 text-teal-500" />
-                    <span className="text-purple-800">{redemption.userPhone}</span>
+                    <span className="text-purple-800">{phoneApplyMask(String(redemption.userPhone))}</span>
                   </div>
                 )}
               </CardContent>

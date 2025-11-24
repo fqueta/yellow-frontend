@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   FileText,
   ClipboardList,
@@ -26,6 +27,25 @@ import { useRecentActivities, useRegistrationData, usePendingPreRegistrations } 
 import { ClientRegistrationChart } from "@/components/ClientRegistrationChart";
 import { VisitorTrendChart } from "@/components/VisitorTrendChart";
 import { useAuth } from "@/contexts/AuthContext";
+// PeriodSelector removido em favor de inputs de data simples
+import { useMemo, useState, useCallback } from "react";
+import { getInicioFimMes } from "@/lib/qlib";
+import { phoneApplyMask } from '@/lib/masks/phone-apply-mask';
+
+/**
+ * getLast14DaysRange
+ * pt-BR: Calcula o intervalo dos últimos 14 dias (inclui hoje)
+ *        e retorna datas no formato `YYYY-MM-DD`.
+ * en-US: Computes the last 14 days range (includes today)
+ *        and returns dates in `YYYY-MM-DD` format.
+ */
+function getLast14DaysRange() {
+  const end = new Date();
+  const start = new Date();
+  start.setDate(end.getDate() - 13);
+  const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  return { startISO: fmt(start), endISO: fmt(end) };
+}
 
 /**
  * Dashboard
@@ -45,9 +65,101 @@ export default function Dashboard() {
   const { data: usersData, isLoading: usersLoading } = useUsersList({ limit: 1 });
 
   // Hooks para dados dinâmicos do dashboard
-  const { data: recentActivities, isLoading: activitiesLoading, error: activitiesError } = useRecentActivities(4);
-  const { data: registrationData, isLoading: registrationLoading, error: registrationError } = useRegistrationData();
-  const { data: pendingPreRegistrations, isLoading: pendingLoading, error: pendingError } = usePendingPreRegistrations(3);
+  // Estado de período selecionado: inicia já com últimos 14 dias
+  const initialRange = getLast14DaysRange();
+  const [startDate, setStartDate] = useState<string | undefined>(initialRange.startISO);
+  const [endDate, setEndDate] = useState<string | undefined>(initialRange.endISO);
+  // Removido estado separado de período aplicado para evitar divergências na UI
+  // Label removido, usaremos apenas Data Inicial/Final
+
+  // (movido para após a declaração dos hooks de dados)
+
+  /**
+   * handleStartDateChange
+   * pt-BR: Atualiza o estado da Data Inicial a partir do input.
+   * en-US: Updates the Initial Date state from the input value.
+   */
+  const handleStartDateChange = useCallback((value: string) => {
+    setStartDate(value);
+  }, []);
+
+  /**
+   * handleEndDateChange
+   * pt-BR: Atualiza o estado da Data Final a partir do input.
+   * en-US: Updates the Final Date state from the input value.
+   */
+  const handleEndDateChange = useCallback((value: string) => {
+    setEndDate(value);
+  }, []);
+
+  // Envia startDate/endDate para atividades recentes, mas só busca ao acionar botão
+  const { data: recentActivities, isLoading: activitiesLoading, error: activitiesError, refetch: refetchActivities } = useRecentActivities(
+    4,
+    startDate,
+    endDate,
+    { enabled: !!startDate && !!endDate, refetchOnWindowFocus: false }
+  );
+  const { data: registrationData, isLoading: registrationLoading, error: registrationError, refetch: refetchRegistration } = useRegistrationData(
+    startDate,
+    endDate,
+    { enabled: !!startDate && !!endDate, refetchOnWindowFocus: false }
+  );
+  const { data: pendingPreRegistrations, isLoading: pendingLoading, error: pendingError, refetch: refetchPending } = usePendingPreRegistrations(
+    3,
+    startDate,
+    endDate,
+    { enabled: !!startDate && !!endDate, refetchOnWindowFocus: false }
+  );
+
+  /**
+   * handleApplyFilters
+   * pt-BR: Dispara as requisições do dashboard usando as datas atuais.
+   * en-US: Triggers dashboard requests using the current date filters.
+   */
+  const handleApplyFilters = useCallback(() => {
+    refetchRegistration();
+    refetchActivities();
+    refetchPending();
+  }, [refetchRegistration, refetchActivities, refetchPending]);
+
+  // Consultas agora são habilitadas automaticamente com o intervalo inicial.
+
+  /**
+   * formatDatePtBr
+   * pt-BR: Converte YYYY-MM-DD para DD/MM/YYYY.
+   * en-US: Converts YYYY-MM-DD to DD/MM/YYYY.
+   */
+  const formatDatePtBr = useCallback((iso?: string) => {
+    if (!iso) return '';
+    const [y, m, d] = iso.split('-');
+    return `${d}/${m}/${y}`;
+  }, []);
+
+  /**
+   * chartDescription
+   * pt-BR: Texto de descrição do gráfico refletindo o período aplicado.
+   * en-US: Chart description text reflecting the applied period.
+   */
+  const chartDescription = useMemo(() => {
+    if (startDate && endDate) {
+      return `Período aplicado: ${formatDatePtBr(startDate)} a ${formatDatePtBr(endDate)}`;
+    }
+    return "Selecione um período e clique em Aplicar Filtros";
+  }, [startDate, endDate, formatDatePtBr]);
+
+  /**
+   * chartTitle
+   * pt-BR: Título do gráfico refletindo o período aplicado.
+   * en-US: Chart title reflecting the applied period.
+   */
+  const chartTitle = useMemo(() => {
+    if (startDate && endDate) {
+      const ini = formatDatePtBr(startDate);
+      const fim = formatDatePtBr(endDate);
+      return `Evolução dos Cadastros de Clientes (${ini} a ${fim})`;
+    }
+    return "Evolução dos Cadastros de Clientes";
+  }, [startDate, endDate, formatDatePtBr]);
   // console.log('pendingPreRegistrations:', pendingPreRegistrations);
   // Verificar se há erro 403 (Acesso negado)
   const hasAccessError = [activitiesError, registrationError, pendingError].some(
@@ -61,6 +173,32 @@ export default function Dashboard() {
     registrationLoading || 
     pendingLoading
   ) && !hasAccessError;
+
+  /**
+   * filteredRecentActivities
+   * pt-BR: Lista de atividades recentes filtradas pelo período selecionado.
+   * en-US: Recent activities filtered by the selected period.
+   */
+  // Garante array para evitar erros de tipagem quando a API ainda não respondeu
+  const recentClientActivities = Array.isArray(recentActivities) ? recentActivities : [];
+  const filteredRecentActivities = useMemo(() => {
+    if (!startDate || !endDate) return recentClientActivities;
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    return recentClientActivities.filter((a: any) => {
+      if (!a?.created_at) return true; // Mantém quando mock não tem data
+      // created_at vem como dd/mm/yyyy HH:MM
+      try {
+        const [datePart, timePart] = String(a.created_at).split(' ');
+        const [day, month, year] = datePart.split('/').map(Number);
+        const [hour, minute] = (timePart || '00:00').split(':').map(Number);
+        const d = new Date(year, (month || 1) - 1, day, hour || 0, minute || 0);
+        return d >= start && d <= end;
+      } catch {
+        return true;
+      }
+    });
+  }, [recentClientActivities, startDate, endDate]);
 
   /**
    * Abre a visualização rápida do cliente
@@ -102,11 +240,8 @@ export default function Dashboard() {
     productsCount: productsData?.total || 0,
     usersCount: usersData?.total || 0,
   };
-
-  // Dados dinâmicos ou fallback para dados mock
-  const recentClientActivities = recentActivities || [];
-  const clientRegistrationData = registrationData || [];
-  const pendingPreRegistrationsData = pendingPreRegistrations || [];
+  const clientRegistrationData = Array.isArray(registrationData) ? registrationData : [];
+  const pendingPreRegistrationsData = Array.isArray(pendingPreRegistrations) ? pendingPreRegistrations : [];
   // console.log('pendingPreRegistrationsData:', pendingPreRegistrationsData);
   // Verificação simples dos dados de registro
   // if (clientRegistrationData.length > 0) {
@@ -124,19 +259,29 @@ export default function Dashboard() {
             Visão geral do sistema de clientes
           </p>
         </div>
-        <div className="flex gap-2">
-          {/* <Button asChild>
-            <Link to="/admin/budgets/new">
-              <Plus className="mr-2 h-4 w-4" />
-              Novo Cliente
-            </Link>
-          </Button> */}
-          {/* <Button variant="outline" asChild>
-            <Link to="/admin/service-orders/new">
-              <FileText className="mr-2 h-4 w-4" />
-              Todos clientes
-            </Link>
-          </Button> */}
+        <div className="flex gap-4 w-full sm:w-auto">
+          {/* Campos simples de período: Data Inicial e Data Final */}
+          <div className="space-y-1 w-full sm:w-[180px]">
+            <label className="text-sm font-medium">Data Inicial</label>
+            <Input
+              type="date"
+              value={startDate || ""}
+              onChange={(e) => handleStartDateChange(e.target.value)}
+            />
+          </div>
+          <div className="space-y-1 w-full sm:w-[180px]">
+            <label className="text-sm font-medium">Data Final</label>
+            <Input
+              type="date"
+              value={endDate || ""}
+              onChange={(e) => handleEndDateChange(e.target.value)}
+            />
+          </div>
+          <div className="flex items-end">
+            <Button onClick={handleApplyFilters} variant="default">
+              Aplicar Filtros
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -168,8 +313,8 @@ export default function Dashboard() {
         ) : (
           <ClientRegistrationChart 
             data={clientRegistrationData}
-            title="Evolução dos Cadastros de Clientes"
-            description="Acompanhamento diário dos cadastros por status nos últimos 14 dias"
+            title={chartTitle}
+            description={chartDescription}
           />
         )}
       </div>
@@ -193,7 +338,7 @@ export default function Dashboard() {
                   <p className="text-sm text-muted-foreground">Nenhuma atividade recente</p>
                 </div>
               ) : (
-                recentClientActivities.map((activity) => (
+                filteredRecentActivities.map((activity) => (
                   <div key={activity.id} className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${
@@ -271,7 +416,7 @@ export default function Dashboard() {
                           {item.email} • {item.date}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {item.phone} • {item.type}
+                          {item.phone ? phoneApplyMask(String(item.phone)) : 'Não informado'} • {item.type}
                         </p>
                       </div>
                     </div>

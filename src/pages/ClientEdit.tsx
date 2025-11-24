@@ -76,12 +76,14 @@ const isValidCNPJ = (cnpj: string): boolean => {
 };
 
 /**
- * Validação de telefone
- * @param phone Telefone a ser validado
- * @returns true se o telefone for válido
+ * isValidPhone
+ * pt-BR: Valida telefone permitindo DDI, removendo máscara e aceitando 10–15 dígitos.
+ * en-US: Validates phone allowing country code, stripping mask and accepting 10–15 digits.
  */
 const isValidPhone = (phone: string): boolean => {
-  return !phone || /^\(\d{2}\)\s\d{4,5}-\d{4}$/.test(phone);
+  if (!phone) return true;
+  const digits = phone.replace(/\D/g, '');
+  return digits.length >= 10 && digits.length <= 15;
 };
 
 /**
@@ -291,7 +293,15 @@ export default function ClientEdit() {
       genero: data.genero,
       status: data.status,
       autor: data.autor,
-      config: data.config,
+      /**
+       * pt-BR: Sanitiza campos de telefone removendo a máscara/DDD/DDI antes de enviar.
+       * en-US: Sanitizes phone fields by removing mask/area/country codes before sending.
+       */
+      config: {
+        ...data.config,
+        celular: data.config?.celular ? data.config.celular.replace(/\D/g, '') : '',
+        telefone_residencial: data.config?.telefone_residencial ? data.config.telefone_residencial.replace(/\D/g, '') : '',
+      },
     };
     
     // console.log('Dados enviados para API:', clientData);

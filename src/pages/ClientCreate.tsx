@@ -60,9 +60,14 @@ const isValidCNPJ = (cnpj: string): boolean => {
   return digit2 === parseInt(cleanCNPJ.charAt(13));
 };
 
+/**
+ * isValidPhone
+ * pt-BR: Valida telefone permitindo DDI. Aceita 10 a 15 dígitos (E.164).
+ * en-US: Validates phone allowing country code. Accepts 10 to 15 digits (E.164).
+ */
 const isValidPhone = (phone: string): boolean => {
   const cleanPhone = phone.replace(/\D/g, '');
-  return cleanPhone.length >= 10 && cleanPhone.length <= 11;
+  return cleanPhone.length >= 10 && cleanPhone.length <= 15;
 };
 
 const isValidCEP = (cep: string): boolean => {
@@ -233,7 +238,15 @@ export default function ClientCreate() {
       genero: data.genero,
       status: data.status,
       autor: data.autor,
-      config: data.config,
+      /**
+       * pt-BR: Sanitiza campos de telefone removendo a máscara/DDD/DDI antes de enviar.
+       * en-US: Sanitizes phone fields by removing mask/area/country codes before sending.
+       */
+      config: {
+        ...data.config,
+        celular: data.config?.celular ? data.config.celular.replace(/\D/g, '') : '',
+        telefone_residencial: data.config?.telefone_residencial ? data.config.telefone_residencial.replace(/\D/g, '') : '',
+      },
     };
     
     createClientMutation.mutate(

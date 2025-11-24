@@ -266,7 +266,16 @@ export default function Partners() {
       razao: data.tipo_pessoa === 'pj' ? data.razao : undefined,
       genero: data.genero,
       ativo: data.ativo,
-      config: data.config,
+      /**
+       * pt-BR: Sanitiza campos de telefone removendo a máscara/DDD/DDI antes de enviar.
+       * en-US: Sanitizes phone fields by removing mask/area/country codes before sending.
+       */
+      config: {
+        ...data.config,
+        celular: data.config?.celular ? data.config.celular.replace(/\D/g, '') : '',
+        telefone_residencial: data.config?.telefone_residencial ? data.config.telefone_residencial.replace(/\D/g, '') : '',
+        telefone_comercial: data.config?.telefone_comercial ? data.config.telefone_comercial.replace(/\D/g, '') : '',
+      },
     };
 
     // Incluir password apenas se fornecido

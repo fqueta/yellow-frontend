@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, User, Mail, Phone, MapPin } from "lucide-react";
+import { phoneApplyMask, phoneRemoveMask } from "@/lib/masks/phone-apply-mask";
 import { toast } from "sonner";
 import { clientsService } from "@/services/clientsService";
 
@@ -77,7 +78,11 @@ export default function QuickClientForm({ onClientCreated, onCancel }: QuickClie
       const clientData = {
         name: data.name,
         email: data.email || undefined,
-        phone: data.phone || undefined,
+        /**
+         * pt-BR: Sanitiza telefone removendo máscara/DDD/DDI antes de enviar.
+         * en-US: Sanitizes phone by removing mask/area/country codes before sending.
+         */
+        phone: data.phone ? phoneRemoveMask(data.phone) : undefined,
         address: data.address || undefined,
         notes: data.notes || undefined,
       };
@@ -181,8 +186,11 @@ export default function QuickClientForm({ onClientCreated, onCancel }: QuickClie
                   </FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="(11) 99999-9999"
+                      placeholder="+DDI (DDD) número"
                       {...field}
+                      value={field.value || ''}
+                      onChange={(e) => field.onChange(phoneApplyMask(e.target.value))}
+                      maxLength={25}
                       disabled={isLoading}
                     />
                   </FormControl>
