@@ -18,8 +18,8 @@ type AppBrandProps = {
 export function AppBrand({ collapsed, showSubtitle = true, className }: AppBrandProps) {
   return (
     <div className={`flex items-center gap-2 px-4 py-3 ${className || ''}`}>
-      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground overflow-hidden">
-        <img src={BRAND_LOGO_URL} alt={BRAND_TITLE} className="h-5 w-5" />
+      <div className="flex h-8 w-8 items-center justify-center rounded-lg text-primary-foreground overflow-hidden">
+        <img src={BRAND_LOGO_URL} alt={BRAND_TITLE} className="h-8 w-8" />
       </div>
       {!collapsed && (
         <div className="flex flex-col">
