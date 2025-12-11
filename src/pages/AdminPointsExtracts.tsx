@@ -308,6 +308,8 @@ const AdminPointsExtracts: React.FC = () => {
    */
   const handleExport = async () => {
     try {
+      // pt-BR: Colunas exportadas (sem "Expira").
+      // en-US: Exported columns (without "Expira").
       const headers = [
         'ID',
         'Cliente',
@@ -318,7 +320,6 @@ const AdminPointsExtracts: React.FC = () => {
         'Saldo Anterior',
         'Saldo Atual',
         'Data',
-        'Expira',
       ];
 
       const rows = displayExtracts.map((ex: any) => {
@@ -334,7 +335,6 @@ const AdminPointsExtracts: React.FC = () => {
           pointsVal = -pointsVal;
         }
         const createdStr = ex.createdAt ? format(new Date(ex.createdAt), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : '—';
-        const expStr = ex.expirationDate ? format(new Date(ex.expirationDate), 'dd/MM/yyyy', { locale: ptBR }) : '';
         return [
           ex.id ?? '—',
           ex.userName || 'Não informado',
@@ -345,7 +345,6 @@ const AdminPointsExtracts: React.FC = () => {
           parseNumberField(ex.balanceBefore),
           parseNumberField(ex.balanceAfter),
           createdStr,
-          expStr,
         ];
       });
 
@@ -364,7 +363,6 @@ const AdminPointsExtracts: React.FC = () => {
         { wch: 14 },
         { wch: 14 },
         { wch: 18 },
-        { wch: 12 },
       ];
 
       XLSX.utils.book_append_sheet(wb, ws, 'Extratos');
@@ -392,6 +390,8 @@ const AdminPointsExtracts: React.FC = () => {
    */
   const handleExportPdf = async () => {
     try {
+      // pt-BR: Cabeçalhos do PDF (sem "Expira").
+      // en-US: PDF headers (without "Expira").
       const headers = [
         'ID',
         'Cliente',
@@ -402,7 +402,6 @@ const AdminPointsExtracts: React.FC = () => {
         'Saldo Anterior',
         'Saldo Atual',
         'Data',
-        'Expira',
       ];
 
       const rows = displayExtracts.map((ex: any) => {
@@ -414,7 +413,6 @@ const AdminPointsExtracts: React.FC = () => {
           pointsVal = -pointsVal;
         }
         const createdStr = ex.createdAt ? format(new Date(ex.createdAt), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : '—';
-        const expStr = ex.expirationDate ? format(new Date(ex.expirationDate), 'dd/MM/yyyy', { locale: ptBR }) : '';
         return [
           ex.id ?? '—',
           ex.userName || 'Não informado',
@@ -425,7 +423,6 @@ const AdminPointsExtracts: React.FC = () => {
           parseNumberField(ex.balanceBefore),
           parseNumberField(ex.balanceAfter),
           createdStr,
-          expStr,
         ];
       });
 
