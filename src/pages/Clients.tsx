@@ -833,7 +833,7 @@ export default function Clients() {
               <PerPageSelector
                 value={pageSize}
                 onChange={(val) => setPageSize(val)}
-                options={[20, 50, 100, 200, 500, 'all']}
+                options={[20, 50, 100, 200, 500, 1000]}
                 label="Por página"
               />
             </div>

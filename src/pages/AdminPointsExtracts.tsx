@@ -542,7 +542,7 @@ const AdminPointsExtracts: React.FC = () => {
               <PerPageSelector
                 value={perPageChoice}
                 onChange={(val) => setPerPageChoice(val)}
-                options={[20, 50, 100, 200, 500, 'all']}
+                options={[20, 50, 100, 200, 500, 1000]}
                 label="Por página"
               />
             </div>

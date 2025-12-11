@@ -493,7 +493,7 @@ const AdminRedemptions: React.FC = () => {
                   setItemsPerPage(val);
                   setCurrentPage(1);
                 }}
-                options={[20, 50, 100, 200, 500, 'all']}
+                options={[20, 50, 100, 200, 500, 1000]}
                 label="Por página"
               />
             </div>
