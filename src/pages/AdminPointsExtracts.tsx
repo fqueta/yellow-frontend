@@ -18,9 +18,11 @@ import {
   AlertCircle,
   CheckCircle,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  FileText
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ExportActions } from '@/components/ui/ExportActions';
 import { Input } from '@/components/ui/input';
 import { PrintButton } from '@/components/ui/PrintButton';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -40,6 +42,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import PerPageSelector, { PerPageValue } from '@/components/ui/PerPageSelector';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -63,6 +66,9 @@ import {
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import '@/styles/print.css';
+import * as XLSX from 'xlsx';
+import { exportTablePdf } from '@/lib/pdfExport';
+import { pointsExtractsService } from '@/services/pointsExtractsService';
 
 // Removido dados mockados - agora usando dados da API
 
@@ -77,7 +83,13 @@ const AdminPointsExtracts: React.FC = () => {
   const [dateFromFilter, setDateFromFilter] = useState('');
   const [dateToFilter, setDateToFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [perPage] = useState(20);
+  // pt-BR: Controle de paginação com opção "Todos" para listar tudo.
+  // en-US: Pagination control with "All" option to list everything.
+  const [perPageChoice, setPerPageChoice] = useState<PerPageValue>(50);
+  const showAll = perPageChoice === 'all';
+  const perPage = showAll ? 20 : (perPageChoice as number);
+  const [allExtracts, setAllExtracts] = useState<PointsExtract[]>([]);
+  const [isLoadingAll, setIsLoadingAll] = useState<boolean>(false);
 
   // Parâmetros para a API
   const apiParams = {
@@ -105,6 +117,7 @@ const AdminPointsExtracts: React.FC = () => {
   const exportMutation = useExportPointsExtracts();
   // console.log('extractsResponse',extractsResponse);
   const extracts = extractsResponse?.data || [];
+  const displayExtracts = showAll ? allExtracts : extracts;
   // console.log('extracts',extracts);
   const pagination = {
     current_page: extractsResponse?.current_page || 1,
@@ -179,35 +192,256 @@ const AdminPointsExtracts: React.FC = () => {
   // Aplicar filtros quando mudarem
   React.useEffect(() => {
     applyFilters();
-  }, [searchTerm, typeFilter, dateFromFilter, dateToFilter]);
+  }, [searchTerm, typeFilter, dateFromFilter, dateToFilter, perPageChoice]);
+
+  /**
+   * fetchAllExtracts
+   * pt-BR: Busca todas as páginas de extratos considerando os filtros atuais e agrega em uma lista única.
+   * en-US: Fetches all pages of extracts using current filters and aggregates into a single list.
+   */
+  async function fetchAllExtracts() {
+    if (!showAll) {
+      setAllExtracts([]);
+      return;
+    }
+    setIsLoadingAll(true);
+    try {
+      const combined: PointsExtract[] = [];
+      // Primeiro request para descobrir total de páginas
+      const first = await pointsExtractsService.listPointsExtracts({
+        page: 1,
+        per_page: 100,
+        search: apiParams.search,
+        type: apiParams.type,
+        dateFrom: apiParams.dateFrom,
+        dateTo: apiParams.dateTo,
+        sort: apiParams.sort,
+        order: apiParams.order,
+      });
+      combined.push(...(first.data || []));
+      const lastPage = first.last_page || 1;
+      // Buscar páginas restantes em sequência
+      for (let p = 2; p <= lastPage; p++) {
+        const resp = await pointsExtractsService.listPointsExtracts({
+          page: p,
+          per_page: 100,
+          search: apiParams.search,
+          type: apiParams.type,
+          dateFrom: apiParams.dateFrom,
+          dateTo: apiParams.dateTo,
+          sort: apiParams.sort,
+          order: apiParams.order,
+        });
+        combined.push(...(resp.data || []));
+      }
+      setAllExtracts(combined);
+    } catch (err) {
+      console.error('Falha ao carregar todos os extratos:', err);
+      toast({
+        title: 'Erro ao listar todos',
+        description: 'Não foi possível carregar todas as transações.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoadingAll(false);
+    }
+  }
+
+  // Dispara a busca de todas as páginas quando "Todos" for selecionado
+  React.useEffect(() => {
+    fetchAllExtracts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showAll, searchTerm, typeFilter, dateFromFilter, dateToFilter]);
 
   // Função para visualizar detalhes do extrato
   const handleViewDetails = (extractId: string) => {
     navigate(`/admin/points-extracts/${extractId}`);
   };
 
-  // Função para exportar dados
+  /**
+   * parseNumberField
+   * pt-BR: Converte valores numéricos vindos da API (número ou string) para número seguro.
+   *        Remove separadores de milhar, ajusta vírgula decimal e ignora caracteres não numéricos.
+   * en-US: Converts numeric values from the API (number or string) into a safe number.
+   *        Strips thousand separators, normalizes decimal comma, and ignores non-numeric characters.
+   */
+  function parseNumberField(value: unknown): number {
+    if (typeof value === 'number') {
+      return isNaN(value) ? 0 : value;
+    }
+    if (typeof value === 'string') {
+      // pt-BR: Tratamento robusto para separadores. Considera o último separador ('.' ou ',') como decimal
+      //        e remove os demais como milhares. Mantém sinal se presente.
+      // en-US: Robust handling for separators. Treats the last separator ('.' or ',') as decimal
+      //        and removes all other separators as thousands. Preserves sign if present.
+      const trimmed = value.trim();
+      const signMatch = trimmed.match(/^\s*([+-])/);
+      const sign = signMatch ? signMatch[1] : '';
+      const digitsAndSeps = trimmed.replace(/[^0-9.,]/g, '');
+      const lastDot = digitsAndSeps.lastIndexOf('.');
+      const lastComma = digitsAndSeps.lastIndexOf(',');
+      const decSepIndex = Math.max(lastDot, lastComma);
+
+      if (decSepIndex === -1) {
+        // Nenhum separador: remover quaisquer espaços e parsear direto
+        const intStr = digitsAndSeps.replace(/[^0-9]/g, '');
+        const parsedInt = parseFloat(`${sign}${intStr}`);
+        return isNaN(parsedInt) ? 0 : parsedInt;
+      }
+
+      const decSep = digitsAndSeps[decSepIndex];
+      const before = digitsAndSeps.slice(0, decSepIndex).replace(/[^0-9]/g, '');
+      const after = digitsAndSeps.slice(decSepIndex + 1).replace(/[^0-9]/g, '');
+      const normalized = `${sign}${before}.${after}`;
+      const parsed = parseFloat(normalized);
+      return isNaN(parsed) ? 0 : parsed;
+    }
+    return 0;
+  }
+
+  /**
+   * handleExport
+   * pt-BR: Exporta os extratos filtrados para um arquivo .xlsx nativo usando SheetJS,
+   *        mantendo as colunas visíveis da tabela.
+   * en-US: Exports filtered points extracts to a native .xlsx file using SheetJS,
+   *        keeping the table’s visible columns.
+   */
   const handleExport = async () => {
     try {
-      const blob = await exportMutation.mutateAsync();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `extratos-pontos-${format(new Date(), 'yyyy-MM-dd')}.xlsx`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      
+      const headers = [
+        'ID',
+        'Cliente',
+        'Email',
+        'Tipo',
+        'Pontos',
+        'Descrição',
+        'Saldo Anterior',
+        'Saldo Atual',
+        'Data',
+        'Expira',
+      ];
+
+      const rows = displayExtracts.map((ex: any) => {
+        const typeLabel = getTransactionLabel(ex.type);
+        // pt-BR: Garante que o campo "Pontos" seja numérico mesmo quando vier como string (ex: "1.000", "-98").
+        // en-US: Ensures the "Pontos" field is numeric even when provided as a string (e.g., "1.000", "-98").
+        const rawPoints = ex.points ?? ex.valor ?? ex.valor_referencia;
+        let pointsVal = parseNumberField(rawPoints);
+        // pt-BR: Ajusta o sinal com base no tipo se o valor vier sem sinal explícito.
+        // en-US: Adjusts the sign based on the transaction type if the value has no explicit sign.
+        const txType = (ex.type ?? ex.tipo) as string | undefined;
+        if (txType && /debito|redeemed/i.test(txType) && pointsVal > 0) {
+          pointsVal = -pointsVal;
+        }
+        const createdStr = ex.createdAt ? format(new Date(ex.createdAt), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : '—';
+        const expStr = ex.expirationDate ? format(new Date(ex.expirationDate), 'dd/MM/yyyy', { locale: ptBR }) : '';
+        return [
+          ex.id ?? '—',
+          ex.userName || 'Não informado',
+          ex.userEmail || 'Não informado',
+          typeLabel,
+          pointsVal,
+          ex.description ? ex.description.replace(/Resgate de produto: /, 'Resgate de: ') : '',
+          parseNumberField(ex.balanceBefore),
+          parseNumberField(ex.balanceAfter),
+          createdStr,
+          expStr,
+        ];
+      });
+
+      const aoa = [headers, ...rows];
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+      const maxLen = (vals: any[]) => Math.max(...vals.map(v => (v ? String(v).length : 0)), 0);
+      ws['!cols'] = [
+        { wch: 6 },
+        { wch: Math.max(16, maxLen(rows.map(r => r[1])) + 2) },
+        { wch: Math.max(22, maxLen(rows.map(r => r[2])) + 2) },
+        { wch: Math.max(16, maxLen(rows.map(r => r[3])) + 2) },
+        { wch: 10 },
+        { wch: Math.max(24, maxLen(rows.map(r => r[5])) + 2) },
+        { wch: 14 },
+        { wch: 14 },
+        { wch: 18 },
+        { wch: 12 },
+      ];
+
+      XLSX.utils.book_append_sheet(wb, ws, 'Extratos');
+      const date = new Date().toISOString().slice(0, 10);
+      XLSX.writeFile(wb, `extratos-pontos-${date}.xlsx`);
+
       toast({
-        title: "Exportação concluída",
-        description: "Os dados dos extratos foram exportados com sucesso.",
+        title: 'Exportação concluída',
+        description: 'Arquivo .xlsx gerado com sucesso.',
       });
     } catch (error) {
+      console.error('Erro ao exportar extratos:', error);
       toast({
-        title: "Erro na exportação",
-        description: "Ocorreu um erro ao exportar os dados.",
-        variant: "destructive"
+        title: 'Erro na exportação',
+        description: 'Ocorreu um erro ao exportar os dados.',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  /**
+   * handleExportPdf
+   * pt-BR: Gera um PDF com os extratos filtrados e abre em nova aba.
+   * en-US: Generates a PDF with filtered points extracts and opens in a new tab.
+   */
+  const handleExportPdf = async () => {
+    try {
+      const headers = [
+        'ID',
+        'Cliente',
+        'Email',
+        'Tipo',
+        'Pontos',
+        'Descrição',
+        'Saldo Anterior',
+        'Saldo Atual',
+        'Data',
+        'Expira',
+      ];
+
+      const rows = displayExtracts.map((ex: any) => {
+        const typeLabel = getTransactionLabel(ex.type);
+        const rawPoints = ex.points ?? ex.valor ?? ex.valor_referencia;
+        let pointsVal = parseNumberField(rawPoints);
+        const txType = (ex.type ?? ex.tipo) as string | undefined;
+        if (txType && /debito|redeemed/i.test(txType) && pointsVal > 0) {
+          pointsVal = -pointsVal;
+        }
+        const createdStr = ex.createdAt ? format(new Date(ex.createdAt), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : '—';
+        const expStr = ex.expirationDate ? format(new Date(ex.expirationDate), 'dd/MM/yyyy', { locale: ptBR }) : '';
+        return [
+          ex.id ?? '—',
+          ex.userName || 'Não informado',
+          ex.userEmail || 'Não informado',
+          typeLabel,
+          pointsVal,
+          ex.description ? ex.description.replace(/Resgate de produto: /, 'Resgate de: ') : '',
+          parseNumberField(ex.balanceBefore),
+          parseNumberField(ex.balanceAfter),
+          createdStr,
+          expStr,
+        ];
+      });
+
+      exportTablePdf({
+        title: 'Extratos de Pontos',
+        headers,
+        rows,
+        orientation: 'landscape',
+        filtersLegend: filterLegend,
+      });
+    } catch (error) {
+      console.error('Erro ao exportar extratos (PDF):', error);
+      toast({
+        title: 'Erro na exportação',
+        description: 'Ocorreu um erro ao gerar o PDF.',
+        variant: 'destructive',
       });
     }
   };
@@ -278,12 +512,14 @@ const AdminPointsExtracts: React.FC = () => {
         </div>
         {/* Área de ações à direita (inclui botão de impressão) */}
         <div className="flex gap-2 items-center justify-end w-full sm:w-auto">
-          {/* Botão de imprimir extratos alinhado à direita */}
-          <PrintButton className="ml-auto" label="Imprimir extratos" />
-          {/* <Button variant="outline" onClick={handleExport}>
-            <Download className="w-4 h-4 mr-2" />
-            Exportar
-          </Button> */}
+          {/* Ações consolidadas em um único botão com dropdown */}
+          <ExportActions
+            label="Exportar"
+            onPrint={() => window.print()}
+            onExportXlsx={handleExport}
+            onExportPdf={handleExportPdf}
+            printLabel="Imprimir extratos"
+          />
           {/* <Button variant="outline" onClick={handleCreateAdjustment}>
             <Plus className="w-4 h-4 mr-2" />
             Criar Ajuste
@@ -304,7 +540,15 @@ const AdminPointsExtracts: React.FC = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="space-y-2">
+              <PerPageSelector
+                value={perPageChoice}
+                onChange={(val) => setPerPageChoice(val)}
+                options={[20, 50, 100, 200, 500, 'all']}
+                label="Por página"
+              />
+            </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Buscar</label>
               <div className="relative">
@@ -433,7 +677,7 @@ const AdminPointsExtracts: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <DollarSign className="w-5 h-5" />
-            Extratos de Pontos ({extracts.length})
+            Extratos de Pontos ({displayExtracts.length})
           </CardTitle>
           <CardDescription>
             Histórico completo de movimentações de pontos dos clientes
@@ -456,7 +700,7 @@ const AdminPointsExtracts: React.FC = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {isLoading ? (
+                {isLoading || (showAll && isLoadingAll) ? (
                   [...Array(5)].map((_, i) => (
                     <TableRow key={i}>
                       <TableCell><div className="h-4 w-16 bg-gray-200 rounded animate-pulse" /></TableCell>
@@ -470,7 +714,7 @@ const AdminPointsExtracts: React.FC = () => {
                       <TableCell><div className="h-4 w-8 bg-gray-200 rounded animate-pulse" /></TableCell>
                     </TableRow>
                   ))
-                ) : extracts.length === 0 ? (
+                ) : displayExtracts.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={9} className="text-center py-8">
                       <div className="flex flex-col items-center gap-2">
@@ -480,7 +724,7 @@ const AdminPointsExtracts: React.FC = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  extracts.map((extract) => (
+                  displayExtracts.map((extract) => (
                     <TableRow key={extract.id}>
                       <TableCell className="font-medium">{extract.id}</TableCell>
                       <TableCell>
@@ -588,7 +832,7 @@ const AdminPointsExtracts: React.FC = () => {
           </div>
           
           {/* Paginação */}
-          {pagination && pagination.total > 0 && (
+          {!showAll && pagination && pagination.total > 0 && (
             <div className="flex items-center justify-between px-6 py-4 border-t">
               <div className="text-sm text-gray-500">
                 Mostrando {((pagination.current_page - 1) * pagination.per_page) + 1} a {Math.min(pagination.current_page * pagination.per_page, pagination.total)} de {pagination.total} resultados

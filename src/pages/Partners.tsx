@@ -34,6 +34,9 @@ import {
 import { PartnerRecord, CreatePartnerInput } from '@/types/partners';
 import { PartnerForm } from '@/components/partners/PartnerForm';
 import { PartnersTable } from '@/components/partners/PartnersTable';
+import PerPageSelector, { PerPageValue } from '@/components/ui/PerPageSelector';
+import { exportTablePdf } from '@/lib/pdfExport';
+import { ExportActions } from '@/components/ui/ExportActions';
 
 /**
  * Schema de validação para formulário de parceiros
@@ -89,14 +92,14 @@ export default function Partners() {
   const [editingPartner, setEditingPartner] = useState<PartnerRecord | null>(null);
   const [partnerToDelete, setPartnerToDelete] = useState<PartnerRecord | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(10);
+  const [pageSize, setPageSize] = useState<PerPageValue>(10);
   const { toast } = useToast();
   const navigate = useNavigate();
 
   // React Query hooks para operações de parceiros
   const partnersQuery = usePartnersList({
     page: currentPage,
-    per_page: pageSize,
+    per_page: pageSize === 'all' ? 999999 : pageSize,
   });
   const createPartnerMutation = useCreatePartner();
   const updatePartnerMutation = useUpdatePartner();
@@ -357,14 +360,48 @@ export default function Partners() {
     });
   }, [partnersQuery.data, searchTerm]);
 
+  /**
+   * handleExportPdf
+   * pt-BR: Gera um PDF com a lista filtrada de parceiros e abre em nova aba.
+   * en-US: Generates a PDF with the filtered partners list and opens in a new tab.
+   */
+  const handleExportPdf = () => {
+    try {
+      const headers = ['Nome', 'Email', 'Documento', 'Tipo', 'Ativo'];
+      const rows = filteredPartners.map((partner: any) => {
+        const document = partner.tipo_pessoa === 'pf' ? partner.cpf : partner.cnpj;
+        const tipo = partner.tipo_pessoa?.toUpperCase();
+        const ativo = partner.ativo === 's' ? 'Sim' : 'Não';
+        return [
+          partner.name || '—',
+          partner.email || '—',
+          document || '—',
+          tipo || '—',
+          ativo,
+        ];
+      });
+      exportTablePdf({ title: 'Parceiros', headers, rows, orientation: 'portrait' });
+    } catch (error) {
+      console.error('Erro ao exportar parceiros (PDF):', error);
+    }
+  };
+
   return (
     <div className="container mx-auto py-6 space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Parceiros</h1>
-        <Button onClick={handleNewPartner}>
-          <Plus className="mr-2 h-4 w-4" /> Novo Parceiro
-        </Button>
+        <div className="flex items-center gap-2">
+          <ExportActions
+            label="Exportar"
+            onPrint={() => window.print()}
+            onExportPdf={handleExportPdf}
+            printLabel="Imprimir parceiros"
+          />
+          <Button onClick={handleNewPartner}>
+            <Plus className="mr-2 h-4 w-4" /> Novo Parceiro
+          </Button>
+        </div>
       </div>
 
       {/* Cards de Estatísticas */}
@@ -430,14 +467,24 @@ export default function Partners() {
           <CardDescription>
             Gerencie seus parceiros, visualize informações e histórico de atividades.
           </CardDescription>
-          <div className="flex items-center mt-4">
-            <Search className="h-4 w-4 mr-2 opacity-50" />
-            <Input
-              placeholder="Buscar por nome, email ou documento..."
-              className="max-w-sm"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+          <div className="flex flex-col sm:flex-row gap-4 mt-4">
+            <div className="w-full sm:w-40">
+              <PerPageSelector
+                value={pageSize}
+                onChange={(val) => setPageSize(val)}
+                options={[20, 50, 100, 200, 500, 'all']}
+                label="Por página"
+              />
+            </div>
+            <div className="relative flex-1">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por nome, email ou documento..."
+                className="pl-8"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
           </div>
         </CardHeader>
         <CardContent>

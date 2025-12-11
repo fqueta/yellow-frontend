@@ -16,9 +16,11 @@ import {
   Calendar,
   User,
   Gift,
-  Phone
+  Phone,
+  FileText
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ExportActions } from '@/components/ui/ExportActions';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -37,6 +39,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import PerPageSelector, { PerPageValue } from '@/components/ui/PerPageSelector';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -57,6 +60,8 @@ import { ptBR } from 'date-fns/locale';
 import { PrintButton } from '@/components/ui/PrintButton';
 import '@/styles/print.css';
 import { phoneApplyMask } from '@/lib/masks/phone-apply-mask';
+import * as XLSX from 'xlsx';
+import { exportTablePdf } from '@/lib/pdfExport';
 
 
 
@@ -74,7 +79,7 @@ const AdminRedemptions: React.FC = () => {
 
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(100);
+  const [itemsPerPage, setItemsPerPage] = useState<PerPageValue>(100);
 
   const {
     data: redemptionsData,
@@ -83,7 +88,7 @@ const AdminRedemptions: React.FC = () => {
     refetch
   } = useAllRedemptions({
     page: currentPage,
-    per_page: itemsPerPage,
+    per_page: itemsPerPage === 'all' ? 999999 : itemsPerPage,
     status: statusFilter !== 'all' ? statusFilter : undefined,
     // Período enviado para API
     dateFrom: dateFromFilter || undefined,
@@ -258,12 +263,133 @@ const AdminRedemptions: React.FC = () => {
     navigate(`/admin/redemptions/${redemptionId}`);
   };
 
-  // Função para exportar dados
+  /**
+   * handleExport
+   * pt-BR: Exporta os resgates filtrados para um arquivo .xlsx nativo (SheetJS),
+   *        mantendo as colunas visíveis: ID, Cliente, Email, Telefone, Produto,
+   *        Categoria, Pontos, Data e Status.
+   * en-US: Exports filtered redemptions to a native .xlsx file (SheetJS),
+   *        keeping the visible columns: ID, Customer, Email, Phone, Product,
+   *        Category, Points, Date and Status.
+   */
   const handleExport = () => {
-    toast({
-      title: "Exportando dados",
-      description: "Os dados dos resgates estão sendo exportados...",
-    });
+    try {
+      const headers = [
+        'ID',
+        'Cliente',
+        'Email',
+        'Telefone',
+        'Produto',
+        'Categoria',
+        'Pontos',
+        'Data',
+        'Status',
+      ];
+
+      const rows = filteredRedemptions.map((r: any) => {
+        const phone = formatDisplayPhone(r.userPhone) || 'Não informado';
+        const dateStr = r.redemptionDate ? format(new Date(r.redemptionDate), 'dd/MM/yyyy', { locale: ptBR }) : '—';
+        const statusLabel = REDEMPTION_STATUSES[r.status]?.label || r.status || '—';
+        return [
+          r.id ?? '—',
+          r.userName || 'Não informado',
+          r.userEmail || 'Não informado',
+          phone,
+          r.productName || '—',
+          r.productCategory || '—',
+          typeof r.pointsUsed === 'number' ? r.pointsUsed : '—',
+          dateStr,
+          statusLabel,
+        ];
+      });
+
+      const aoa = [headers, ...rows];
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+      // Ajuste simples de largura das colunas
+      const maxLen = (vals: any[]) => Math.max(...vals.map(v => (v ? String(v).length : 0)), 0);
+      ws['!cols'] = [
+        { wch: 6 },
+        { wch: Math.max(16, maxLen(rows.map(r => r[1])) + 2) },
+        { wch: Math.max(22, maxLen(rows.map(r => r[2])) + 2) },
+        { wch: Math.max(14, maxLen(rows.map(r => r[3])) + 2) },
+        { wch: Math.max(20, maxLen(rows.map(r => r[4])) + 2) },
+        { wch: Math.max(16, maxLen(rows.map(r => r[5])) + 2) },
+        { wch: 10 },
+        { wch: 12 },
+        { wch: 12 },
+      ];
+
+      XLSX.utils.book_append_sheet(wb, ws, 'Resgates');
+      const date = new Date().toISOString().slice(0, 10);
+      XLSX.writeFile(wb, `resgates-${date}.xlsx`);
+
+      toast({
+        title: 'Exportação concluída',
+        description: 'Arquivo .xlsx gerado com sucesso.',
+      });
+    } catch (error) {
+      console.error('Erro ao exportar resgates:', error);
+      toast({
+        title: 'Erro na exportação',
+        description: 'Ocorreu um erro ao exportar os dados.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  /**
+   * handleExportPdf
+   * pt-BR: Gera um PDF com os resgates filtrados e abre em nova aba.
+   * en-US: Generates a PDF with filtered redemptions and opens in a new tab.
+   */
+  const handleExportPdf = () => {
+    try {
+      const headers = [
+        'ID',
+        'Cliente',
+        'Email',
+        'Telefone',
+        'Produto',
+        'Categoria',
+        'Pontos',
+        'Data',
+        'Status',
+      ];
+
+      const rows = filteredRedemptions.map((r: any) => {
+        const phone = formatDisplayPhone(r.userPhone) || 'Não informado';
+        const dateStr = r.redemptionDate ? format(new Date(r.redemptionDate), 'dd/MM/yyyy', { locale: ptBR }) : '—';
+        const statusLabel = REDEMPTION_STATUSES[r.status]?.label || r.status || '—';
+        return [
+          r.id ?? '—',
+          r.userName || 'Não informado',
+          r.userEmail || 'Não informado',
+          phone,
+          r.productName || '—',
+          r.productCategory || '—',
+          typeof r.pointsUsed === 'number' ? r.pointsUsed : '—',
+          dateStr,
+          statusLabel,
+        ];
+      });
+
+      exportTablePdf({
+        title: 'Resgates da Loja de Pontos',
+        headers,
+        rows,
+        orientation: 'landscape',
+        filtersLegend: filterLegend,
+      });
+    } catch (error) {
+      console.error('Erro ao exportar resgates (PDF):', error);
+      toast({
+        title: 'Erro na exportação',
+        description: 'Ocorreu um erro ao gerar o PDF.',
+        variant: 'destructive',
+      });
+    }
   };
 
   /**
@@ -339,8 +465,14 @@ const AdminRedemptions: React.FC = () => {
           </p>
         </div>
         <div className="flex gap-2">
-          {/* Botão de impressão visível apenas no modo normal (oculto na impressão via CSS) */}
-          <PrintButton className="ml-auto" label="Imprimir resgates" />
+          {/* Ações consolidadas em um único botão com dropdown */}
+          <ExportActions
+            label="Exportar"
+            onPrint={() => window.print()}
+            onExportXlsx={handleExport}
+            onExportPdf={handleExportPdf}
+            printLabel="Imprimir resgates"
+          />
         </div>
       </div>
 
@@ -354,6 +486,17 @@ const AdminRedemptions: React.FC = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+            <div className="space-y-2">
+              <PerPageSelector
+                value={itemsPerPage}
+                onChange={(val) => {
+                  setItemsPerPage(val);
+                  setCurrentPage(1);
+                }}
+                options={[20, 50, 100, 200, 500, 'all']}
+                label="Por página"
+              />
+            </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Buscar</label>
               <div className="relative">
@@ -650,7 +793,7 @@ const AdminRedemptions: React.FC = () => {
           </div>
 
           {/* Paginação */}
-          {totalItems > 0 && totalPages > 1 && (
+          {itemsPerPage !== 'all' && totalItems > 0 && totalPages > 1 && (
             <div className="flex items-center justify-between px-6 py-4 border-t">
               <div className="text-sm text-gray-500">
                 Mostrando {((currentPage - 1) * itemsPerPage) + 1} a {Math.min(currentPage * itemsPerPage, totalItems)} de {totalItems} resultados

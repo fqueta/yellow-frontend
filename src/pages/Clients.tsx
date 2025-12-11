@@ -25,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import PerPageSelector, { PerPageValue } from "@/components/ui/PerPageSelector";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,8 +43,7 @@ import { useToast } from "@/hooks/use-toast";
 import * as z from "zod";
 import { 
   Plus, 
-  Search,
-  Printer
+  Search
 } from "lucide-react";
 import "@/styles/print.css";
 import { getBrazilianStates } from '@/lib/qlib';
@@ -59,6 +59,10 @@ import { ClientForm } from '@/components/clients/ClientForm';
 import { ClientsTable } from '@/components/clients/ClientsTable';
 import { useDebounce } from '@/hooks/useDebounce';
 import { Switch } from "@/components/ui/switch";
+import { phoneApplyMask } from '@/lib/masks/phone-apply-mask';
+import * as XLSX from 'xlsx';
+import { exportTablePdf } from '@/lib/pdfExport';
+import { ExportActions } from '@/components/ui/ExportActions';
 interface ApiDeleteResponse {
   exec: boolean;
   message: string;
@@ -230,7 +234,7 @@ export default function Clients() {
   const [editingClient, setEditingClient] = useState<ClientRecord | null>(null);
   const [clientToDelete, setClientToDelete] = useState<ClientRecord | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(100);
+  const [pageSize, setPageSize] = useState<PerPageValue>(100);
   // Filtro de lixeira (excluido=s)
   const [showTrash, setShowTrash] = useState(false);
   const { toast } = useToast();
@@ -247,7 +251,7 @@ export default function Clients() {
   const clientsQuery = useClientsList(
     {
       page: currentPage,
-      per_page: pageSize,
+      per_page: pageSize === 'all' ? 999999 : pageSize,
       search: debouncedSearchTerm,
       excluido: showTrash ? 's' : undefined,
     },
@@ -270,7 +274,7 @@ export default function Clients() {
   // Reset to first page when search or status filter changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearchTerm, statusFilter, showTrash]);
+  }, [debouncedSearchTerm, statusFilter, showTrash, pageSize]);
   const createClientMutation = useCreateClient();
   const updateClientMutation = useUpdateClient();
   const deleteClientMutation = useDeleteClient();
@@ -617,15 +621,143 @@ export default function Clients() {
     window.print();
   }, []);
 
+  /**
+   * mapStatus
+   * pt-BR: Converte o valor técnico de `status` em um rótulo amigável
+   *        para exibição e exportação (tabela, XLSX e PDF).
+   * en-US: Converts the technical `status` value into a user-friendly label
+   *        for display and export (table, XLSX and PDF).
+   */
+  const mapStatus = (status: string) => {
+    switch (status) {
+      case 'actived': return 'Ativo';
+      case 'inactived': return 'Inativo';
+      case 'pre_registred': return 'Pré-cadastro';
+      default: return status || 'Não definido';
+    }
+  };
+
+  /**
+   * handleExport
+   * pt-BR: Exporta os clientes filtrados para um arquivo .xlsx nativo usando SheetJS.
+   *        Mantém as colunas visíveis da tabela: Nome, Documento, Email, Telefone,
+   *        Proprietário e Status. Gera uma planilha compatível com Excel.
+   * en-US: Exports filtered clients to a native .xlsx file using SheetJS.
+   *        Keeps the visible table columns: Name, Document, Email, Phone,
+   *        Owner and Status. Produces an Excel-compatible worksheet.
+   */
+  const handleExport = useCallback(() => {
+    try {
+      // Header columns aligned with the table
+      const headers = [
+        'Nome',
+        'Documento',
+        'Email',
+        'Telefone',
+        'Proprietário',
+        'Status',
+      ];
+
+      // Build worksheet rows from filtered clients
+      const rows = filteredClients.map((client) => {
+        const documento = client.tipo_pessoa === 'pf' ? (client.cpf || 'Não informado') : (client.cnpj || 'Não informado');
+        const telefoneRaw = client?.config?.celular || client?.config?.telefone_residencial || '';
+        const telefone = telefoneRaw ? phoneApplyMask(String(telefoneRaw)) : 'Não informado';
+        const proprietario = client.autor_name || 'Não identificado';
+        const statusLabel = mapStatus(client.status);
+
+        return [
+          client.name || 'Não informado',
+          documento,
+          client.email || 'Não informado',
+          telefone,
+          proprietario,
+          statusLabel,
+        ];
+      });
+
+      // Create workbook and worksheet using SheetJS
+      const aoa = [headers, ...rows];
+      const workbook = XLSX.utils.book_new();
+      const worksheet = XLSX.utils.aoa_to_sheet(aoa);
+
+      // Basic column widths for readability (auto-sized approximation)
+      const maxLen = (arr: any[]) => Math.max(...arr.map(v => (v ? String(v).length : 0)));
+      worksheet['!cols'] = [
+        { wch: Math.max(8, maxLen(rows.map(r => r[0])) + 2) },
+        { wch: Math.max(14, maxLen(rows.map(r => r[1])) + 2) },
+        { wch: Math.max(18, maxLen(rows.map(r => r[2])) + 2) },
+        { wch: Math.max(12, maxLen(rows.map(r => r[3])) + 2) },
+        { wch: Math.max(12, maxLen(rows.map(r => r[4])) + 2) },
+        { wch: Math.max(8, maxLen(rows.map(r => r[5])) + 2) },
+      ];
+
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Clientes');
+      const date = new Date().toISOString().slice(0, 10);
+  XLSX.writeFile(workbook, `clientes-${date}.xlsx`);
+  } catch (error) {
+      console.error('Erro ao exportar clientes:', error);
+  }
+  }, [filteredClients]);
+
+  /**
+   * handleExportPdf
+   * pt-BR: Gera um PDF com a lista filtrada de clientes e abre em
+   *         uma nova aba, sem usar a impressão do navegador.
+   * en-US: Generates a PDF with the filtered clients list and opens
+   *         it in a new tab, without using the browser print feature.
+   */
+  const handleExportPdf = useCallback(() => {
+    try {
+      const headers = [
+        'Nome completo',
+        'CPF/CNPJ',
+        'Email',
+        'Telefone',
+        'Proprietário',
+        'Status',
+      ];
+
+      const rows = filteredClients.map((client: any) => {
+        const documento = client.document || client.document_number || 'Não informado';
+        const telefone = client.phone || client.telefone || 'Não informado';
+        const proprietario = client.autor_name || 'Não identificado';
+        const statusLabel = mapStatus(client.status);
+        return [
+          client.name || 'Não informado',
+          documento,
+          client.email || 'Não informado',
+          telefone,
+          proprietario,
+          statusLabel,
+        ];
+      });
+
+      exportTablePdf({
+        title: 'Usuários Cadastrados',
+        headers,
+        rows,
+        orientation: 'landscape',
+      });
+    } catch (error) {
+      console.error('Erro ao exportar PDF de clientes:', error);
+    }
+  }, [filteredClients]);
+
   return (
     <div className="container mx-auto py-6 space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Clientes</h1>
         <div className="flex items-center gap-2">
-          <Button className="no-print" variant="outline" onClick={handlePrint}>
-            <Printer className="mr-2 h-4 w-4" /> Imprimir
-          </Button>
+          <ExportActions
+            label="Exportar"
+            onPrint={() => window.print()}
+            onExportXlsx={handleExport}
+            onExportPdf={handleExportPdf}
+            disabled={!filteredClients.length}
+            printLabel="Imprimir clientes"
+          />
           <Button onClick={handleNewClient}>
             <Plus className="mr-2 h-4 w-4" /> Novo Cliente
           </Button>
@@ -696,6 +828,15 @@ export default function Clients() {
             Gerencie seus clientes, visualize informações e histórico de atividades.
           </CardDescription>
           <div className="flex flex-col sm:flex-row gap-4 mt-4">
+            {/* Per-page selector */}
+            <div className="w-full sm:w-40">
+              <PerPageSelector
+                value={pageSize}
+                onChange={(val) => setPageSize(val)}
+                options={[20, 50, 100, 200, 500, 'all']}
+                label="Por página"
+              />
+            </div>
             <div className="relative flex-1">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
@@ -784,7 +925,7 @@ export default function Clients() {
             />
           )}
           {/* Pagination */}
-          {clientsQuery.data && clientsQuery.data.total > 0 && totalPages > 1 && (
+          {pageSize !== 'all' && clientsQuery.data && clientsQuery.data.total > 0 && totalPages > 1 && (
             <div className="flex items-center justify-between mt-4">
               <p className="text-sm text-muted-foreground">Página {currentPage} de {totalPages}</p>
               <div className="flex gap-2">

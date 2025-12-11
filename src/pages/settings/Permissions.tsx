@@ -1,10 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, Search, Pencil, Trash2, Check, X } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, Check, X, FileText } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 
 import { Button } from '@/components/ui/button';
+import { ExportActions } from '@/components/ui/ExportActions';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -45,6 +46,8 @@ import {
 } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import PerPageSelector, { PerPageValue } from '@/components/ui/PerPageSelector';
+import { exportTablePdf } from '@/lib/pdfExport';
 
 import { 
   usePermissionsList, 
@@ -68,6 +71,7 @@ type PermissionFormData = z.infer<typeof permissionSchema>;
 export default function Permissions() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState<PerPageValue>(10);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPermission, setEditingPermission] = useState<PermissionRecord | null>(null);
   const [deletingPermission, setDeletingPermission] = useState<PermissionRecord | null>(null);
@@ -81,7 +85,7 @@ export default function Permissions() {
 
   const { data: permissionsData, isLoading, error } = usePermissionsList({ 
     page, 
-    per_page: 10 
+    per_page: perPage === 'all' ? 999999 : perPage 
   });
 
   const { data: menuPermissions } = useMenuPermissions(selectedPermissionId);
@@ -112,6 +116,27 @@ export default function Permissions() {
       (permission.description && permission.description.toLowerCase().includes(searchLower))
     );
   }, [permissions, search]);
+
+  /**
+   * handleExportPdf
+   * pt-BR: Gera um PDF com a lista de permissões filtrada e abre em nova aba.
+   * en-US: Generates a PDF with the filtered permissions list and opens in a new tab.
+   */
+  const handleExportPdf = () => {
+    try {
+      const headers = ['Nome', 'Descrição'];
+      const rows = filteredPermissions.map((p) => [p.name, p.description || '-']);
+      exportTablePdf({
+        title: 'Permissões',
+        headers,
+        rows,
+        orientation: 'portrait',
+      });
+    } catch (error) {
+      // Silently fail to avoid UI disruption; can add toast if desired
+      console.error('Erro ao exportar permissões (PDF):', error);
+    }
+  };
   const permissionTree = buildPermissionTree(menuItems);
   
   // Create lookup maps for efficient access
@@ -384,10 +409,18 @@ export default function Permissions() {
             Gerencie as permissões do sistema
           </p>
         </div>
-        <Button onClick={() => handleOpenModal()}>
+        <div className="flex gap-2">
+          <ExportActions
+            label="Exportar"
+            onPrint={() => window.print()}
+            onExportPdf={handleExportPdf}
+            printLabel="Imprimir permissões"
+          />
+          <Button onClick={() => handleOpenModal()}>
           <Plus className="mr-2 h-4 w-4" />
           Nova Permissão
-        </Button>
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="dados" className="w-full">
@@ -404,6 +437,17 @@ export default function Permissions() {
                 Configure as permissões disponíveis no sistema
               </CardDescription>
               <div className="flex items-center space-x-2">
+                <div className="w-40">
+                  <PerPageSelector
+                    value={perPage}
+                    onChange={(val) => {
+                      setPerPage(val);
+                      setPage(1);
+                    }}
+                    options={[20, 50, 100, 200, 500, 'all']}
+                    label="Por página"
+                  />
+                </div>
                 <div className="relative flex-1 max-w-sm">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                   <Input
@@ -482,7 +526,7 @@ export default function Permissions() {
                     </TableBody>
                   </Table>
 
-                  {totalPages > 1 && (
+                  {perPage !== 'all' && totalPages > 1 && (
                     <div className="flex items-center justify-between mt-4">
                       <p className="text-sm text-muted-foreground">
                         Página {page} de {totalPages}
