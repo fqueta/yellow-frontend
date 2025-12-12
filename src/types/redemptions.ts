@@ -53,6 +53,9 @@ export interface Redemption {
   actualDelivery?: string;
   notes?: string;
   adminNotes?: string;
+  // Dados adicionais da requisição de resgate (ex.: configurações do formulário)
+  // Pode ser um objeto JSON ou uma string JSON retornada pela API
+  config?: any;
   createdAt: string;
   updatedAt: string;
   priority: 'low' | 'medium' | 'high';

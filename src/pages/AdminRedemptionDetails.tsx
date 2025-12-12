@@ -21,7 +21,8 @@ import {
   Star,
   Gift,
   DollarSign,
-  Trash
+  Trash,
+  FileText
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -265,6 +266,57 @@ const AdminRedemptionDetails: React.FC = () => {
       title: "Download iniciado",
       description: "O comprovante está sendo gerado..."
     });
+  };
+
+  // ===== Helpers de Configuração do Pedido =====
+  /**
+   * Extrai e normaliza o objeto de configuração do resgate.
+   * pt-BR: Aceita `redemption.config` como objeto ou string JSON; retorna Record ou null.
+   * en-US: Accepts `redemption.config` as object or JSON string; returns Record or null.
+   */
+  const getOrderConfig = (): Record<string, any> | null => {
+    console.log('redemption:', (redemption as any));
+    const cfg = (redemption as any)?.config;
+    if (!cfg) return null;
+    let obj = cfg;
+    if (typeof obj === 'string') {
+      try {
+        obj = JSON.parse(obj);
+      } catch {
+        // Mantém conteúdo bruto caso não seja JSON válido
+        return { conteudo: String(obj) } as Record<string, any>;
+      }
+    }
+    if (obj && typeof obj === 'object') return obj as Record<string, any>;
+    return null;
+  };
+
+  /**
+   * Converte a chave técnica em um rótulo amigável.
+   * pt-BR: Ex.: "chave_pix" -> "Chave PIX".
+   * en-US: Turns technical keys into user-friendly labels.
+   */
+  const labelizeKey = (key: string): string => {
+    const map: Record<string, string> = {
+      chave_pix: 'Chave PIX',
+      confere_pix: 'Confirmação PIX',
+      confira_pix: 'Confirmação PIX',
+    };
+    return (map[key] || key).replace(/_/g, ' ');
+  };
+
+  /**
+   * Gera uma lista de pares chave/valor para renderização.
+   * pt-BR: Retorna valores como string para exibição simples.
+   * en-US: Returns key/value pairs as strings for simple rendering.
+   */
+  const buildConfigEntries = (configObj: Record<string, any> | null): { key: string; value: string }[] => {
+    if (!configObj) return [];
+    try {
+      return Object.entries(configObj).map(([k, v]) => ({ key: k, value: String(v ?? '') }));
+    } catch {
+      return [];
+    }
   };
 
   /**
@@ -599,6 +651,37 @@ const AdminRedemptionDetails: React.FC = () => {
                   </div>
                 )}
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Detalhes do pedido (config da requisição) */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <FileText className="w-4 h-4" />
+                Detalhes do pedido
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {(() => {
+                const cfg = getOrderConfig();
+                const entries = buildConfigEntries(cfg);
+                if (!entries.length) {
+                  return (
+                    <p className="text-sm text-gray-700">Nenhuma informação adicional do pedido.</p>
+                  );
+                }
+                return (
+                  <div className="space-y-3">
+                    {entries.map((item) => (
+                      <div key={item.key} className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">{labelizeKey(item.key)}</span>
+                        <span className="text-sm font-medium break-all">{item.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
             </CardContent>
           </Card>
 
