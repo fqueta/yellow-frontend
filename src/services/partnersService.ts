@@ -51,7 +51,7 @@ class PartnersService extends BaseApiService {
    * @param id - ID do parceiro
    */
   async deletePartner(id: string): Promise<void> {
-    await this.delete(`/partners/${id}`);
+    await super.delete(`/partners/${id}`);
   }
 
   // Métodos de conveniência para compatibilidade com useGenericApi
@@ -71,6 +71,7 @@ class PartnersService extends BaseApiService {
     return this.updatePartner(id, data);
   }
 
+  // @ts-ignore
   async delete(id: string): Promise<void> {
     return this.deletePartner(id);
   }
