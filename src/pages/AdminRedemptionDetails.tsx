@@ -275,7 +275,7 @@ const AdminRedemptionDetails: React.FC = () => {
    * en-US: Accepts `redemption.config` as object or JSON string; returns Record or null.
    */
   const getOrderConfig = (): Record<string, any> | null => {
-    console.log('redemption:', (redemption as any));
+    // console.log('redemption:', (redemption as any));
     const cfg = (redemption as any)?.config;
     if (!cfg) return null;
     let obj = cfg;

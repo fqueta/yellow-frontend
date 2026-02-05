@@ -6,7 +6,7 @@ export function getTenantIdFromSubdomain(): string | null {
 
 export function getTenantApiUrl(): string {
   // Derive tenant API URL from VITE_API_URL by removing 'api-' prefix
-  const baseUrl : string = import.meta.env.VITE_TENANT_API_URL || 'http://maisaqui1.localhost:8000/api/v1';
+  const baseUrl : string = import.meta.env.VITE_TENANT_API_URL || 'http://api-mileto.localhost:8000/api/v1';
   
   // Se a URL contém placeholder {tenant_id}, substitui pelo tenant atual
   if (baseUrl.includes('{tenant_id}')) {
