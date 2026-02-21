@@ -63,7 +63,7 @@ import {
   useCreateAdjustment, 
   useExportPointsExtracts 
 } from '@/hooks/pointsExtracts';
-import { format } from 'date-fns';
+import { format, parse } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import '@/styles/print.css';
 import * as XLSX from 'xlsx';
@@ -477,12 +477,22 @@ const AdminPointsExtracts: React.FC = () => {
     }
 
     // Período de datas
+    // pt-BR: Evita deslocamento por timezone ao formatar datas (yyyy-MM-dd) do input date.
+    // en-US: Avoid timezone shift when formatting date-only strings from input date.
+    const fmtLocal = (d: string) => {
+      try {
+        const parsed = parse(d, 'yyyy-MM-dd', new Date());
+        return format(parsed, 'dd/MM/yyyy');
+      } catch {
+        return d;
+      }
+    };
     if (dateFrom && dateTo) {
-      parts.push(`Período: ${format(new Date(dateFrom), 'dd/MM/yyyy')} a ${format(new Date(dateTo), 'dd/MM/yyyy')}`);
+      parts.push(`Período: ${fmtLocal(dateFrom)} a ${fmtLocal(dateTo)}`);
     } else if (dateFrom) {
-      parts.push(`Período: a partir de ${format(new Date(dateFrom), 'dd/MM/yyyy')}`);
+      parts.push(`Período: a partir de ${fmtLocal(dateFrom)}`);
     } else if (dateTo) {
-      parts.push(`Período: até ${format(new Date(dateTo), 'dd/MM/yyyy')}`);
+      parts.push(`Período: até ${fmtLocal(dateTo)}`);
     }
 
     // Busca
