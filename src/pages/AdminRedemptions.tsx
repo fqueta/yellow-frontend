@@ -277,6 +277,7 @@ const AdminRedemptions: React.FC = () => {
       const headers = [
         'ID',
         'Cliente',
+        'CPF',
         'Email',
         'Telefone',
         'Produto',
@@ -293,6 +294,7 @@ const AdminRedemptions: React.FC = () => {
         return [
           r.id ?? '—',
           r.userName || 'Não informado',
+          r.userCpf || '—',
           r.userEmail || 'Não informado',
           phone,
           r.productName || '—',
@@ -312,10 +314,11 @@ const AdminRedemptions: React.FC = () => {
       ws['!cols'] = [
         { wch: 6 },
         { wch: Math.max(16, maxLen(rows.map(r => r[1])) + 2) },
-        { wch: Math.max(22, maxLen(rows.map(r => r[2])) + 2) },
-        { wch: Math.max(14, maxLen(rows.map(r => r[3])) + 2) },
-        { wch: Math.max(20, maxLen(rows.map(r => r[4])) + 2) },
-        { wch: Math.max(16, maxLen(rows.map(r => r[5])) + 2) },
+        { wch: 14 },
+        { wch: Math.max(22, maxLen(rows.map(r => r[3])) + 2) },
+        { wch: Math.max(14, maxLen(rows.map(r => r[4])) + 2) },
+        { wch: Math.max(20, maxLen(rows.map(r => r[5])) + 2) },
+        { wch: Math.max(16, maxLen(rows.map(r => r[6])) + 2) },
         { wch: 10 },
         { wch: 12 },
         { wch: 12 },
@@ -349,6 +352,7 @@ const AdminRedemptions: React.FC = () => {
       const headers = [
         'ID',
         'Cliente',
+        'CPF',
         'Email',
         'Telefone',
         'Produto',
@@ -365,6 +369,7 @@ const AdminRedemptions: React.FC = () => {
         return [
           r.id ?? '—',
           r.userName || 'Não informado',
+          r.userCpf || '—',
           r.userEmail || 'Não informado',
           phone,
           r.productName || '—',

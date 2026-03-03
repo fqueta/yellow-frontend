@@ -313,6 +313,7 @@ const AdminPointsExtracts: React.FC = () => {
       const headers = [
         'ID',
         'Cliente',
+        'CPF',
         'Email',
         'Tipo',
         'Pontos',
@@ -338,6 +339,7 @@ const AdminPointsExtracts: React.FC = () => {
         return [
           ex.id ?? '—',
           ex.userName || 'Não informado',
+          ex.userCpf || '—',
           ex.userEmail || 'Não informado',
           typeLabel,
           pointsVal,
@@ -356,10 +358,11 @@ const AdminPointsExtracts: React.FC = () => {
       ws['!cols'] = [
         { wch: 6 },
         { wch: Math.max(16, maxLen(rows.map(r => r[1])) + 2) },
-        { wch: Math.max(22, maxLen(rows.map(r => r[2])) + 2) },
-        { wch: Math.max(16, maxLen(rows.map(r => r[3])) + 2) },
+        { wch: 14 },
+        { wch: Math.max(22, maxLen(rows.map(r => r[3])) + 2) },
+        { wch: Math.max(16, maxLen(rows.map(r => r[4])) + 2) },
         { wch: 10 },
-        { wch: Math.max(24, maxLen(rows.map(r => r[5])) + 2) },
+        { wch: Math.max(24, maxLen(rows.map(r => r[6])) + 2) },
         { wch: 14 },
         { wch: 14 },
         { wch: 18 },
@@ -395,6 +398,7 @@ const AdminPointsExtracts: React.FC = () => {
       const headers = [
         'ID',
         'Cliente',
+        'CPF',
         'Email',
         'Tipo',
         'Pontos',
@@ -416,6 +420,7 @@ const AdminPointsExtracts: React.FC = () => {
         return [
           ex.id ?? '—',
           ex.userName || 'Não informado',
+          ex.userCpf || '—',
           ex.userEmail || 'Não informado',
           typeLabel,
           pointsVal,

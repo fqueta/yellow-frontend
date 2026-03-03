@@ -39,6 +39,7 @@ export interface Redemption {
   userId: string;
   userName: string;
   userEmail: string;
+  userCpf?: string;
   userPhone?: string;
   productId: string;
   productName: string;
@@ -82,6 +83,7 @@ export interface PointsExtract {
   userId: string;
   userName: string;
   userEmail: string;
+  userCpf?: string;
   type: PointsTransactionType;
   points: number;
   description: string;
