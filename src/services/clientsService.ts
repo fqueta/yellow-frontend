@@ -99,16 +99,19 @@ class ClientsService extends BaseApiService {
    * @param status - Filtro de status: 'all', 'actived', 'inactived', 'pre_registred'
    * @param orderBy - Campo de ordenação: 'name', 'created_at', 'email'
    * @param order - Direção: 'asc' ou 'desc'
+   * @param autor - ID do autor/proprietário: 'all' ou ID do usuário
    */
   async exportClients(
     status: string = 'all', 
     orderBy: string = 'name', 
-    order: string = 'asc'
+    order: string = 'asc',
+    autor: string = 'all'
   ): Promise<{ data: ClientRecord[]; total: number }> {
     const response = await this.get<{ data: ClientRecord[]; total: number }>('/clients/export', { 
       status,
       order_by: orderBy,
-      order: order
+      order: order,
+      autor: autor
     });
     return response;
   }

@@ -67,6 +67,7 @@ import * as XLSX from 'xlsx';
 import { exportTablePdf } from '@/lib/pdfExport';
 import { ExportActions } from '@/components/ui/ExportActions';
 import { clientsService } from '@/services/clientsService';
+import { usersService } from '@/services/usersService';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 interface ApiDeleteResponse {
@@ -250,6 +251,8 @@ export default function Clients() {
   const [exportFormat, setExportFormat] = useState<'xlsx' | 'pdf'>('xlsx');
   const [exportOrderBy, setExportOrderBy] = useState<string>('name');
   const [exportOrder, setExportOrder] = useState<string>('asc');
+  const [exportAutor, setExportAutor] = useState<string>('all');
+  const [proprietors, setProprietors] = useState<{id: string, name: string}[]>([]);
   const { toast } = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -757,25 +760,34 @@ export default function Clients() {
     }
   }, [filteredClients]);
 
-  /**
-   * Abre o dialog de exportação completa
-   */
-  const handleOpenExportDialog = () => {
-    setExportStatusFilter('all');
-    setExportFormat('xlsx');
-    setExportOrderBy('name');
-    setExportOrder('asc');
-    setOpenExportDialog(true);
-  };
+   /**
+    * Abre o dialog de exportação completa
+    */
+   const handleOpenExportDialog = async () => {
+     setExportStatusFilter('all');
+     setExportFormat('xlsx');
+     setExportOrderBy('name');
+     setExportOrder('asc');
+     setExportAutor('all');
+     setOpenExportDialog(true);
+     
+     // Carrega lista de proprietários
+     try {
+       const users = await usersService.getUsersPropertys();
+       setProprietors(users.map((u: any) => ({ id: String(u.id), name: u.name })));
+     } catch (error) {
+       console.error('Erro ao carregar proprietários:', error);
+     }
+   };
 
-  /**
-   * Executa a exportação completa de clientes
-   */
-  const handleFullExport = async () => {
-    setIsExporting(true);
-    try {
-      const response = await clientsService.exportClients(exportStatusFilter, exportOrderBy, exportOrder);
-      const clients = response.data;
+   /**
+    * Executa a exportação completa de clientes
+    */
+   const handleFullExport = async () => {
+     setIsExporting(true);
+     try {
+       const response = await clientsService.exportClients(exportStatusFilter, exportOrderBy, exportOrder, exportAutor);
+       const clients = response.data;
 
       const headers = [
         'Nome completo',
@@ -1150,6 +1162,20 @@ export default function Clients() {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Proprietário</Label>
+              <Select value={exportAutor} onValueChange={setExportAutor}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos os proprietários" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os proprietários</SelectItem>
+                  {proprietors.map((prop) => (
+                    <SelectItem key={prop.id} value={prop.id}>{prop.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label>Formato de arquivo</Label>
