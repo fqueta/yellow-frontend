@@ -7,9 +7,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Settings, Save, Palette, Link } from "lucide-react";
+import { Settings, Save, Palette, Link, Clock } from "lucide-react";
 import { systemSettingsService, AdvancedSystemSettings } from "@/services/systemSettingsService";
 import { useApiOptions } from "@/hooks/useApiOptions";
+import { useAuth } from "@/contexts/AuthContext";
+import { PointExpirationSettings } from "./components/PointExpirationSettings";
 
 /**
  * Página de configurações do sistema
@@ -32,6 +34,21 @@ export default function SystemSettings() {
     saveMultipleOptions, 
     getApiConfigOptions 
   } = useApiOptions();
+  
+  // Hook de Autenticação para validar regras de acesso
+  const { user } = useAuth();
+  
+  // Acesso total (Master/SuperAdmin) apenas para permission_id 1
+  const isSuperAdmin = user && Number(user.permission_id) <= 1;
+  // Acesso Admin (permission_id 1 e 2)
+  const isAdmin = user && Number(user.permission_id) < 3;
+  
+  // Ajusta a aba padrão dependendo da permissão
+  useEffect(() => {
+    if (user && Number(user.permission_id) === 2) {
+      setActiveTab("rules");
+    }
+  }, [user]);
   
   // Estado local para as configurações de API (antes de salvar)
   const [localApiOptions, setLocalApiOptions] = useState<{[key: number]: string}>({});
@@ -99,6 +116,7 @@ export default function SystemSettings() {
     backupRetention: "",
     url_api_aeroclube: "",
     token_api_aeroclube: "",
+    pontos_dias_expiracao: "",
   });
 
   /**
@@ -331,6 +349,7 @@ export default function SystemSettings() {
         backupRetention: advancedInputSettings.backupRetention,
         url_api_aeroclube: advancedInputSettings.url_api_aeroclube,
         token_api_aeroclube: advancedInputSettings.token_api_aeroclube,
+        pontos_dias_expiracao: advancedInputSettings.pontos_dias_expiracao,
       };
 
       // Envia as configurações avançadas para a API na rota /options
@@ -367,6 +386,7 @@ export default function SystemSettings() {
         backupRetention: data.backupRetention || "",
         url_api_aeroclube: data.url_api_aeroclube || "",
         token_api_aeroclube: data.token_api_aeroclube || "",
+        pontos_dias_expiracao: data.pontos_dias_expiracao || "",
       });
       
       // Também atualiza as outras configurações se necessário
@@ -422,13 +442,38 @@ export default function SystemSettings() {
         )}
       </div>
 
-      {/* Abas de Configurações */}
-      <Tabs defaultValue="basic" className="w-full" onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="basic">Configurações Básicas</TabsTrigger>
-          <TabsTrigger value="advanced">Configurações Avançadas</TabsTrigger>
-          <TabsTrigger value="api">Configurações de API</TabsTrigger>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList className="mb-4 flex flex-wrap h-auto w-full md:w-auto">
+          {isSuperAdmin && (
+            <TabsTrigger value="basic" className="flex items-center space-x-2">
+              <Settings className="h-4 w-4" />
+              <span className="hidden sm:inline">Gerais</span>
+            </TabsTrigger>
+          )}
+          
+          {isSuperAdmin && (
+            <TabsTrigger value="api" className="flex items-center space-x-2">
+              <Link className="h-4 w-4" />
+              <span className="hidden sm:inline">API & Integrações</span>
+            </TabsTrigger>
+          )}
+          
+          {isSuperAdmin && (
+             <TabsTrigger value="rules" className="flex items-center space-x-2">
+               <Clock className="h-4 w-4" />
+               <span className="hidden sm:inline">Regras</span>
+             </TabsTrigger>
+          )}
+
+          {isSuperAdmin && (
+            <TabsTrigger value="advanced" className="flex items-center space-x-2">
+              <Settings className="h-4 w-4 text-orange-500" />
+              <span className="hidden sm:inline text-orange-500">Avançadas</span>
+            </TabsTrigger>
+          )}
         </TabsList>
+
+
 
         {/* Aba de Configurações Básicas */}
         <TabsContent value="basic" className="space-y-6">
@@ -982,6 +1027,13 @@ export default function SystemSettings() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* Aba de Regras - Apenas Admins */}
+        {isAdmin && (
+          <TabsContent value="rules" className="space-y-6">
+            <PointExpirationSettings />
+          </TabsContent>
+        )}
 
         {/* Aba de Configurações de API */}
         <TabsContent value="api" className="space-y-6">
