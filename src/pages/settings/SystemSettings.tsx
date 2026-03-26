@@ -7,11 +7,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Settings, Save, Palette, Link, Clock } from "lucide-react";
+import { Settings, Save, Palette, Link, Clock, Activity } from "lucide-react";
 import { systemSettingsService, AdvancedSystemSettings } from "@/services/systemSettingsService";
 import { useApiOptions } from "@/hooks/useApiOptions";
 import { useAuth } from "@/contexts/AuthContext";
 import { PointExpirationSettings } from "./components/PointExpirationSettings";
+import { SystemLogsPanel } from "./components/SystemLogsPanel";
 
 /**
  * Página de configurações do sistema
@@ -462,6 +463,13 @@ export default function SystemSettings() {
              <TabsTrigger value="rules" className="flex items-center space-x-2">
                <Clock className="h-4 w-4" />
                <span className="hidden sm:inline">Regras</span>
+             </TabsTrigger>
+          )}
+
+          {isSuperAdmin && (
+             <TabsTrigger value="logs" className="flex items-center space-x-2">
+               <Activity className="h-4 w-4" />
+               <span className="hidden sm:inline">Logs</span>
              </TabsTrigger>
           )}
 
@@ -1105,7 +1113,14 @@ export default function SystemSettings() {
                )}
              </CardContent>
            </Card>
-        </TabsContent>
+         </TabsContent>
+
+        {/* Aba de Logs do Sistema */}
+        {isSuperAdmin && (
+          <TabsContent value="logs" className="space-y-6">
+            <SystemLogsPanel />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );

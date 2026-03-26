@@ -43,7 +43,10 @@ import { useToast } from "@/hooks/use-toast";
 import * as z from "zod";
 import { 
   Plus, 
-  Search
+  Search,
+  FileDown,
+  FileText,
+  Loader2
 } from "lucide-react";
 import "@/styles/print.css";
 import { getBrazilianStates } from '@/lib/qlib';
@@ -63,6 +66,9 @@ import { phoneApplyMask } from '@/lib/masks/phone-apply-mask';
 import * as XLSX from 'xlsx';
 import { exportTablePdf } from '@/lib/pdfExport';
 import { ExportActions } from '@/components/ui/ExportActions';
+import { clientsService } from '@/services/clientsService';
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 interface ApiDeleteResponse {
   exec: boolean;
   message: string;
@@ -237,6 +243,13 @@ export default function Clients() {
   const [pageSize, setPageSize] = useState<PerPageValue>(100);
   // Filtro de lixeira (excluido=s)
   const [showTrash, setShowTrash] = useState(false);
+  // Dialog de exportação completa
+  const [openExportDialog, setOpenExportDialog] = useState(false);
+  const [exportStatusFilter, setExportStatusFilter] = useState<string>('all');
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportFormat, setExportFormat] = useState<'xlsx' | 'pdf'>('xlsx');
+  const [exportOrderBy, setExportOrderBy] = useState<string>('name');
+  const [exportOrder, setExportOrder] = useState<string>('asc');
   const { toast } = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -744,12 +757,104 @@ export default function Clients() {
     }
   }, [filteredClients]);
 
+  /**
+   * Abre o dialog de exportação completa
+   */
+  const handleOpenExportDialog = () => {
+    setExportStatusFilter('all');
+    setExportFormat('xlsx');
+    setExportOrderBy('name');
+    setExportOrder('asc');
+    setOpenExportDialog(true);
+  };
+
+  /**
+   * Executa a exportação completa de clientes
+   */
+  const handleFullExport = async () => {
+    setIsExporting(true);
+    try {
+      const response = await clientsService.exportClients(exportStatusFilter, exportOrderBy, exportOrder);
+      const clients = response.data;
+
+      const headers = [
+        'Nome completo',
+        'CPF/CNPJ',
+        'Email',
+        'Telefone',
+        'Proprietário',
+        'Status',
+      ];
+
+      const rows = clients.map((client: any) => {
+        const documento = client.tipo_pessoa === 'pf' ? client.cpf : client.cnpj;
+        const telefoneRaw = client?.config?.celular || client?.config?.telefone_residencial || '';
+        const telefone = telefoneRaw ? phoneApplyMask(String(telefoneRaw)) : 'Não informado';
+        const proprietario = client.autor_name || 'Não identificado';
+        const statusLabel = mapStatus(client.status);
+
+        return [
+          client.name || 'Não informado',
+          documento || 'Não informado',
+          client.email || 'Não informado',
+          telefone,
+          proprietario,
+          statusLabel,
+        ];
+      });
+
+      if (exportFormat === 'xlsx') {
+        const aoa = [headers, ...rows];
+        const workbook = XLSX.utils.book_new();
+        const worksheet = XLSX.utils.aoa_to_sheet(aoa);
+        const maxLen = (arr: any[]) => Math.max(...arr.map(v => (v ? String(v).length : 0)));
+        worksheet['!cols'] = [
+          { wch: Math.max(8, maxLen(rows.map(r => r[0])) + 2) },
+          { wch: Math.max(14, maxLen(rows.map(r => r[1])) + 2) },
+          { wch: Math.max(18, maxLen(rows.map(r => r[2])) + 2) },
+          { wch: Math.max(12, maxLen(rows.map(r => r[3])) + 2) },
+          { wch: Math.max(12, maxLen(rows.map(r => r[4])) + 2) },
+          { wch: Math.max(8, maxLen(rows.map(r => r[5])) + 2) },
+        ];
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Clientes');
+        const date = new Date().toISOString().slice(0, 10);
+        const statusLabel = exportStatusFilter === 'all' ? 'todos' : exportStatusFilter;
+        XLSX.writeFile(workbook, `clientes-${statusLabel}-${date}.xlsx`);
+      } else {
+        exportTablePdf({
+          title: 'Clientes Cadastrados',
+          headers,
+          rows,
+          orientation: 'landscape',
+        });
+      }
+
+      setOpenExportDialog(false);
+      toast({
+        title: 'Exportação concluída',
+        description: `${clients.length} clientes exportados com sucesso`,
+      });
+    } catch (error) {
+      console.error('Erro ao exportar clientes:', error);
+      toast({
+        title: 'Erro na exportação',
+        description: 'Não foi possível exportar os clientes. Tente novamente.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="container mx-auto py-6 space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Clientes</h1>
         <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={handleOpenExportDialog}>
+            <FileDown className="w-4 h-4 mr-2" /> Exportação Completa
+          </Button>
           <ExportActions
             label="Exportar"
             onPrint={() => window.print()}
@@ -987,6 +1092,103 @@ export default function Clients() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Export Full List Dialog */}
+      <Dialog open={openExportDialog} onOpenChange={setOpenExportDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Exportar Clientes</DialogTitle>
+            <DialogDescription>
+              Escolha o filtro de status, ordenação e o formato para exportação completa.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Filtrar por status</Label>
+              <RadioGroup 
+                value={exportStatusFilter} 
+                onValueChange={setExportStatusFilter}
+                className="flex flex-col gap-2"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="all" id="export-all" />
+                  <Label htmlFor="export-all" className="cursor-pointer">Todos os clientes</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="actived" id="export-actived" />
+                  <Label htmlFor="export-actived" className="cursor-pointer">Apenas ativos</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="inactived" id="export-inactived" />
+                  <Label htmlFor="export-inactived" className="cursor-pointer">Apenas inativos</Label>
+                </div>
+              </RadioGroup>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Ordenar por</Label>
+                <Select value={exportOrderBy} onValueChange={setExportOrderBy}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="name">Nome</SelectItem>
+                    <SelectItem value="created_at">Data de cadastro</SelectItem>
+                    <SelectItem value="email">Email</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Ordem</Label>
+                <Select value={exportOrder} onValueChange={setExportOrder}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="asc">Crescente (A-Z)</SelectItem>
+                    <SelectItem value="desc">Decrescente (Z-A)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Formato de arquivo</Label>
+              <RadioGroup 
+                value={exportFormat} 
+                onValueChange={(value) => setExportFormat(value as 'xlsx' | 'pdf')}
+                className="flex gap-4"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="xlsx" id="format-xlsx" />
+                  <Label htmlFor="format-xlsx" className="cursor-pointer flex items-center gap-2">
+                    <FileDown className="w-4 h-4" /> XLSX (Excel)
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="pdf" id="format-pdf" />
+                  <Label htmlFor="format-pdf" className="cursor-pointer flex items-center gap-2">
+                    <FileText className="w-4 h-4" /> PDF
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpenExportDialog(false)} disabled={isExporting}>
+              Cancelar
+            </Button>
+            <Button onClick={handleFullExport} disabled={isExporting}>
+              {isExporting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Exportando...
+                </>
+              ) : (
+                <>Exportar</>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

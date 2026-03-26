@@ -93,6 +93,25 @@ class ClientsService extends BaseApiService {
   async restore(id: string): Promise<ClientRecord> {
     return this.restoreClient(id);
   }
+
+  /**
+   * Exporta clientes para XLSX/PDF
+   * @param status - Filtro de status: 'all', 'actived', 'inactived', 'pre_registred'
+   * @param orderBy - Campo de ordenação: 'name', 'created_at', 'email'
+   * @param order - Direção: 'asc' ou 'desc'
+   */
+  async exportClients(
+    status: string = 'all', 
+    orderBy: string = 'name', 
+    order: string = 'asc'
+  ): Promise<{ data: ClientRecord[]; total: number }> {
+    const response = await this.get<{ data: ClientRecord[]; total: number }>('/clients/export', { 
+      status,
+      order_by: orderBy,
+      order: order
+    });
+    return response;
+  }
 }
 
 export const clientsService = new ClientsService();
