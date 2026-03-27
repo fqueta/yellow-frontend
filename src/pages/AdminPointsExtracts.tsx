@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -17,10 +17,9 @@ import {
   MoreHorizontal,
   AlertCircle,
   CheckCircle,
-  ChevronLeft,
-  ChevronRight,
-  FileText
+  Loader2
 } from 'lucide-react';
+import { useInView } from 'react-intersection-observer';
 import { Button } from '@/components/ui/button';
 import { ExportActions } from '@/components/ui/ExportActions';
 import { Input } from '@/components/ui/input';
@@ -58,7 +57,7 @@ import {
   POINTS_TRANSACTION_TYPES 
 } from '@/types/redemptions';
 import { 
-  usePointsExtracts, 
+  useInfinitePointsExtracts, 
   usePointsExtractStats, 
   useCreateAdjustment, 
   useExportPointsExtracts 
@@ -83,29 +82,50 @@ const AdminPointsExtracts: React.FC = () => {
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [dateFromFilter, setDateFromFilter] = useState('');
   const [dateToFilter, setDateToFilter] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  // pt-BR: Controle de paginação com opção "Todos" para listar tudo.
-  // en-US: Pagination control with "All" option to list everything.
-  const [perPageChoice, setPerPageChoice] = useState<PerPageValue>(50);
-  const showAll = perPageChoice === 'all';
-  const perPage = showAll ? 20 : (perPageChoice as number);
-  const [allExtracts, setAllExtracts] = useState<PointsExtract[]>([]);
-  const [isLoadingAll, setIsLoadingAll] = useState<boolean>(false);
+  const [perPageChoice, setPerPageChoice] = useState<PerPageValue>(20);
 
-  // Parâmetros para a API
-  const apiParams = {
-    page: currentPage,
-    per_page: perPage,
+  const { ref: scrollTriggerRef, inView } = useInView();
+
+  // Parâmetros para a API (sem page, gerenciado pelo hook infinito)
+  const apiParams = useMemo(() => ({
+    per_page: perPageChoice === 'all' ? 100 : (perPageChoice as number),
     search: searchTerm || undefined,
     type: typeFilter !== 'all' ? (typeFilter as PointsTransactionType) : undefined,
     dateFrom: dateFromFilter || undefined,
     dateTo: dateToFilter || undefined,
     sort: 'createdAt',
     order: 'desc' as const
-  };
+  }), [perPageChoice, searchTerm, typeFilter, dateFromFilter, dateToFilter]);
 
-  // Hooks da API
-  const { data: extractsResponse, isLoading, error, refetch } = usePointsExtracts(apiParams);
+  // Hook de scroll infinito
+  const {
+    data: infiniteData,
+    isLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    error,
+    refetch
+  } = useInfinitePointsExtracts(apiParams, {
+    refetchOnMount: 'always',
+    staleTime: 0,
+  });
+
+  // Carregar próxima página quando o trigger entrar na visualização
+  useEffect(() => {
+    if (inView && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  // Achatar as páginas em um único array
+  const extracts = useMemo(
+    () => infiniteData?.pages.flatMap((page) => page.data) || [],
+    [infiniteData]
+  );
+  const totalItems = infiniteData?.pages[0]?.total || 0;
+  const displayExtracts = extracts;
+
   // Params específicos para estatísticas (somente filtros relevantes)
   const statsParams = {
     search: apiParams.search,
@@ -139,16 +159,7 @@ const AdminPointsExtracts: React.FC = () => {
       });
     },
   });
-  // console.log('extractsResponse',extractsResponse);
-  const extracts = extractsResponse?.data || [];
-  const displayExtracts = showAll ? allExtracts : extracts;
-  // console.log('extracts',extracts);
-  const pagination = {
-    current_page: extractsResponse?.current_page || 1,
-    last_page: extractsResponse?.last_page || 1,
-    per_page: extractsResponse?.per_page || perPage,
-    total: extractsResponse?.total || 0
-  };
+
 
   // Função para obter o ícone do tipo de transação
   const getTransactionIcon = (type: PointsTransactionType) => {
@@ -208,76 +219,7 @@ const AdminPointsExtracts: React.FC = () => {
     }
   };
 
-  // Função para aplicar filtros (resetar página)
-  const applyFilters = () => {
-    setCurrentPage(1);
-  };
-
-  // Aplicar filtros quando mudarem
-  React.useEffect(() => {
-    applyFilters();
-  }, [searchTerm, typeFilter, dateFromFilter, dateToFilter, perPageChoice]);
-
-  /**
-   * fetchAllExtracts
-   * pt-BR: Busca todas as páginas de extratos considerando os filtros atuais e agrega em uma lista única.
-   * en-US: Fetches all pages of extracts using current filters and aggregates into a single list.
-   */
-  async function fetchAllExtracts() {
-    if (!showAll) {
-      setAllExtracts([]);
-      return;
-    }
-    setIsLoadingAll(true);
-    try {
-      const combined: PointsExtract[] = [];
-      // Primeiro request para descobrir total de páginas
-      const first = await pointsExtractsService.listPointsExtracts({
-        page: 1,
-        per_page: 100,
-        search: apiParams.search,
-        type: apiParams.type,
-        dateFrom: apiParams.dateFrom,
-        dateTo: apiParams.dateTo,
-        sort: apiParams.sort,
-        order: apiParams.order,
-      });
-      combined.push(...(first.data || []));
-      const lastPage = first.last_page || 1;
-      // Buscar páginas restantes em sequência
-      for (let p = 2; p <= lastPage; p++) {
-        const resp = await pointsExtractsService.listPointsExtracts({
-          page: p,
-          per_page: 100,
-          search: apiParams.search,
-          type: apiParams.type,
-          dateFrom: apiParams.dateFrom,
-          dateTo: apiParams.dateTo,
-          sort: apiParams.sort,
-          order: apiParams.order,
-        });
-        combined.push(...(resp.data || []));
-      }
-      setAllExtracts(combined);
-    } catch (err) {
-      console.error('Falha ao carregar todos os extratos:', err);
-      toast({
-        title: 'Erro ao listar todos',
-        description: 'Não foi possível carregar todas as transações.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoadingAll(false);
-    }
-  }
-
-  // Dispara a busca de todas as páginas quando "Todos" for selecionado
-  React.useEffect(() => {
-    fetchAllExtracts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showAll, searchTerm, typeFilter, dateFromFilter, dateToFilter]);
-
-  // Função para visualizar detalhes do extrato
+  // Visualizar detalhes do extrato
   const handleViewDetails = (extractId: string) => {
     navigate(`/admin/points-extracts/${extractId}`);
   };
@@ -736,7 +678,7 @@ const AdminPointsExtracts: React.FC = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {isLoading || (showAll && isLoadingAll) ? (
+                {isLoading ? (
                   [...Array(5)].map((_, i) => (
                     <TableRow key={i}>
                       <TableCell><div className="h-4 w-16 bg-gray-200 rounded animate-pulse" /></TableCell>
@@ -765,7 +707,12 @@ const AdminPointsExtracts: React.FC = () => {
                       <TableCell className="font-medium">{extract.id}</TableCell>
                       <TableCell>
                         <div className="flex flex-col">
-                          <span className="font-medium">{extract.userName}</span>
+                          <Link 
+                            to={`/admin/clients/${extract.userId}/view`}
+                            className="font-medium text-blue-600 hover:text-blue-800 underline underline-offset-2 decoration-blue-400"
+                          >
+                            {extract.userName}
+                          </Link>
                           <span className="text-sm text-gray-500">{extract.userEmail}</span>
                         </div>
                       </TableCell>
@@ -892,55 +839,18 @@ const AdminPointsExtracts: React.FC = () => {
             </Table>
           </div>
           
-          {/* Paginação */}
-          {!showAll && pagination && pagination.total > 0 && (
-            <div className="flex items-center justify-between px-6 py-4 border-t">
-              <div className="text-sm text-gray-500">
-                Mostrando {((pagination.current_page - 1) * pagination.per_page) + 1} a {Math.min(pagination.current_page * pagination.per_page, pagination.total)} de {pagination.total} resultados
+          {/* Trigger de scroll infinito */}
+          <div ref={scrollTriggerRef} className="py-4 flex items-center justify-center">
+            {isFetchingNextPage && (
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Carregando mais...
               </div>
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(currentPage - 1)}
-                  disabled={currentPage <= 1 || isLoading}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  Anterior
-                </Button>
-                
-                <div className="flex items-center space-x-1">
-                  {Array.from({ length: Math.min(5, pagination.last_page) }, (_, i) => {
-                    const pageNumber = i + 1;
-                    const isCurrentPage = pageNumber === currentPage;
-                    
-                    return (
-                      <Button
-                        key={pageNumber}
-                        variant={isCurrentPage ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setCurrentPage(pageNumber)}
-                        disabled={isLoading}
-                        className="w-8 h-8 p-0"
-                      >
-                        {pageNumber}
-                      </Button>
-                    );
-                  })}
-                </div>
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(currentPage + 1)}
-                  disabled={currentPage >= pagination.last_page || isLoading}
-                >
-                  Próxima
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          )}
+            )}
+            {!hasNextPage && displayExtracts.length > 0 && (
+              <p className="text-sm text-gray-400">Fim da lista</p>
+            )}
+          </div>
         </CardContent>
       </Card>
     </div>

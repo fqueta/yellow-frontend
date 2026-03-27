@@ -84,8 +84,16 @@ export abstract class BaseApiService {
    */
   protected normalizePaginatedResponse<T>(response: any): PaginatedResponse<T> {
     // Se já está no formato correto, retorna como está
-    if (response.data && Array.isArray(response.data)) {
-      return response as PaginatedResponse<T>;
+    if (response.data && Array.isArray(response.data) && (response.current_page || response.pagination)) {
+       const pagination = response.pagination || {};
+       const normalized = {
+          data: response.data,
+          current_page: Number(pagination.current_page || response.current_page || 1),
+          last_page: Number(pagination.last_page || response.last_page || 1),
+          per_page: Number(pagination.per_page || response.per_page || response.data.length),
+          total: Number(pagination.total || response.total || response.data.length)
+       };
+       return normalized;
     }
 
     // Se é um array direto, converte para formato paginado
@@ -100,13 +108,20 @@ export abstract class BaseApiService {
     }
 
     // Fallback para outros formatos
-    return {
-      data: response?.items || response?.data || [],
-      current_page: response?.current_page || response?.page || 1,
-      last_page: response?.last_page || response?.total_pages || 1,
-      per_page: response?.per_page || response?.limit || 10,
-      total: response?.total || response?.count || 0
+    // Se response.data.data for um array, é o formato duplamente aninhado do admin/redemptions
+    const isDoubleNested = response?.data && Array.isArray(response.data.data);
+    const data = isDoubleNested ? response.data.data : (response?.items || response?.data || []);
+    const source = isDoubleNested ? response.data : response;
+    const pagination = response?.pagination || {};
+    
+    const normalizedFallback = {
+      data: Array.isArray(data) ? data : [],
+      current_page: Number(pagination.current_page || source?.current_page || source?.page || 1),
+      last_page: Number(pagination.last_page || source?.last_page || source?.total_pages || 1),
+      per_page: Number(pagination.per_page || source?.per_page || source?.limit || 10),
+      total: Number(pagination.total || source?.total || source?.count || 0)
     };
+    return normalizedFallback;
   }
 
   /**

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { 
   ArrowUpRight, 
   ArrowDownLeft, 
@@ -8,15 +8,20 @@ import {
   History,
   TrendingUp,
   TrendingDown,
-  Clock
+  Clock,
+  Loader2
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { useAuthenticatedUserPointsExtracts, useAuthenticatedUserPointsBalance } from '@/hooks/pointsExtracts';
+import { 
+  useAuthenticatedUserInfinitePointsExtracts, 
+  useAuthenticatedUserPointsBalance 
+} from '@/hooks/pointsExtracts';
 import { formatDate } from '@/lib/utils';
 import { PointsTransactionType } from '@/types/redemptions';
+import { useInView } from 'react-intersection-observer';
 
 const PointsExtractContent: React.FC = () => {
   const [search, setSearch] = React.useState('');
@@ -24,12 +29,20 @@ const PointsExtractContent: React.FC = () => {
   const [dateFrom, setDateFrom] = React.useState<string>('');
   const [dateTo, setDateTo] = React.useState<string>('');
   
-  const { data: extractData, isLoading: isLoadingExtract } = useAuthenticatedUserPointsExtracts({
+  const { ref, inView } = useInView();
+
+  const { 
+    data: extractInfiniteData, 
+    isLoading: isLoadingExtract,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage
+  } = useAuthenticatedUserInfinitePointsExtracts({
     search,
     type: type as any,
     dateFrom,
     dateTo,
-    per_page: 50
+    per_page: 20
   });
 
   const { data: balanceData, isLoading: isLoadingBalance } = useAuthenticatedUserPointsBalance({
@@ -37,6 +50,13 @@ const PointsExtractContent: React.FC = () => {
     dateFrom,
     dateTo
   });
+
+  // Carregar próxima página quando o elemento final entrar em visualização
+  useEffect(() => {
+    if (inView && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const clearFilters = () => {
     setSearch('');
@@ -85,7 +105,7 @@ const PointsExtractContent: React.FC = () => {
     }
   };
 
-  if (isLoadingExtract || isLoadingBalance) {
+  if (isLoadingExtract && !extractInfiniteData) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
@@ -93,7 +113,8 @@ const PointsExtractContent: React.FC = () => {
     );
   }
 
-  const transactions = extractData?.data || [];
+  // Achatar todas as páginas de transações em um único array
+  const transactions = extractInfiniteData?.pages.flatMap(page => page.data) || [];
   const stats = balanceData || {
     total_points: 0,
     total_earned: 0,
@@ -118,7 +139,7 @@ const PointsExtractContent: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-
+ 
         <Card className="bg-gradient-to-br from-red-50 to-orange-50 border-red-200 shadow-sm">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -272,7 +293,7 @@ const PointsExtractContent: React.FC = () => {
                 })
               ) : (
                 <tr>
-                  <td colSpan={4} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
                     <History className="w-12 h-12 mx-auto mb-4 opacity-20" />
                     <p>Nenhuma movimentação encontrada.</p>
                   </td>
@@ -281,6 +302,24 @@ const PointsExtractContent: React.FC = () => {
             </tbody>
           </table>
         </div>
+      </div>
+      
+      {/* Elemento de trigger para scroll infinito */}
+      <div ref={ref} className="py-8 flex justify-center">
+        {isFetchingNextPage ? (
+          <div className="flex items-center gap-2 text-sm text-gray-500 bg-white px-4 py-2 rounded-full shadow-sm border border-gray-100">
+            <Loader2 className="w-4 h-4 animate-spin text-green-600" />
+            Carregando mais registros...
+          </div>
+        ) : hasNextPage ? (
+          <div className="text-xs text-gray-400 bg-gray-50/50 px-3 py-1 rounded-full border border-dashed border-gray-200">
+            Continue rolando para carregar mais
+          </div>
+        ) : transactions.length > 0 ? (
+          <div className="text-xs text-gray-400">
+            Fim do extrato • {transactions.length} registros carregados
+          </div>
+        ) : null}
       </div>
     </div>
   );

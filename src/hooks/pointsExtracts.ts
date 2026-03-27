@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { 
   pointsExtractsService, 
   PointsExtractListParams, 
@@ -15,6 +15,25 @@ export function usePointsExtracts(params?: PointsExtractListParams, queryOptions
   return useQuery<PaginatedResponse<PointsExtract>>({
     queryKey: ['points-extracts', params],
     queryFn: () => pointsExtractsService.listPointsExtracts(params),
+    ...queryOptions
+  });
+}
+
+/**
+ * Hook para listar extratos de pontos (admin) com scroll infinito
+ */
+export function useInfinitePointsExtracts(params?: PointsExtractListParams, queryOptions?: any) {
+  return useInfiniteQuery<PaginatedResponse<PointsExtract>>({
+    queryKey: ['infinite-points-extracts', params],
+    queryFn: ({ pageParam = 1 }) =>
+      pointsExtractsService.listPointsExtracts({ ...params, page: pageParam as number }),
+    getNextPageParam: (lastPage) => {
+      if (lastPage.current_page < lastPage.last_page) {
+        return lastPage.current_page + 1;
+      }
+      return undefined;
+    },
+    initialPageParam: 1,
     ...queryOptions
   });
 }
@@ -142,6 +161,25 @@ export function useAuthenticatedUserPointsBalance(params?: PointsExtractListPara
   }>({
     queryKey: ['authenticated-user-points-balance', params],
     queryFn: () => pointsExtractsService.getAuthenticatedUserBalance(params),
+    ...queryOptions
+  });
+}
+
+/**
+ * Hook para obter extratos de pontos do usuário autenticado com paginação infinita
+ */
+export function useAuthenticatedUserInfinitePointsExtracts(params?: PointsExtractListParams, queryOptions?: any) {
+  return useInfiniteQuery<PaginatedResponse<PointsExtract>>({
+    queryKey: ['authenticated-user-points-extracts-infinite', params],
+    queryFn: ({ pageParam = 1 }) => 
+      pointsExtractsService.getAuthenticatedUserExtract({ ...params, page: pageParam as number }),
+    getNextPageParam: (lastPage) => {
+      if (lastPage.current_page < lastPage.last_page) {
+        return lastPage.current_page + 1;
+      }
+      return undefined;
+    },
+    initialPageParam: 1,
     ...queryOptions
   });
 }

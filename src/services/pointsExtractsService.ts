@@ -51,7 +51,7 @@ class PointsExtractsService extends BaseApiService {
    */
   async listPointsExtracts(params?: PointsExtractListParams): Promise<PaginatedResponse<PointsExtract>> {
     const response = await this.get<any>(this.endpoint, params);
-    return response;
+    return this.normalizePaginatedResponse<PointsExtract>(response);
   }
 
   /**
@@ -181,7 +181,7 @@ class PointsExtractsService extends BaseApiService {
    */
   async getAuthenticatedUserExtract(params?: PointsExtractListParams): Promise<PaginatedResponse<PointsExtract>> {
     const response = await this.get<any>('/user/points/extract', params);
-    return response;
+    return this.normalizePaginatedResponse<PointsExtract>(response);
   }
 
   /**

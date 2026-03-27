@@ -43,8 +43,8 @@ class RedemptionsService extends BaseApiService {
    */
   async listAllRedemptions(params?: RedemptionListParams): Promise<PaginatedResponse<Redemption>> {
     // Passa params diretamente para buildUrlWithParams
-    const response = await this.get<ApiResponse<PaginatedResponse<Redemption>>>('/admin/redemptions', params);
-    return response.data;
+    const response = await this.get<any>('/admin/redemptions', params);
+    return this.normalizePaginatedResponse<Redemption>(response);
   }
 
   /**

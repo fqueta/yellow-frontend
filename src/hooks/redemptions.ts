@@ -1,6 +1,6 @@
 import { Redemption, RedemptionFilters } from '@/types/redemptions';
 import { redemptionsService, RedemptionListParams } from '@/services/redemptionsService';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 
 /**
  * Hook para listar resgates do usuário logado
@@ -21,6 +21,31 @@ export function useRedemption(id: string, queryOptions?: any) {
     queryKey: ['redemption', id],
     queryFn: () => redemptionsService.getRedemption(id),
     enabled: !!id,
+    ...queryOptions
+  });
+}
+
+/**
+ * Hook para listar todos os resgates (admin) com scroll infinito
+ */
+export function useInfiniteAllRedemptions(params?: RedemptionListParams, queryOptions?: any) {
+  return useInfiniteQuery({
+    queryKey: ['infinite-all-redemptions', params],
+    queryFn: ({ pageParam = 1 }) => 
+      redemptionsService.listAllRedemptions({ ...params, page: pageParam as number }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      if (lastPage.current_page < lastPage.last_page) {
+        return lastPage.current_page + 1;
+      }
+      return undefined;
+    },
+    getPreviousPageParam: (firstPage) => {
+      if (firstPage.current_page > 1) {
+        return firstPage.current_page - 1;
+      }
+      return undefined;
+    },
     ...queryOptions
   });
 }
@@ -50,6 +75,7 @@ export function useUpdateRedemptionStatus(mutationOptions?: any) {
       queryClient.invalidateQueries({ queryKey: ['redemptions'] });
       queryClient.invalidateQueries({ queryKey: ['user-redemptions'] });
       queryClient.invalidateQueries({ queryKey: ['all-redemptions'] });
+      queryClient.invalidateQueries({ queryKey: ['infinite-all-redemptions'] });
       // Invalidar também a query específica do resgate atualizado
       queryClient.invalidateQueries({ queryKey: ['redemption', variables.id] });
       // Forçar refetch das queries ativas
@@ -73,6 +99,7 @@ export function useRefundRedemption(mutationOptions?: any) {
       queryClient.invalidateQueries({ queryKey: ['redemptions'] });
       queryClient.invalidateQueries({ queryKey: ['user-redemptions'] });
       queryClient.invalidateQueries({ queryKey: ['all-redemptions'] });
+      queryClient.invalidateQueries({ queryKey: ['infinite-all-redemptions'] });
       queryClient.invalidateQueries({ queryKey: ['redemption', variables.id] });
       queryClient.refetchQueries({ queryKey: ['all-redemptions'] });
     },
@@ -133,6 +160,7 @@ export function useDeleteRedemption(mutationOptions?: any) {
       queryClient.invalidateQueries({ queryKey: ['redemptions'] });
       queryClient.invalidateQueries({ queryKey: ['user-redemptions'] });
       queryClient.invalidateQueries({ queryKey: ['all-redemptions'] });
+      queryClient.invalidateQueries({ queryKey: ['infinite-all-redemptions'] });
       queryClient.removeQueries({ queryKey: ['redemption', id] });
 
       // Garante atualização imediata das listagens ativas

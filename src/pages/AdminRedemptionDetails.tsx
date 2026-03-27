@@ -46,6 +46,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
 import { useRedemption, useUpdateRedemptionStatus } from '@/hooks/redemptions';
 import { useRefundRedemption, useDeleteRedemption } from '@/hooks/redemptions';
@@ -74,6 +82,10 @@ const AdminRedemptionDetails: React.FC = () => {
   // Filtros de período para histórico
   const [dateFromFilter, setDateFromFilter] = useState('');
   const [dateToFilter, setDateToFilter] = useState('');
+
+  // Estados para o modal de estorno
+  const [isRefundDialogOpen, setIsRefundDialogOpen] = useState(false);
+  const [refundReason, setRefundReason] = useState('');
   
   // Hook para buscar dados do resgate
   const { data: redemption, isLoading, error } = useRedemption(id || '', {
@@ -98,18 +110,20 @@ const AdminRedemptionDetails: React.FC = () => {
     }
   });
 
-  // Mutation para extornar resgate
+  // Mutation para estornar resgate
   const refundMutation = useRefundRedemption({
     onSuccess: () => {
       toast({
-        title: 'Resgate extornado',
-        description: 'O pedido de resgate foi extornado com sucesso.',
+        title: 'Resgate estornado',
+        description: 'O pedido de resgate foi estornado com sucesso.',
       });
+      setIsRefundDialogOpen(false);
+      setRefundReason('');
     },
     onError: (error: any) => {
       toast({
-        title: 'Erro ao extornar',
-        description: error?.message || 'Ocorreu um erro ao extornar o resgate.',
+        title: 'Erro ao estornar',
+        description: error?.message || 'Ocorreu um erro ao estornar o resgate.',
         variant: 'destructive',
       });
     },
@@ -134,14 +148,28 @@ const AdminRedemptionDetails: React.FC = () => {
   });
 
   /**
-   * Extorna o resgate atual
-   * Envia o ID do resgate para API e atualiza a UI
+   * handleRefund
+   * pt-BR: Abre o modal para confirmar o estorno de um resgate.
    */
   const handleRefund = () => {
+    setRefundReason('');
+    setIsRefundDialogOpen(true);
+  };
+
+  /**
+   * handleConfirmRefund
+   * pt-BR: Executa o estorno do resgate com o motivo fornecido.
+   */
+  const handleConfirmRefund = async () => {
     if (!id) return;
-    const confirmed = window.confirm('Confirmar extorno deste resgate?');
-    if (!confirmed) return;
-    refundMutation.mutate({ id: id! });
+    try {
+      await refundMutation.mutateAsync({ 
+        id: id!,
+        notes: refundReason
+      });
+    } catch (error) {
+      console.error('Erro ao estornar resgate:', error);
+    }
   };
 
   /**
@@ -424,7 +452,7 @@ const AdminRedemptionDetails: React.FC = () => {
           </div>
         </div>
         <div className="flex gap-2">
-           {/* Botão de Extorno */}
+           {/* Botão de Estorno */}
            {redemption.status !== 'refunded' && (
              <Button 
                variant="destructive" 
@@ -767,6 +795,52 @@ const AdminRedemptionDetails: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Modal de Confirmação de Estorno */}
+      <Dialog open={isRefundDialogOpen} onOpenChange={setIsRefundDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirmar Estorno</DialogTitle>
+            <DialogDescription>
+              Deseja realmente estornar este resgate? Os pontos serão devolvidos ao saldo do cliente.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Motivo do Estorno (opcional)</label>
+              <Textarea
+                placeholder="Informe o motivo para facilitar a auditoria..."
+                value={refundReason}
+                onChange={(e) => setRefundReason(e.target.value)}
+                className="h-24 resize-none"
+              />
+            </div>
+          </div>
+          <DialogFooter className="flex sm:justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsRefundDialogOpen(false)}
+              disabled={refundMutation.isPending}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="default"
+              onClick={handleConfirmRefund}
+              disabled={refundMutation.isPending}
+            >
+              {refundMutation.isPending ? (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                  Estornando...
+                </>
+              ) : (
+                'Confirmar Estorno'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

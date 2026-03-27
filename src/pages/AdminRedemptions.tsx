@@ -17,8 +17,10 @@ import {
   User,
   Gift,
   Phone,
-  FileText
+  FileText,
+  Loader2
 } from 'lucide-react';
+import { useInView } from 'react-intersection-observer';
 import { Button } from '@/components/ui/button';
 import { ExportActions } from '@/components/ui/ExportActions';
 import { Input } from '@/components/ui/input';
@@ -48,8 +50,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
-import { useAllRedemptions, useUpdateRedemptionStatus, useRefundRedemption } from '@/hooks/redemptions';
+import { useUpdateRedemptionStatus, useRefundRedemption, useInfiniteAllRedemptions } from '@/hooks/redemptions';
 import { 
   Redemption, 
   RedemptionStatus, 
@@ -78,39 +89,48 @@ const AdminRedemptions: React.FC = () => {
   const [dateToFilter, setDateToFilter] = useState<string>('');
 
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState<PerPageValue>(100);
+  const [itemsPerPage, setItemsPerPage] = useState<PerPageValue>(20);
+
+  // Estados para o modal de estorno
+  const [isRefundDialogOpen, setIsRefundDialogOpen] = useState(false);
+  const [refundData, setRefundData] = useState<{ id: string } | null>(null);
+  const [refundReason, setRefundReason] = useState('');
+
+  const { ref, inView } = useInView();
 
   const {
-    data: redemptionsData,
+    data: redemptionsInfiniteData,
     isLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
     error,
     refetch
-  } = useAllRedemptions({
-    page: currentPage,
-    per_page: itemsPerPage === 'all' ? 999999 : itemsPerPage,
+  } = useInfiniteAllRedemptions({
     status: statusFilter !== 'all' ? statusFilter : undefined,
-    // Período enviado para API
     dateFrom: dateFromFilter || undefined,
     dateTo: dateToFilter || undefined,
     category: categoryFilter !== 'all' ? categoryFilter : undefined,
-    search: searchTerm || undefined
-  },
-  /**
-   * Força refetch ao montar a página de lista.
-   * pt-BR: Garante que, ao voltar após excluir um resgate, a listagem
-   * não exiba o item removido a partir do cache antigo.
-   * en-US: Ensures the list refetches on mount so deleted items won’t
-   * appear from stale cache when navigating back from details.
-   */
-  {
+    search: searchTerm || undefined,
+    per_page: itemsPerPage === 'all' ? 999999 : (itemsPerPage as number)
+  }, {
     refetchOnMount: 'always',
     staleTime: 0,
   });
 
-  const redemptions = (redemptionsData as any)?.data || [];
-  const totalPages = (redemptionsData as any)?.last_page || 1;
-  const totalItems = (redemptionsData as any)?.total || 0;
+  // Carregar próxima página quando o elemento entrar na visualização
+  useEffect(() => {
+    if (inView && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  // Achatar os dados das páginas em um único array
+  const redemptions = useMemo(() => {
+    return redemptionsInfiniteData?.pages.flatMap(page => page.data) || [];
+  }, [redemptionsInfiniteData]);
+
+  const totalItems = redemptionsInfiniteData?.pages[0]?.total || 0;
 
   // Função para obter o ícone do status
   const getStatusIcon = (status: RedemptionStatus) => {
@@ -235,14 +255,17 @@ const AdminRedemptions: React.FC = () => {
     onSuccess: () => {
       refetch();
       toast({
-        title: "Resgate extornado",
+        title: "Resgate estornado",
         description: "Os pontos foram devolvidos ao cliente com sucesso.",
       });
+      setIsRefundDialogOpen(false);
+      setRefundReason('');
+      setRefundData(null);
     },
     onError: (error: any) => {
       toast({
-        title: "Erro ao extornar",
-        description: error?.message || "Ocorreu um erro ao extornar o resgate.",
+        title: "Erro ao estornar",
+        description: error?.message || "Ocorreu um erro ao estornar o resgate.",
         variant: "destructive",
       });
     }
@@ -278,19 +301,28 @@ const AdminRedemptions: React.FC = () => {
 
   /**
    * handleRefund
-   * pt-BR: Realiza o extorno de um resgate (devolve pontos ao cliente).
-   * en-US: Refunds a redemption (returns points to the customer).
+   * pt-BR: Abre o modal para confirmar o estorno de um resgate.
    */
-  const handleRefund = async (redemptionId: string) => {
-    const confirmed = window.confirm('Deseja realmente extornar este resgate? Os pontos serão devolvidos ao saldo do cliente.');
-    if (!confirmed) return;
+  const handleRefund = (redemptionId: string) => {
+    setRefundData({ id: redemptionId });
+    setRefundReason('');
+    setIsRefundDialogOpen(true);
+  };
+
+  /**
+   * handleConfirmRefund
+   * pt-BR: Executa o estorno do resgate com o motivo fornecido.
+   */
+  const handleConfirmRefund = async () => {
+    if (!refundData) return;
 
     try {
       await refundRedemptionMutation.mutateAsync({
-        id: redemptionId
+        id: refundData.id,
+        notes: refundReason
       });
     } catch (error) {
-      console.error('Erro ao extornar resgate:', error);
+      console.error('Erro ao estornar resgate:', error);
     }
   };
 
@@ -433,13 +465,6 @@ const AdminRedemptions: React.FC = () => {
     }
   };
 
-  /**
-   * Handle pagination page change
-   * Manipula a mudança de página na paginação
-   */
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
 
   // Obter categorias únicas para o filtro
   const categories = Array.from(new Set(redemptions.map((r: any) => r.productCategory))) as string[];
@@ -498,12 +523,12 @@ const AdminRedemptions: React.FC = () => {
   );
 
   /**
-   * Reset page to 1 when filters or search change
-   * Reseta a página quando filtros ou busca mudarem para evitar páginas vazias
+   * Reset when filters or search change
+   * Recarrega do zero quando filtros ou busca mudarem
    */
   useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, statusFilter, categoryFilter, dateFromFilter, dateToFilter]);
+    refetch();
+  }, [searchTerm, statusFilter, categoryFilter, dateFromFilter, dateToFilter, itemsPerPage, refetch]);
 
   return (
     <div className="space-y-6">
@@ -542,10 +567,9 @@ const AdminRedemptions: React.FC = () => {
                 value={itemsPerPage}
                 onChange={(val) => {
                   setItemsPerPage(val);
-                  setCurrentPage(1);
                 }}
                 options={[20, 50, 100, 200, 500, 1000]}
-                label="Por página"
+                label="Itens iniciais"
               />
             </div>
             <div className="space-y-2">
@@ -840,7 +864,7 @@ const AdminRedemptions: React.FC = () => {
                               className="text-orange-600"
                             >
                               <RefreshCw className={`mr-2 h-4 w-4 ${refundRedemptionMutation.isPending ? 'animate-spin' : ''}`} />
-                              Extorno
+                              Estorno
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -852,34 +876,80 @@ const AdminRedemptions: React.FC = () => {
             </Table>
           </div>
 
-          {/* Paginação */}
-          {itemsPerPage !== 'all' && totalItems > 0 && totalPages > 1 && (
-            <div className="flex items-center justify-between px-6 py-4 border-t">
-              <div className="text-sm text-gray-500">
-                Mostrando {((currentPage - 1) * itemsPerPage) + 1} a {Math.min(currentPage * itemsPerPage, totalItems)} de {totalItems} resultados
+          {/* Trigger para Scroll Infinito */}
+          <div 
+            ref={ref} 
+            className="flex flex-col items-center justify-center p-8 gap-4 border-t bg-gray-50/50"
+          >
+            {isFetchingNextPage ? (
+              <div className="flex items-center gap-2 text-muted-foreground animate-pulse">
+                <Loader2 className="w-5 h-5 animate-spin" />
+                <span>Carregando mais registros...</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-                  disabled={currentPage <= 1 || isLoading}
-                >
-                  Anterior
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
-                  disabled={currentPage >= totalPages || isLoading}
-                >
-                  Próxima
-                </Button>
+            ) : hasNextPage ? (
+              <div className="text-sm text-muted-foreground italic">
+                Role para carregar mais
               </div>
-            </div>
-          )}
+            ) : totalItems > 0 ? (
+              <div className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                <span>Fim da lista • {redemptions.length} registros carregados</span>
+              </div>
+            ) : null}
+            
+            {totalItems > 0 && (
+              <div className="text-xs text-muted-foreground">
+                Mostrando {redemptions.length} de {totalItems} resgates
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
+      {/* Modal de Confirmação de Estorno */}
+      <Dialog open={isRefundDialogOpen} onOpenChange={setIsRefundDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirmar Estorno</DialogTitle>
+            <DialogDescription>
+              Deseja realmente estornar este resgate? Os pontos serão devolvidos ao saldo do cliente.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Motivo do Estorno (opcional)</label>
+              <Textarea
+                placeholder="Informe o motivo para facilitar a auditoria..."
+                value={refundReason}
+                onChange={(e) => setRefundReason(e.target.value)}
+                className="h-24 resize-none"
+              />
+            </div>
+          </div>
+          <DialogFooter className="flex sm:justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsRefundDialogOpen(false)}
+              disabled={refundRedemptionMutation.isPending}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="default"
+              onClick={handleConfirmRefund}
+              disabled={refundRedemptionMutation.isPending}
+            >
+              {refundRedemptionMutation.isPending ? (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                  Estornando...
+                </>
+              ) : (
+                'Confirmar Estorno'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

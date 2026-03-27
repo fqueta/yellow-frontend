@@ -31,7 +31,7 @@ export default function ClientView() {
    * Navega de volta para a listagem de clientes
    */
   const handleBack = () => {
-    navigate(`/${link_admin}/clients`);
+    navigate(-1);
   };
 
   /**
@@ -484,11 +484,11 @@ export default function ClientView() {
             <CardContent className="space-y-4">
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Status</label>
-                <p className="text-sm">
+                <div className="text-sm">
                   <Badge variant="secondary">
                     Aguardando Ativação
                   </Badge>
-                </p>
+                </div>
               </div>
               
               <div>
@@ -529,11 +529,11 @@ export default function ClientView() {
 
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Situação</label>
-                <p className="text-sm">
+                <div className="text-sm">
                   <Badge variant={client.is_alloyal.active ? 'default' : 'destructive'}>
                     {client.is_alloyal.active ? 'Ativado' : 'Desativado'}
                   </Badge>
-                </p>
+                </div>
               </div>
 
               <div>
