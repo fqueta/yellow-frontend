@@ -16,6 +16,7 @@ import { cepApplyMask, cepRemoveMask } from '@/lib/masks/cep-apply-mask';
 import { cpfApplyMask } from '@/lib/masks/cpf-apply-mask';
 import { phoneApplyMask, phoneRemoveMask } from '@/lib/masks/phone-apply-mask';
 import MyRedemptionsContent from '@/components/loja/MyRedemptionsContent';
+import PointsExtractContent from '@/components/loja/PointsExtractContent';
 import { PointsStoreProps } from '@/types/products';
 import { formatPoints } from '@/lib/utils';
 
@@ -33,7 +34,7 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
   // Verificar se deve abrir uma aba específica baseada nos parâmetros da URL
   useEffect(() => {
     const tab = searchParams.get('tab');
-    if (tab && ['profile', 'history', 'settings'].includes(tab)) {
+    if (tab && ['profile', 'history', 'extract', 'settings'].includes(tab)) {
       setActiveTab(tab);
     }
   }, [searchParams]);
@@ -377,7 +378,7 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
               <h1 className="text-xl font-bold text-white">Área do Cliente</h1>
             </div>
             <div className="bg-white/20 rounded-lg px-4 py-2 backdrop-blur-sm">
-              <span className="text-yellow-200 text-sm font-medium">Pontos: </span>
+              <span className="text-yellow-200 text-sm font-medium">Saldo de pontos: </span>
               <span className="text-yellow-300 font-bold">
                 {user?.points ? formatPoints(Number(user.points)) : '0'}
               </span>
@@ -388,7 +389,7 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 bg-white rounded-xl shadow-lg border-2 border-purple-100">
+          <TabsList className="grid w-full grid-cols-4 bg-white rounded-xl shadow-lg border-2 border-purple-100">
             <TabsTrigger 
               value="profile" 
               className="flex items-center space-x-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-teal-500 data-[state=active]:to-green-500 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"
@@ -400,8 +401,15 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
               value="history" 
               className="flex items-center space-x-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"
             >
+              <Gift className="w-4 h-4" />
+              <span>Meus Resgates</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="extract" 
+              className="flex items-center space-x-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-500 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"
+            >
               <History className="w-4 h-4" />
-              <span>Histórico</span>
+              <span>Extrato de Pontos</span>
             </TabsTrigger>
             <TabsTrigger 
               value="settings" 
@@ -736,9 +744,14 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
             </div>
           </TabsContent>
 
-          {/* Aba Histórico */}
+          {/* Aba Histórico (Resgates) */}
           <TabsContent value="history">
             <MyRedemptionsContent showHeader={false} showStats={true} linkLoja={linkLoja} />
+          </TabsContent>
+
+          {/* Aba Extrato de Pontos */}
+          <TabsContent value="extract">
+            <PointsExtractContent />
           </TabsContent>
 
           {/* Aba Configurações */}

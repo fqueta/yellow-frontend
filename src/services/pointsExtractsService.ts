@@ -1,5 +1,5 @@
 import { BaseApiService } from './BaseApiService';
-import { PointsExtract, PointsExtractFilters } from '@/types/redemptions';
+import { PointsExtract, PointsExtractFilters, PointsTransactionType } from '@/types/redemptions';
 import { ApiResponse, PaginatedResponse } from '@/types/index';
 import { link } from 'fs';
 
@@ -167,19 +167,36 @@ class PointsExtractsService extends BaseApiService {
     return await response.blob();
   }
 
-  /**
-   * Obtém extratos de pontos de um usuário específico
-   * @param userId - ID do usuário
-   * @param params - Parâmetros de filtro e paginação
-   *
-   * Nota: passar `params` plano para serialização correta na URL.
-   */
   async getUserPointsExtracts(userId: string, params?: PointsExtractListParams): Promise<PaginatedResponse<PointsExtract>> {
     const response = await this.get<any>(`/admin/users/${userId}/points-extracts`, params);
     if (response.data && response.data.points && Array.isArray(response.data.points)) {
       response.data.points = response.data.points.map((item: any) => this.mapApiResponseToPointsExtract(item));
     }
     return response;
+  }
+
+  /**
+   * Obtém extratos de pontos do usuário autenticado
+   * @param params - Parâmetros de filtro e paginação
+   */
+  async getAuthenticatedUserExtract(params?: PointsExtractListParams): Promise<PaginatedResponse<PointsExtract>> {
+    const response = await this.get<any>('/user/points/extract', params);
+    return response;
+  }
+
+  /**
+   * Obtém saldo de pontos e estatísticas do usuário autenticado
+   */
+  async getAuthenticatedUserBalance(params?: PointsExtractListParams): Promise<{
+    total_points: number;
+    total_earned: number;
+    total_spent: number;
+    total_transactions: number;
+    active_points: number;
+    expired_points: number;
+  }> {
+    const response = await this.get<ApiResponse<any>>('/user/points/balance', params);
+    return response.data;
   }
 
   /**

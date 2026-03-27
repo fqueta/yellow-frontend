@@ -49,7 +49,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { toast } from '@/hooks/use-toast';
-import { useAllRedemptions, useUpdateRedemptionStatus } from '@/hooks/redemptions';
+import { useAllRedemptions, useUpdateRedemptionStatus, useRefundRedemption } from '@/hooks/redemptions';
 import { 
   Redemption, 
   RedemptionStatus, 
@@ -57,7 +57,7 @@ import {
 } from '@/types/redemptions';
 import { format, parse } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { PrintButton } from '@/components/ui/PrintButton';
+import { PrintButton } from '@/components/ui/printbutton';
 import '@/styles/print.css';
 import { phoneApplyMask } from '@/lib/masks/phone-apply-mask';
 import * as XLSX from 'xlsx';
@@ -230,6 +230,24 @@ const AdminRedemptions: React.FC = () => {
     }
   });
 
+  // Hook para extornar resgate
+  const refundRedemptionMutation = useRefundRedemption({
+    onSuccess: () => {
+      refetch();
+      toast({
+        title: "Resgate extornado",
+        description: "Os pontos foram devolvidos ao cliente com sucesso.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao extornar",
+        description: error?.message || "Ocorreu um erro ao extornar o resgate.",
+        variant: "destructive",
+      });
+    }
+  });
+
   // Função para atualizar status do resgate
   /**
    * Atualiza o status do resgate.
@@ -255,6 +273,24 @@ const AdminRedemptions: React.FC = () => {
     } catch (error) {
       // Erro já tratado no onError da mutation
       console.error('Erro ao atualizar status:', error);
+    }
+  };
+
+  /**
+   * handleRefund
+   * pt-BR: Realiza o extorno de um resgate (devolve pontos ao cliente).
+   * en-US: Refunds a redemption (returns points to the customer).
+   */
+  const handleRefund = async (redemptionId: string) => {
+    const confirmed = window.confirm('Deseja realmente extornar este resgate? Os pontos serão devolvidos ao saldo do cliente.');
+    if (!confirmed) return;
+
+    try {
+      await refundRedemptionMutation.mutateAsync({
+        id: redemptionId
+      });
+    } catch (error) {
+      console.error('Erro ao extornar resgate:', error);
     }
   };
 
@@ -406,7 +442,7 @@ const AdminRedemptions: React.FC = () => {
   };
 
   // Obter categorias únicas para o filtro
-  const categories = Array.from(new Set(redemptions.map((r: any) => r.productCategory)));
+  const categories = Array.from(new Set(redemptions.map((r: any) => r.productCategory))) as string[];
 
   /**
    * buildFilterLegend
@@ -527,7 +563,7 @@ const AdminRedemptions: React.FC = () => {
             
             <div className="space-y-2">
               <label className="text-sm font-medium">Status</label>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as RedemptionStatus | 'all')}>
                 <SelectTrigger>
                   <SelectValue placeholder="Todos os status" />
                 </SelectTrigger>
@@ -792,10 +828,19 @@ const AdminRedemptions: React.FC = () => {
                             <DropdownMenuItem 
                               onClick={() => handleStatusUpdate(redemption.id, 'cancelled')}
                               disabled={updateRedemptionStatusMutation.isPending || redemption.status === 'cancelled' || redemption.status === 'refunded'}
-                              className="text-red-600"
+                              className="text-red-500"
                             >
                               <XCircle className="mr-2 h-4 w-4" />
                               Cancelar
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem 
+                              onClick={() => handleRefund(redemption.id)}
+                              disabled={refundRedemptionMutation.isPending || redemption.status === 'refunded' || redemption.status === 'cancelled'}
+                              className="text-orange-600"
+                            >
+                              <RefreshCw className={`mr-2 h-4 w-4 ${refundRedemptionMutation.isPending ? 'animate-spin' : ''}`} />
+                              Extorno
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>

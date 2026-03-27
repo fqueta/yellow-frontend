@@ -185,7 +185,7 @@ const MyRedemptionsContent: React.FC<MyRedemptionsContentProps & PointsStoreProp
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold text-gray-900">Meus Resgates</h2>
           <div className="text-right">
-            <p className="text-sm text-gray-600">Pontos disponíveis</p>
+            <p className="text-sm text-gray-600">Saldo de pontos</p>
             <p className="text-lg font-bold text-green-600">{userPoints.toLocaleString()}</p>
           </div>
         </div>
@@ -330,12 +330,12 @@ const MyRedemptionsContent: React.FC<MyRedemptionsContentProps & PointsStoreProp
                           <h3 className="text-lg font-semibold text-gray-900">{redemption.productName || 'Produto não encontrado'}</h3>
                           <p className="text-sm text-gray-600">Categoria: {redemption.category}</p>
                         </div>
-                        {/* <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-2">
                           <span className={`px-3 py-1 rounded-full text-sm font-medium flex items-center space-x-1 ${statusInfo.color}`}>
                             <StatusIcon className="w-4 h-4" />
                             <span>{statusInfo.label}</span>
                           </span>
-                        </div> */}
+                        </div>
                       </div>
                       
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
@@ -360,6 +360,12 @@ const MyRedemptionsContent: React.FC<MyRedemptionsContentProps & PointsStoreProp
                             </p>
                           </div>
                         )}
+                        <div>
+                          <p className="text-gray-600 font-medium">Status do Pedido</p>
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium inline-block mt-1 ${statusInfo.color}`}>
+                            {statusInfo.label}
+                          </span>
+                        </div>
                         {redemption.trackingCode && (
                           <div>
                             <p className="text-gray-600 font-medium">Código de Rastreamento</p>

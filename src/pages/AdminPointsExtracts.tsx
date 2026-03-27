@@ -24,7 +24,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { ExportActions } from '@/components/ui/ExportActions';
 import { Input } from '@/components/ui/input';
-import { PrintButton } from '@/components/ui/PrintButton';
+import { PrintButton } from '@/components/ui/printbutton';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -63,6 +63,7 @@ import {
   useCreateAdjustment, 
   useExportPointsExtracts 
 } from '@/hooks/pointsExtracts';
+import { useRefundRedemption } from '@/hooks/redemptions';
 import { format, parse } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import '@/styles/print.css';
@@ -115,6 +116,29 @@ const AdminPointsExtracts: React.FC = () => {
   const { data: stats, isLoading: isLoadingStats } = usePointsExtractStats(statsParams);
   const createAdjustmentMutation = useCreateAdjustment();
   const exportMutation = useExportPointsExtracts();
+  
+  /**
+   * Mutation para extornar resgate
+   * pt-BR: Devolve os pontos ao cliente e cancela o resgate.
+   * en-US: Returns points to the customer and cancels the redemption.
+   */
+  const refundRedemptionMutation = useRefundRedemption({
+    onSuccess: () => {
+      // Recarregar dados da lista e estatísticas
+      refetch();
+      toast({
+        title: 'Resgate extornado',
+        description: 'O pedido de resgate foi extornado e os pontos foram devolvidos ao cliente.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Erro ao extornar resgate',
+        description: error?.message || 'Ocorreu um erro ao processar o extorno.',
+        variant: 'destructive',
+      });
+    },
+  });
   // console.log('extractsResponse',extractsResponse);
   const extracts = extractsResponse?.data || [];
   const displayExtracts = showAll ? allExtracts : extracts;
@@ -809,6 +833,31 @@ const AdminPointsExtracts: React.FC = () => {
                               <Eye className="mr-2 h-4 w-4" />
                               Ver detalhes
                             </DropdownMenuItem>
+                            {(extract.pedido_id || (extract.reference && (extract.reference.startsWith('R') || extract.reference.startsWith('ORDER')))) && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem 
+                                  onClick={async () => {
+                                    const rawId = extract.pedido_id || extract.reference;
+                                    if (!rawId) return;
+                                    const id = String(rawId).replace(/[^0-9]/g, '');
+                                    if (!id) return;
+                                    const confirmed = window.confirm(`Deseja realmente extornar o resgate #${id}? Os pontos serão devolvidos ao saldo do cliente.`);
+                                    if (!confirmed) return;
+                                    try {
+                                      await refundRedemptionMutation.mutateAsync({ id });
+                                    } catch (e) {
+                                      console.error(e);
+                                    }
+                                  }}
+                                  disabled={refundRedemptionMutation.isPending}
+                                  className="text-orange-600"
+                                >
+                                  <RefreshCw className={`mr-2 h-4 w-4 ${refundRedemptionMutation.isPending ? 'animate-spin' : ''}`} />
+                                  Extornar Resgate
+                                </DropdownMenuItem>
+                              </>
+                            )}
                             {/* {extract.reference && (
                               <DropdownMenuItem onClick={() => {
                                 if (extract.reference?.startsWith('R')) {
@@ -861,7 +910,7 @@ const AdminPointsExtracts: React.FC = () => {
                 </Button>
                 
                 <div className="flex items-center space-x-1">
-                  {Array.from({ length: Math.min(5, pagination.total_pages) }, (_, i) => {
+                  {Array.from({ length: Math.min(5, pagination.last_page) }, (_, i) => {
                     const pageNumber = i + 1;
                     const isCurrentPage = pageNumber === currentPage;
                     
@@ -884,7 +933,7 @@ const AdminPointsExtracts: React.FC = () => {
                   variant="outline"
                   size="sm"
                   onClick={() => setCurrentPage(currentPage + 1)}
-                  disabled={currentPage >= pagination.total_pages || isLoading}
+                  disabled={currentPage >= pagination.last_page || isLoading}
                 >
                   Próxima
                   <ChevronRight className="h-4 w-4" />

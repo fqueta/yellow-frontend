@@ -308,7 +308,7 @@ const ProductDetails: React.FC<PointsStoreProps> = ({ linkLoja }) => {
             </button>
             <div className="flex items-center space-x-4">
               <div className="text-right bg-white/20 rounded-lg px-4 py-2 backdrop-blur-sm">
-                <p className="text-sm text-yellow-200">Seus pontos</p>
+                <p className="text-sm text-yellow-200">Saldo de pontos</p>
                 <p className="text-lg font-bold text-yellow-300">{formatPoints(userPoints)}</p>
               </div>
             </div>

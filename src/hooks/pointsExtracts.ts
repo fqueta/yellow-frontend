@@ -116,3 +116,32 @@ export function useUserPointsBalance(userId: string, queryOptions?: any) {
     ...queryOptions
   });
 }
+
+/**
+ * Hook para obter extratos de pontos do usuário autenticado
+ */
+export function useAuthenticatedUserPointsExtracts(params?: PointsExtractListParams, queryOptions?: any) {
+  return useQuery<PaginatedResponse<PointsExtract>>({
+    queryKey: ['authenticated-user-points-extracts', params],
+    queryFn: () => pointsExtractsService.getAuthenticatedUserExtract(params),
+    ...queryOptions
+  });
+}
+
+/**
+ * Hook para obter saldo de pontos do usuário autenticado
+ */
+export function useAuthenticatedUserPointsBalance(params?: PointsExtractListParams, queryOptions?: any) {
+  return useQuery<{
+    total_points: number;
+    total_earned: number;
+    total_spent: number;
+    total_transactions: number;
+    active_points: number;
+    expired_points: number;
+  }>({
+    queryKey: ['authenticated-user-points-balance', params],
+    queryFn: () => pointsExtractsService.getAuthenticatedUserBalance(params),
+    ...queryOptions
+  });
+}

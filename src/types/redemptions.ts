@@ -65,17 +65,17 @@ export interface Redemption {
 
 // Tipos de transação de pontos
 export type PointsTransactionType = 
-  // | 'earned'       // Pontos ganhos
-  // | 'redeemed'     // Pontos resgatados
-  // | 'expired'      // Pontos expirados
-  // | 'bonus'        // Bônus
-  // | 'refund'       // Reembolso
-  // | 'adjustment'   // Ajuste manual
+  | 'earned'       // Pontos ganhos
+  | 'redeemed'     // Pontos resgatados
+  | 'expired'      // Pontos expirados
+  | 'bonus'        // Bônus
+  | 'refund'       // Reembolso
+  | 'adjustment'   // Ajuste manual
   | 'credito'      // Crédito (da API)
   | 'debito'       // Débito (da API)
-  // | 'ajuste'       // Ajuste (da API)
-  // | 'reembolso'    // Reembolso (da API)
-  // | 'expiracao';   // Expiração (da API)
+  | 'ajuste'       // Ajuste (da API)
+  | 'reembolso'    // Reembolso (da API)
+  | 'expiracao';   // Expiração (da API)
 
 // Interface para extrato de pontos
 export interface PointsExtract {

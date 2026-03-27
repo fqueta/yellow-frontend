@@ -45,7 +45,7 @@ export function useUpdateRedemptionStatus(mutationOptions?: any) {
   return useMutation({
     mutationFn: ({ id, status, notes, trackingCode }: { id: string; status: string; notes?: string; trackingCode?: string }) => 
       redemptionsService.updateRedemptionStatus(id, status, notes, trackingCode),
-    onSuccess: (data, variables) => {
+    onSuccess: (data: Redemption, variables: { id: string; status: string; notes?: string; trackingCode?: string }) => {
       // Invalidar cache de resgates para atualizar dados
       queryClient.invalidateQueries({ queryKey: ['redemptions'] });
       queryClient.invalidateQueries({ queryKey: ['user-redemptions'] });
@@ -68,7 +68,7 @@ export function useRefundRedemption(mutationOptions?: any) {
 
   return useMutation({
     mutationFn: ({ id, notes }: { id: string; notes?: string }) => redemptionsService.refundRedemption(id, notes),
-    onSuccess: (data, variables) => {
+    onSuccess: (data: Redemption, variables: { id: string; notes?: string }) => {
       // Invalidar caches para refletir o extorno
       queryClient.invalidateQueries({ queryKey: ['redemptions'] });
       queryClient.invalidateQueries({ queryKey: ['user-redemptions'] });

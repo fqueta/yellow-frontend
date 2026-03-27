@@ -560,7 +560,7 @@ export default function ClientView() {
               </div>
               {client.points !== undefined && (
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">Pontos</label>
+                  <label className="text-sm font-medium text-muted-foreground">Saldo de Pontos</label>
                   <p className="text-sm flex items-center">
                     <DollarSign className="mr-2 h-4 w-4" />
                     {client.points}

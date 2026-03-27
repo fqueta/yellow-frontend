@@ -196,7 +196,7 @@ const PointsStore: React.FC<PointsStoreProps> = ({ linkLoja }) => {
             <div className="flex items-center space-x-4">
               <div className="hidden sm:flex items-center space-x-2 bg-yellow-400 px-4 py-2 rounded-lg shadow-md">
                 <Gift className="w-4 h-4 text-purple-800" />
-                <span className="text-purple-800 text-sm font-medium">Seus pontos: </span>
+                <span className="text-purple-800 text-sm font-medium">Saldo de pontos: </span>
                 <span className="text-purple-900 font-bold">{formatPoints(user.points)}</span>
               </div>
               
