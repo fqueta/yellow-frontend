@@ -27,6 +27,7 @@ export interface AdvancedSystemSettings {
   token_api_aeroclube: string;
   pontos_dias_expiracao?: string;
   pontos_expiracao_ativa?: string;
+  exibir_extrato_cliente?: string;
 }
 
 /**

@@ -11,6 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { authService } from '@/services/authService';
+import { useApiOptions } from '@/hooks/useApiOptions';
 import { useCep } from '@/hooks/useCep';
 import { cepApplyMask, cepRemoveMask } from '@/lib/masks/cep-apply-mask';
 import { cpfApplyMask } from '@/lib/masks/cpf-apply-mask';
@@ -30,6 +31,10 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
   // Estados para controle das abas e edição
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('profile');
+  
+  // Buscar configurações do sistema para verificar se deve exibir a aba de extrato
+  const { options: apiOptions } = useApiOptions();
+  const showExtractTab = apiOptions.find(o => o.url === 'exibir_extrato_cliente')?.value !== 'n';
   
   // Verificar se deve abrir uma aba específica baseada nos parâmetros da URL
   useEffect(() => {
@@ -389,7 +394,7 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 bg-white rounded-xl shadow-lg border-2 border-purple-100">
+          <TabsList className={`grid w-full ${showExtractTab ? 'grid-cols-4' : 'grid-cols-3'} bg-white rounded-xl shadow-lg border-2 border-purple-100`}>
             <TabsTrigger 
               value="profile" 
               className="flex items-center space-x-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-teal-500 data-[state=active]:to-green-500 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"
@@ -404,13 +409,15 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
               <Gift className="w-4 h-4" />
               <span>Meus Resgates</span>
             </TabsTrigger>
-            <TabsTrigger 
-              value="extract" 
-              className="flex items-center space-x-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-500 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"
-            >
-              <History className="w-4 h-4" />
-              <span>Extrato de Pontos</span>
-            </TabsTrigger>
+            {showExtractTab && (
+              <TabsTrigger 
+                value="extract" 
+                className="flex items-center space-x-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-500 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"
+              >
+                <History className="w-4 h-4" />
+                <span>Extrato de Pontos</span>
+              </TabsTrigger>
+            )}
             <TabsTrigger 
               value="settings" 
               className="flex items-center space-x-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-red-500 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"
@@ -750,9 +757,11 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
           </TabsContent>
 
           {/* Aba Extrato de Pontos */}
-          <TabsContent value="extract">
-            <PointsExtractContent />
-          </TabsContent>
+          {showExtractTab && (
+            <TabsContent value="extract">
+              <PointsExtractContent />
+            </TabsContent>
+          )}
 
           {/* Aba Configurações */}
           <TabsContent value="settings" className="space-y-6">

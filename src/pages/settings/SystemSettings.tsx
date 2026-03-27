@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Settings, Save, Palette, Link, Clock, Activity } from "lucide-react";
+import { Settings, Save, Palette, Link, Clock, Activity, Bell } from "lucide-react";
 import { systemSettingsService, AdvancedSystemSettings } from "@/services/systemSettingsService";
 import { useApiOptions } from "@/hooks/useApiOptions";
 import { useAuth } from "@/contexts/AuthContext";
@@ -43,7 +43,49 @@ export default function SystemSettings() {
   const isSuperAdmin = user && Number(user.permission_id) <= 1;
   // Acesso Admin (permission_id 1 e 2)
   const isAdmin = user && Number(user.permission_id) < 3;
-  
+
+  // Preferências de notificações do admin (permission_id=1)
+  const [notifPrefs, setNotifPrefs] = useState({
+    extorno_resgate: true,
+  });
+  const [isSavingNotif, setIsSavingNotif] = useState(false);
+
+  // Carrega preferências a partir dos dados do usuário logado
+  useEffect(() => {
+    if (user && Number(user.permission_id) === 1) {
+      const prefs = (user as any).preferencias;
+      if (prefs?.notificacoes) {
+        setNotifPrefs({
+          extorno_resgate: prefs.notificacoes.extorno_resgate ?? true,
+        });
+      }
+    }
+  }, [user]);
+
+  const handleSaveNotifPrefs = async () => {
+    setIsSavingNotif(true);
+    try {
+      const token = localStorage.getItem('auth_token');
+      const { getTenantApiUrl, getVersionApi } = await import('@/lib/qlib');
+      const url = getTenantApiUrl() + getVersionApi() + '/user/preferences';
+      const res = await fetch(url, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ notificacoes: notifPrefs }),
+      });
+      if (!res.ok) throw new Error('request failed');
+      toast.success('Preferências de notificação salvas!');
+    } catch (e) {
+      toast.error('Erro ao salvar preferências de notificação');
+    } finally {
+      setIsSavingNotif(false);
+    }
+  };
+
   // Ajusta a aba padrão dependendo da permissão
   useEffect(() => {
     if (user && Number(user.permission_id) === 2) {
@@ -98,6 +140,7 @@ export default function SystemSettings() {
     enableCaching: true,
     enableCompression: false,
     enableSslRedirect: true,
+    exibir_extrato_cliente: true,
   });
 
   // Estados para configurações avançadas - Select
@@ -351,6 +394,7 @@ export default function SystemSettings() {
         url_api_aeroclube: advancedInputSettings.url_api_aeroclube,
         token_api_aeroclube: advancedInputSettings.token_api_aeroclube,
         pontos_dias_expiracao: advancedInputSettings.pontos_dias_expiracao,
+        exibir_extrato_cliente: advancedSwitchSettings.exibir_extrato_cliente ? 's' : 'n',
       };
 
       // Envia as configurações avançadas para a API na rota /options
@@ -398,6 +442,7 @@ export default function SystemSettings() {
           enableCaching: data.enableCaching,
           enableCompression: data.enableCompression,
           enableSslRedirect: data.enableSslRedirect,
+          exibir_extrato_cliente: data.exibir_extrato_cliente !== 'n',
         }));
       }
       
@@ -794,6 +839,42 @@ export default function SystemSettings() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Card de Preferências de Notificação (apenas super admin) */}
+          {isSuperAdmin && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Bell className="h-5 w-5" />
+                  <span>Preferências de Notificação</span>
+                </CardTitle>
+                <CardDescription>
+                  Gerencie quais notificações por e-mail você deseja receber como administrador.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="notif_extorno_resgate">Notificação de Extorno de Resgate</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Receber e-mail quando um resgate for extornado pelo sistema
+                    </p>
+                  </div>
+                  <Switch
+                    id="notif_extorno_resgate"
+                    checked={notifPrefs.extorno_resgate}
+                    onCheckedChange={(val) => setNotifPrefs(p => ({ ...p, extorno_resgate: val }))}
+                  />
+                </div>
+                <div className="flex justify-end pt-4 border-t">
+                  <Button onClick={handleSaveNotifPrefs} disabled={isSavingNotif} className="flex items-center space-x-2">
+                    <Save className="h-4 w-4" />
+                    <span>{isSavingNotif ? 'Salvando...' : 'Salvar Notificações'}</span>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         {/* Aba de Configurações Avançadas */}
@@ -860,6 +941,20 @@ export default function SystemSettings() {
                   id="enableSslRedirect"
                   checked={advancedSwitchSettings.enableSslRedirect}
                   onCheckedChange={(value) => handleAdvancedSwitchChange('enableSslRedirect', value)}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="exibir_extrato_cliente">Exibir Extrato de Pontos para Clientes</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Define se a aba de Extrato de Pontos deve ser visível na área do cliente.
+                  </p>
+                </div>
+                <Switch
+                  id="exibir_extrato_cliente"
+                  checked={advancedSwitchSettings.exibir_extrato_cliente}
+                  onCheckedChange={(value) => handleAdvancedSwitchChange('exibir_extrato_cliente', value)}
                 />
               </div>
             </CardContent>
