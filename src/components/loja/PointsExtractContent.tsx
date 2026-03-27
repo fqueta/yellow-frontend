@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { 
   ArrowUpRight, 
   ArrowDownLeft, 
@@ -24,29 +24,45 @@ import { PointsTransactionType } from '@/types/redemptions';
 import { useInView } from 'react-intersection-observer';
 
 const PointsExtractContent: React.FC = () => {
-  const [search, setSearch] = React.useState('');
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [type, setType] = React.useState<string | undefined>(undefined);
   const [dateFrom, setDateFrom] = React.useState<string>('');
   const [dateTo, setDateTo] = React.useState<string>('');
-  
+
+  // Debounce: só dispara a query após 400ms sem digitar
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 400);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [search]);
   const { ref, inView } = useInView();
 
   const { 
     data: extractInfiniteData, 
     isLoading: isLoadingExtract,
+    isFetching: isFetchingExtract,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage
   } = useAuthenticatedUserInfinitePointsExtracts({
-    search,
+    search: debouncedSearch,
     type: type as any,
     dateFrom,
     dateTo,
     per_page: 20
+  }, {
+    placeholderData: (previousData: any) => previousData,
+    staleTime: 0,
   });
 
   const { data: balanceData, isLoading: isLoadingBalance } = useAuthenticatedUserPointsBalance({
-    search,
+    search: debouncedSearch,
     dateFrom,
     dateTo
   });
@@ -60,6 +76,7 @@ const PointsExtractContent: React.FC = () => {
 
   const clearFilters = () => {
     setSearch('');
+    setDebouncedSearch('');
     setType(undefined);
     setDateFrom('');
     setDateTo('');
@@ -105,13 +122,7 @@ const PointsExtractContent: React.FC = () => {
     }
   };
 
-  if (isLoadingExtract && !extractInfiniteData) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
-      </div>
-    );
-  }
+
 
   // Achatar todas as páginas de transações em um único array
   const transactions = extractInfiniteData?.pages.flatMap(page => page.data) || [];
@@ -173,7 +184,11 @@ const PointsExtractContent: React.FC = () => {
       <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
           <div className="relative flex-1 sm:w-64">
-            <Search className="absolute left-3 top-1/2 -transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            {isFetchingExtract && !isFetchingNextPage ? (
+              <Loader2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-500 animate-spin" />
+            ) : (
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            )}
             <Input
               placeholder="Buscar por descrição..."
               value={search}
@@ -252,7 +267,16 @@ const PointsExtractContent: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {transactions.length > 0 ? (
+              {isLoadingExtract && !extractInfiniteData ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center">
+                    <div className="flex items-center justify-center gap-2 text-gray-400">
+                      <Loader2 className="w-6 h-6 animate-spin" />
+                      Carregando...
+                    </div>
+                  </td>
+                </tr>
+              ) : transactions.length > 0 ? (
                 transactions.map((transaction) => {
                   const isPositive = transaction.points > 0;
                   return (
