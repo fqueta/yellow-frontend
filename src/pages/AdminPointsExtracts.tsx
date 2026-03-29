@@ -12,6 +12,7 @@ import {
   Minus,
   Gift,
   Calendar,
+  Clock,
   User,
   DollarSign,
   MoreHorizontal,
@@ -287,6 +288,7 @@ const AdminPointsExtracts: React.FC = () => {
         'Saldo Anterior',
         'Saldo Atual',
         'Data',
+        'Expiração',
       ];
 
       const rows = displayExtracts.map((ex: any) => {
@@ -302,6 +304,7 @@ const AdminPointsExtracts: React.FC = () => {
           pointsVal = -pointsVal;
         }
         const createdStr = ex.createdAt ? format(new Date(ex.createdAt), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : '—';
+        const expirationStr = ex.expirationDate ? format(new Date(ex.expirationDate), 'dd/MM/yyyy', { locale: ptBR }) : '—';
         return [
           ex.id ?? '—',
           ex.userName || 'Não informado',
@@ -313,6 +316,7 @@ const AdminPointsExtracts: React.FC = () => {
           parseNumberField(ex.balanceBefore),
           parseNumberField(ex.balanceAfter),
           createdStr,
+          expirationStr,
         ];
       });
 
@@ -332,6 +336,7 @@ const AdminPointsExtracts: React.FC = () => {
         { wch: 14 },
         { wch: 14 },
         { wch: 18 },
+        { wch: 14 },
       ];
 
       XLSX.utils.book_append_sheet(wb, ws, 'Extratos');
@@ -372,6 +377,7 @@ const AdminPointsExtracts: React.FC = () => {
         'Saldo Anterior',
         'Saldo Atual',
         'Data',
+        'Expiração',
       ];
 
       const rows = displayExtracts.map((ex: any) => {
@@ -383,6 +389,7 @@ const AdminPointsExtracts: React.FC = () => {
           pointsVal = -pointsVal;
         }
         const createdStr = ex.createdAt ? format(new Date(ex.createdAt), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : '—';
+        const expirationStr = ex.expirationDate ? format(new Date(ex.expirationDate), 'dd/MM/yyyy', { locale: ptBR }) : '—';
         return [
           ex.id ?? '—',
           ex.userName || 'Não informado',
@@ -394,6 +401,7 @@ const AdminPointsExtracts: React.FC = () => {
           parseNumberField(ex.balanceBefore),
           parseNumberField(ex.balanceAfter),
           createdStr,
+          expirationStr,
         ];
       });
 
@@ -670,10 +678,12 @@ const AdminPointsExtracts: React.FC = () => {
                   <TableHead>Cliente</TableHead>
                   <TableHead>Tipo</TableHead>
                   <TableHead>Pontos</TableHead>
+                  <TableHead>Saldo Disp.</TableHead>
                   <TableHead>Descrição</TableHead>
                   <TableHead>Saldo Anterior</TableHead>
                   <TableHead>Saldo Atual</TableHead>
                   <TableHead>Data</TableHead>
+                  <TableHead>Expiração</TableHead>
                   <TableHead className="text-right print-hidden">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -685,16 +695,18 @@ const AdminPointsExtracts: React.FC = () => {
                       <TableCell><div className="h-4 w-32 bg-gray-200 rounded animate-pulse" /></TableCell>
                       <TableCell><div className="h-4 w-20 bg-gray-200 rounded animate-pulse" /></TableCell>
                       <TableCell><div className="h-4 w-16 bg-gray-200 rounded animate-pulse" /></TableCell>
+                      <TableCell><div className="h-4 w-16 bg-gray-200 rounded animate-pulse" /></TableCell>
                       <TableCell><div className="h-4 w-40 bg-gray-200 rounded animate-pulse" /></TableCell>
                       <TableCell><div className="h-4 w-16 bg-gray-200 rounded animate-pulse" /></TableCell>
                       <TableCell><div className="h-4 w-16 bg-gray-200 rounded animate-pulse" /></TableCell>
                       <TableCell><div className="h-4 w-24 bg-gray-200 rounded animate-pulse" /></TableCell>
+                      <TableCell><div className="h-4 w-20 bg-gray-200 rounded animate-pulse" /></TableCell>
                       <TableCell><div className="h-4 w-8 bg-gray-200 rounded animate-pulse" /></TableCell>
                     </TableRow>
                   ))
                 ) : displayExtracts.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-8">
+                    <TableCell colSpan={11} className="text-center py-8">
                       <div className="flex flex-col items-center gap-2">
                         <DollarSign className="w-8 h-8 text-gray-400" />
                         <p className="text-gray-500">Nenhuma movimentação encontrada</p>
@@ -735,6 +747,20 @@ const AdminPointsExtracts: React.FC = () => {
                         </div>
                       </TableCell>
                       <TableCell>
+                        <div className="flex flex-col">
+                          <span className={`font-bold ${
+                            (extract.saldo_restante ?? 0) > 0 ? 'text-blue-700' : 'text-gray-400'
+                          }`}>
+                            {(extract.saldo_restante ?? 0).toLocaleString()}
+                          </span>
+                          {(extract.valor_usado ?? 0) > 0 && (
+                            <span className="text-[10px] text-gray-400">
+                              Uso: {(extract.valor_usado ?? 0).toLocaleString()}
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
                         <div className="max-w-xs">
                           <p className="text-sm truncate" title={extract.description}>
                             {extract.description.replace(/Resgate de produto: /, 'Resgate de: ')}
@@ -761,10 +787,39 @@ const AdminPointsExtracts: React.FC = () => {
                             {extract.createdAt ? format(new Date(extract.createdAt), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : 'Data não disponível'}
                           </span>
                         </div>
-                        {extract.expirationDate && (
-                          <div className="text-xs text-gray-500">
-                            Expira: {extract.expirationDate ? format(new Date(extract.expirationDate), 'dd/MM/yyyy', { locale: ptBR }) : 'Data não disponível'}
-                          </div>
+                      </TableCell>
+                      <TableCell>
+                        {extract.expirationDate ? (() => {
+                          const expDate = new Date(extract.expirationDate);
+                          const now = new Date();
+                          const isExpired = expDate < now;
+                          const diffDays = Math.ceil((expDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                          const isExpiringSoon = !isExpired && diffDays <= 30;
+
+                          return (
+                            <div className="flex flex-col gap-0.5">
+                              <div className={`flex items-center gap-1 text-sm ${
+                                isExpired ? 'text-red-600 font-medium' : isExpiringSoon ? 'text-amber-600 font-medium' : 'text-gray-600'
+                              }`}>
+                                <Clock className={`w-3.5 h-3.5 ${
+                                  isExpired ? 'text-red-500' : isExpiringSoon ? 'text-amber-500' : 'text-gray-400'
+                                }`} />
+                                {format(expDate, 'dd/MM/yyyy', { locale: ptBR })}
+                              </div>
+                              {isExpired && (
+                                <Badge variant="destructive" className="text-[10px] px-1.5 py-0 h-4 w-fit">
+                                  Expirado
+                                </Badge>
+                              )}
+                              {isExpiringSoon && (
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 w-fit border-amber-400 text-amber-600">
+                                  Expira em {diffDays}d
+                                </Badge>
+                              )}
+                            </div>
+                          );
+                        })() : (
+                          <span className="text-sm text-gray-400">—</span>
                         )}
                       </TableCell>
                       <TableCell className="text-right print-hidden">

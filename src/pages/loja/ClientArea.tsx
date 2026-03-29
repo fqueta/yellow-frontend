@@ -759,7 +759,7 @@ const ClientArea: React.FC<PointsStoreProps> = ({ linkLoja }) => {
           {/* Aba Extrato de Pontos */}
           {showExtractTab && (
             <TabsContent value="extract">
-              <PointsExtractContent />
+              <PointsExtractContent linkLoja={linkLoja} />
             </TabsContent>
           )}
 

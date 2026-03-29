@@ -9,8 +9,12 @@ import {
   TrendingUp,
   TrendingDown,
   Clock,
-  Loader2
+  Loader2,
+  AlertTriangle,
+  ShoppingBag
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -23,7 +27,12 @@ import { formatDate } from '@/lib/utils';
 import { PointsTransactionType } from '@/types/redemptions';
 import { useInView } from 'react-intersection-observer';
 
-const PointsExtractContent: React.FC = () => {
+interface PointsExtractContentProps {
+  linkLoja?: string;
+}
+
+const PointsExtractContent: React.FC<PointsExtractContentProps> = ({ linkLoja = '/lojaderesgatesantenamais' }) => {
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [type, setType] = React.useState<string | undefined>(undefined);
@@ -130,11 +139,43 @@ const PointsExtractContent: React.FC = () => {
     total_points: 0,
     total_earned: 0,
     total_spent: 0,
-    active_points: 0
+    active_points: 0,
+    total_transactions: 0,
+    expired_points: 0,
+    points_expiring_soon: 0
   };
 
   return (
     <div className="space-y-6">
+      {/* Alert Banner for Expiring Points */}
+      {stats.points_expiring_soon > 0 && (
+        <Alert className="bg-amber-50 border-amber-200 text-amber-900 shadow-sm animate-in fade-in slide-in-from-top-4 duration-500">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 w-full">
+            <div className="flex gap-3">
+              <div className="p-2 bg-amber-500/20 rounded-lg shrink-0 h-fit">
+                <AlertTriangle className="h-5 w-5 text-amber-600" />
+              </div>
+              <div>
+                <AlertTitle className="text-amber-800 font-bold text-lg mb-1">
+                  Atenção: Pontos a Expirar
+                </AlertTitle>
+                <AlertDescription className="text-amber-700">
+                  Você possui <span className="font-bold text-amber-900">{Math.floor(stats.points_expiring_soon).toLocaleString()} pontos</span> que vão expirar nos próximos 30 dias. 
+                  Não deixe para a última hora! 
+                </AlertDescription>
+              </div>
+            </div>
+            <Button 
+              onClick={() => navigate(linkLoja)}
+              className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-bold px-6 py-6 h-auto shadow-md transform hover:scale-105 transition-all"
+            >
+              <ShoppingBag className="w-5 h-5 mr-2" />
+              Trocar Pontos Agora
+            </Button>
+          </div>
+        </Alert>
+      )}
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200 shadow-sm">
@@ -252,9 +293,10 @@ const PointsExtractContent: React.FC = () => {
         </div>
       </div>
 
-      {/* Transactions List */}
+      {/* Transactions List - Responsive Container */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Desktop Table View (Hidden on Mobile) */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
@@ -263,13 +305,15 @@ const PointsExtractContent: React.FC = () => {
                 <th className="px-6 py-4 text-sm font-semibold text-gray-900">Tipo</th>
                 <th className="px-6 py-4 text-sm font-semibold text-gray-900 text-right">Saldo Anterior</th>
                 <th className="px-6 py-4 text-sm font-semibold text-gray-900 text-right">Pontos</th>
+                <th className="px-6 py-4 text-sm font-semibold text-gray-900 text-right">Saldo Disp.</th>
+                <th className="px-6 py-4 text-sm font-semibold text-gray-900 text-right">Validade</th>
                 <th className="px-6 py-4 text-sm font-semibold text-gray-900 text-right">Saldo Atual</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {isLoadingExtract && !extractInfiniteData ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center">
+                  <td colSpan={8} className="px-6 py-12 text-center">
                     <div className="flex items-center justify-center gap-2 text-gray-400">
                       <Loader2 className="w-6 h-6 animate-spin" />
                       Carregando...
@@ -289,7 +333,7 @@ const PointsExtractContent: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900">
                         <div>
-                          <p className="font-medium">{transaction.description}</p>
+                          <p className="font-medium">{transaction.description || (transaction.type === 'expired' ? 'Expiração de Pontos' : 'Movimentação de Pontos')}</p>
                           {transaction.reference && (
                             <p className="text-xs text-gray-500 mt-0.5">Ref: {transaction.reference}</p>
                           )}
@@ -309,6 +353,45 @@ const PointsExtractContent: React.FC = () => {
                       <td className={`px-6 py-4 whitespace-nowrap text-sm font-bold text-right ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
                         {isPositive ? '+' : '-'}{Math.abs(transaction.points).toLocaleString()}
                       </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
+                        {isPositive ? (
+                          <div className="flex flex-col items-end">
+                            <span className={`font-bold ${(transaction.saldo_restante ?? 0) > 0 ? 'text-blue-600' : 'text-gray-400'}`}>
+                              {(transaction.saldo_restante ?? 0).toLocaleString()}
+                            </span>
+                            {(transaction.valor_usado ?? 0) > 0 && (
+                              <span className="text-[10px] text-gray-400">
+                                Uso: {(transaction.valor_usado ?? 0).toLocaleString()}
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-gray-300">-</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
+                        {isPositive && transaction.expirationDate ? (
+                          <div className="flex flex-col items-end">
+                            <div className="flex items-center text-gray-500 text-xs">
+                              <Clock className="w-3 h-3 mr-1" />
+                              {new Date(transaction.expirationDate).toLocaleDateString('pt-BR')}
+                            </div>
+                            {(() => {
+                              const days = Math.ceil((new Date(transaction.expirationDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                              if (days > 0 && days <= 30) {
+                                return (
+                                  <Badge className="mt-1 bg-amber-100 text-amber-700 hover:bg-amber-100 border-amber-200 text-[10px] h-5 px-1.5 py-0">
+                                    Expira em {days}d
+                                  </Badge>
+                                );
+                              }
+                              return null;
+                            })()}
+                          </div>
+                        ) : (
+                          <span className="text-gray-300">-</span>
+                        )}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 text-right">
                         {transaction.balanceAfter.toLocaleString()}
                       </td>
@@ -317,7 +400,7 @@ const PointsExtractContent: React.FC = () => {
                 })
               ) : (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
                     <History className="w-12 h-12 mx-auto mb-4 opacity-20" />
                     <p>Nenhuma movimentação encontrada.</p>
                   </td>
@@ -326,8 +409,88 @@ const PointsExtractContent: React.FC = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Mobile Card View (Visible only on small screens) */}
+        <div className="md:hidden divide-y divide-gray-100">
+          {isLoadingExtract && !extractInfiniteData ? (
+            <div className="px-6 py-12 text-center">
+              <div className="flex items-center justify-center gap-2 text-gray-400">
+                <Loader2 className="w-6 h-6 animate-spin" />
+                Carregando...
+              </div>
+            </div>
+          ) : transactions.length > 0 ? (
+            transactions.map((transaction) => {
+              const isPositive = transaction.points > 0;
+              return (
+                <div key={transaction.id} className="p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-500 flex items-center">
+                      <Calendar className="w-3 h-3 mr-1" />
+                      {formatDate(transaction.createdAt)}
+                    </span>
+                    <Badge 
+                      variant="outline" 
+                      className={`flex items-center gap-1 border text-[10px] h-5 px-1.5 ${getTransactionColor(transaction.type)}`}
+                    >
+                      {getTypeName(transaction.type)}
+                    </Badge>
+                  </div>
+                  
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">
+                      {transaction.description || (transaction.type === 'expired' ? 'Expiração de Pontos' : 'Movimentação de Pontos')}
+                    </p>
+                    {transaction.reference && (
+                      <p className="text-[10px] text-gray-500 mt-0.5 font-mono">ID: {transaction.reference}</p>
+                    )}
+                  </div>
+
+                  <div className="flex items-end justify-between pt-1">
+                    <div className="space-y-1">
+                      <p className="text-[10px] text-gray-400 uppercase tracking-tighter">Saldo após transação</p>
+                      <p className="text-sm font-bold text-gray-600">
+                        {transaction.balanceAfter.toLocaleString()} pts
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className={`text-lg font-black ${isPositive ? 'text-green-600' : 'text-red-500'}`}>
+                        {isPositive ? '+' : '-'}{Math.abs(transaction.points).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+
+                  {isPositive && (
+                    <div className="mt-2 p-2 bg-gray-50 rounded-lg flex items-center justify-between border border-gray-100">
+                      <div>
+                        <p className="text-[10px] text-gray-400 uppercase tracking-tighter">Saldo Disponível</p>
+                        <p className="text-xs font-bold text-blue-600">
+                           {(transaction.saldo_restante ?? 0).toLocaleString()} pts
+                        </p>
+                      </div>
+                      {transaction.expirationDate && (
+                        <div className="text-right">
+                          <p className="text-[10px] text-gray-400 uppercase tracking-tighter">Validade</p>
+                          <div className="flex items-center justify-end text-[10px] font-medium text-amber-700">
+                             <Clock className="w-3 h-3 mr-1" />
+                             {new Date(transaction.expirationDate).toLocaleDateString('pt-BR')}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          ) : (
+            <div className="px-6 py-12 text-center text-gray-500">
+              <History className="w-10 h-10 mx-auto mb-2 opacity-20" />
+              <p className="text-sm">Nenhuma movimentação encontrada.</p>
+            </div>
+          )}
+        </div>
       </div>
-      
+
       {/* Elemento de trigger para scroll infinito */}
       <div ref={ref} className="py-8 flex justify-center">
         {isFetchingNextPage ? (

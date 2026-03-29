@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 import { toast } from "sonner";
 import { Settings, Save, Palette, Link, Clock, Activity, Bell } from "lucide-react";
 import { systemSettingsService, AdvancedSystemSettings } from "@/services/systemSettingsService";
@@ -141,6 +143,7 @@ export default function SystemSettings() {
     enableCompression: false,
     enableSslRedirect: true,
     exibir_extrato_cliente: true,
+    habilitar_popup_cliente: false,
   });
 
   // Estados para configurações avançadas - Select
@@ -161,6 +164,7 @@ export default function SystemSettings() {
     url_api_aeroclube: "",
     token_api_aeroclube: "",
     pontos_dias_expiracao: "",
+    mensagem_popup_cliente: "",
   });
 
   /**
@@ -394,7 +398,9 @@ export default function SystemSettings() {
         url_api_aeroclube: advancedInputSettings.url_api_aeroclube,
         token_api_aeroclube: advancedInputSettings.token_api_aeroclube,
         pontos_dias_expiracao: advancedInputSettings.pontos_dias_expiracao,
+        mensagem_popup_cliente: advancedInputSettings.mensagem_popup_cliente,
         exibir_extrato_cliente: advancedSwitchSettings.exibir_extrato_cliente ? 's' : 'n',
+        habilitar_popup_cliente: advancedSwitchSettings.habilitar_popup_cliente ? 's' : 'n',
       };
 
       // Envia as configurações avançadas para a API na rota /options
@@ -432,6 +438,7 @@ export default function SystemSettings() {
         url_api_aeroclube: data.url_api_aeroclube || "",
         token_api_aeroclube: data.token_api_aeroclube || "",
         pontos_dias_expiracao: data.pontos_dias_expiracao || "",
+        mensagem_popup_cliente: data.mensagem_popup_cliente || "",
       });
       
       // Também atualiza as outras configurações se necessário
@@ -443,6 +450,7 @@ export default function SystemSettings() {
           enableCompression: data.enableCompression,
           enableSslRedirect: data.enableSslRedirect,
           exibir_extrato_cliente: data.exibir_extrato_cliente !== 'n',
+          habilitar_popup_cliente: data.habilitar_popup_cliente === 's',
         }));
       }
       
@@ -943,20 +951,6 @@ export default function SystemSettings() {
                   onCheckedChange={(value) => handleAdvancedSwitchChange('enableSslRedirect', value)}
                 />
               </div>
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="exibir_extrato_cliente">Exibir Extrato de Pontos para Clientes</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Define se a aba de Extrato de Pontos deve ser visível na área do cliente.
-                  </p>
-                </div>
-                <Switch
-                  id="exibir_extrato_cliente"
-                  checked={advancedSwitchSettings.exibir_extrato_cliente}
-                  onCheckedChange={(value) => handleAdvancedSwitchChange('exibir_extrato_cliente', value)}
-                />
-              </div>
             </CardContent>
           </Card>
 
@@ -1127,6 +1121,59 @@ export default function SystemSettings() {
                 />
               </div>
               
+            </CardContent>
+          </Card>
+
+          {/* Card 4 - Área do Cliente e Loja */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Área do Cliente & Loja</CardTitle>
+              <CardDescription>
+                Configure as opções relacionadas ao portal do cliente e recursos visuais da loja de resgates.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="exibir_extrato_cliente">Exibir Aba de Extrato</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Permitir que os clientes vejam a aba "Extrato de Pontos" na Área do Cliente
+                  </p>
+                </div>
+                <Switch
+                  id="exibir_extrato_cliente"
+                  checked={advancedSwitchSettings.exibir_extrato_cliente}
+                  onCheckedChange={(value) => handleAdvancedSwitchChange('exibir_extrato_cliente', value)}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="habilitar_popup_cliente">Habilitar Popup de Aviso na Loja</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Exibir um popup com mensagem de aviso quando o cliente acessar a loja.
+                  </p>
+                </div>
+                <Switch
+                  id="habilitar_popup_cliente"
+                  checked={advancedSwitchSettings.habilitar_popup_cliente}
+                  onCheckedChange={(value) => handleAdvancedSwitchChange('habilitar_popup_cliente', value)}
+                />
+              </div>
+
+              {advancedSwitchSettings.habilitar_popup_cliente && (
+                <div className="space-y-2 animate-in fade-in slide-in-from-top-2 pb-10">
+                  <Label htmlFor="mensagem_popup_cliente">Mensagem do Popup (suporta formatação rica)</Label>
+                  <ReactQuill
+                    id="mensagem_popup_cliente"
+                    theme="snow"
+                    value={advancedInputSettings.mensagem_popup_cliente}
+                    onChange={(val) => handleAdvancedInputChange('mensagem_popup_cliente', val)}
+                    placeholder="Digite a mensagem de aviso..."
+                    className="bg-white min-h-[150px] rounded-md"
+                  />
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

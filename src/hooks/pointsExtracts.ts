@@ -158,6 +158,7 @@ export function useAuthenticatedUserPointsBalance(params?: PointsExtractListPara
     total_transactions: number;
     active_points: number;
     expired_points: number;
+    points_expiring_soon: number;
   }>({
     queryKey: ['authenticated-user-points-balance', params],
     queryFn: () => pointsExtractsService.getAuthenticatedUserBalance(params),

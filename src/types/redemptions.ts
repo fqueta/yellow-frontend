@@ -90,6 +90,8 @@ export interface PointsExtract {
   reference?: string;  // ID de referência (ex: ID do resgate)
   balanceBefore: number;
   balanceAfter: number;
+  valor_usado?: number;
+  saldo_restante?: number;
   expirationDate?: string;
   createdAt: string;
   createdBy?: string;  // ID do usuário que criou (para ajustes manuais)
@@ -125,6 +127,7 @@ export interface RedemptionFilters {
 // Interface para filtros de extratos
 export interface PointsExtractFilters {
   type?: PointsTransactionType;
+  status?: string;
   dateFrom?: string;
   dateTo?: string;
   userId?: string;
@@ -174,9 +177,9 @@ export const POINTS_TRANSACTION_TYPES = {
   // Tipos da API
   credito: { label: 'Crédito', color: 'green' },
   debito: { label: 'Débito', color: 'blue' },
+  expired: { label: 'Expirados', color: 'red' },
   // ajuste: { label: 'Ajuste', color: 'gray' },
   // reembolso: { label: 'Reembolso', color: 'orange' },
-  // expiracao: { label: 'Expiração', color: 'red' }
 } as const;
 
 // Mapeamento de tipos de transação para lista da tabela

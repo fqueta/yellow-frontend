@@ -28,6 +28,8 @@ export interface AdvancedSystemSettings {
   pontos_dias_expiracao?: string;
   pontos_expiracao_ativa?: string;
   exibir_extrato_cliente?: string;
+  habilitar_popup_cliente?: string;
+  mensagem_popup_cliente?: string;
 }
 
 /**
