@@ -20,8 +20,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Product, PointsStoreProps } from '@/types/products';
 import { Category } from '@/types/categories';
 import { formatPoints } from '@/lib/utils';
-
-
+import { StoreWarningPopup } from '@/components/loja/StoreWarningPopup';
 
 // Interface para dados do usuário na loja (estendendo o User do auth)
 interface StoreUser {
@@ -171,6 +170,7 @@ const PointsStore: React.FC<PointsStoreProps> = ({ linkLoja }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-orange-50 to-pink-50">
+      <StoreWarningPopup />
       {/* Header */}
       <header className="bg-gradient-to-r from-green-500 to-teal-600 shadow-lg sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
