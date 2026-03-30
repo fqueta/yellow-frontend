@@ -67,7 +67,7 @@ export const StoreWarningPopup: React.FC<StoreWarningPopupProps> = ({ isOpen, on
 
         <DialogFooter className="mt-6 flex sm:justify-center">
           <Button onClick={onClose} size="lg" className="w-full sm:w-1/2 bg-purple-700 hover:bg-purple-800 text-white font-bold text-lg">
-            Estou ciente
+            Ok
           </Button>
         </DialogFooter>
       </DialogContent>
