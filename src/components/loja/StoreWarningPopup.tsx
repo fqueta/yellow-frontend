@@ -9,24 +9,14 @@ import {
 import { Button } from '@/components/ui/button';
 import { AlertTriangle } from 'lucide-react';
 
-export const StoreWarningPopup: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(false);
+interface StoreWarningPopupProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
 
-  useEffect(() => {
-    // Check if the user has already seen the warning in this session
-    const hasSeenWarning = sessionStorage.getItem('hasSeenStorePolicyWarning');
-    if (!hasSeenWarning) {
-      setIsOpen(true);
-    }
-  }, []);
-
-  const handleClose = () => {
-    setIsOpen(false);
-    sessionStorage.setItem('hasSeenStorePolicyWarning', 'true');
-  };
-
+export const StoreWarningPopup: React.FC<StoreWarningPopupProps> = ({ isOpen, onClose }) => {
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[700px] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-2 mb-2">
@@ -76,7 +66,7 @@ export const StoreWarningPopup: React.FC = () => {
         </div>
 
         <DialogFooter className="mt-6 flex sm:justify-center">
-          <Button onClick={handleClose} size="lg" className="w-full sm:w-1/2 bg-purple-700 hover:bg-purple-800 text-white font-bold text-lg">
+          <Button onClick={onClose} size="lg" className="w-full sm:w-1/2 bg-purple-700 hover:bg-purple-800 text-white font-bold text-lg">
             Estou ciente
           </Button>
         </DialogFooter>

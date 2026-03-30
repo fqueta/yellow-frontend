@@ -53,6 +53,19 @@ interface Product{
 const PointsStore: React.FC<PointsStoreProps> = ({ linkLoja }) => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isWarningOpen, setIsWarningOpen] = useState(false);
+
+  useEffect(() => {
+    const hasSeenWarning = sessionStorage.getItem('hasSeenStorePolicyWarning');
+    if (!hasSeenWarning) {
+      setIsWarningOpen(true);
+    }
+  }, []);
+
+  const handleCloseWarning = () => {
+    setIsWarningOpen(false);
+    sessionStorage.setItem('hasSeenStorePolicyWarning', 'true');
+  };
   
   /**
    * Função para rolar suavemente até a seção de produtos
@@ -170,7 +183,7 @@ const PointsStore: React.FC<PointsStoreProps> = ({ linkLoja }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-orange-50 to-pink-50">
-      <StoreWarningPopup />
+      <StoreWarningPopup isOpen={isWarningOpen} onClose={handleCloseWarning} />
       {/* Header */}
       <header className="bg-gradient-to-r from-green-500 to-teal-600 shadow-lg sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -336,6 +349,17 @@ const PointsStore: React.FC<PointsStoreProps> = ({ linkLoja }) => {
           {/* <p className="text-lg text-white mb-8 drop-shadow">
             Você tem <span className="font-bold text-yellow-300 bg-purple-800 px-3 py-1 rounded-full">{user.points.toLocaleString()}</span> pontos disponíveis
           </p> */}
+
+          <div className="mt-8">
+            <Button
+              onClick={() => setIsWarningOpen(true)}
+              variant="outline"
+              size="lg"
+              className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-purple-700 font-bold px-8 py-6 text-lg rounded-full shadow-lg transition-all transform hover:scale-105"
+            >
+              Comunicado Importante
+            </Button>
+          </div>
         </div>
       </section>
 
