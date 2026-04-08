@@ -32,6 +32,7 @@ export interface PointsExtractStats {
   totalRedeemed: number;
   totalExpired: number;
   activeUsers: number;
+  totalBalance: number;
   totalAdjustments: number;
   totalRefunds: number;
 }

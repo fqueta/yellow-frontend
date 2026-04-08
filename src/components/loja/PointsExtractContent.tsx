@@ -29,9 +29,10 @@ import { useInView } from 'react-intersection-observer';
 
 interface PointsExtractContentProps {
   linkLoja?: string;
+  adminClientId?: string;
 }
 
-const PointsExtractContent: React.FC<PointsExtractContentProps> = ({ linkLoja = '/lojaderesgatesantenamais' }) => {
+const PointsExtractContent: React.FC<PointsExtractContentProps> = ({ linkLoja = '/lojaderesgatesantenamais', adminClientId }) => {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -64,7 +65,8 @@ const PointsExtractContent: React.FC<PointsExtractContentProps> = ({ linkLoja = 
     type: type as any,
     dateFrom,
     dateTo,
-    per_page: 20
+    per_page: 20,
+    ...(adminClientId ? { admin_client_id: adminClientId } : {})
   }, {
     placeholderData: (previousData: any) => previousData,
     staleTime: 0,
@@ -73,7 +75,8 @@ const PointsExtractContent: React.FC<PointsExtractContentProps> = ({ linkLoja = 
   const { data: balanceData, isLoading: isLoadingBalance } = useAuthenticatedUserPointsBalance({
     search: debouncedSearch,
     dateFrom,
-    dateTo
+    dateTo,
+    ...(adminClientId ? { admin_client_id: adminClientId } : {})
   });
 
   // Carregar próxima página quando o elemento final entrar em visualização
@@ -165,13 +168,15 @@ const PointsExtractContent: React.FC<PointsExtractContentProps> = ({ linkLoja = 
                 </AlertDescription>
               </div>
             </div>
-            <Button 
-              onClick={() => navigate(linkLoja)}
-              className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-bold px-6 py-6 h-auto shadow-md transform hover:scale-105 transition-all"
-            >
-              <ShoppingBag className="w-5 h-5 mr-2" />
-              Trocar Pontos Agora
-            </Button>
+            {!adminClientId && (
+              <Button 
+                onClick={() => navigate(linkLoja)}
+                className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-bold px-6 py-6 h-auto shadow-md transform hover:scale-105 transition-all"
+              >
+                <ShoppingBag className="w-5 h-5 mr-2" />
+                Trocar Pontos Agora
+              </Button>
+            )}
           </div>
         </Alert>
       )}
@@ -290,6 +295,14 @@ const PointsExtractContent: React.FC<PointsExtractContentProps> = ({ linkLoja = 
           >
             Gastos
           </Button>
+          <Button
+            variant={type === 'expired' ? 'default' : 'outline'}
+            onClick={() => setType('expired')}
+            size="sm"
+            className={type === 'expired' ? 'bg-green-600 hover:bg-green-700' : ''}
+          >
+            Expirados
+          </Button>
         </div>
       </div>
 
@@ -372,20 +385,26 @@ const PointsExtractContent: React.FC<PointsExtractContentProps> = ({ linkLoja = 
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
                         {isPositive && transaction.expirationDate ? (
                           <div className="flex flex-col items-end">
-                            <div className="flex items-center text-gray-500 text-xs">
-                              <Clock className="w-3 h-3 mr-1" />
-                              {new Date(transaction.expirationDate).toLocaleDateString('pt-BR')}
-                            </div>
                             {(() => {
                               const days = Math.ceil((new Date(transaction.expirationDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-                              if (days > 0 && days <= 30) {
-                                return (
-                                  <Badge className="mt-1 bg-amber-100 text-amber-700 hover:bg-amber-100 border-amber-200 text-[10px] h-5 px-1.5 py-0">
-                                    Expira em {days}d
-                                  </Badge>
-                                );
-                              }
-                              return null;
+                              const isExpired = days <= 0;
+                              return (
+                                <>
+                                  <div className={`flex items-center text-xs ${isExpired ? 'text-red-500 font-bold' : 'text-gray-500'}`}>
+                                    <Clock className="w-3 h-3 mr-1" />
+                                    {new Date(transaction.expirationDate).toLocaleDateString('pt-BR')}
+                                  </div>
+                                  {isExpired ? (
+                                    <Badge className="mt-1 bg-red-100 text-red-700 hover:bg-red-100 border-red-200 text-[10px] h-5 px-1.5 py-0">
+                                      Expirado
+                                    </Badge>
+                                  ) : (days <= 30) ? (
+                                    <Badge className="mt-1 bg-amber-100 text-amber-700 hover:bg-amber-100 border-amber-200 text-[10px] h-5 px-1.5 py-0">
+                                      Expira em {days}d
+                                    </Badge>
+                                  ) : null}
+                                </>
+                              );
                             })()}
                           </div>
                         ) : (
@@ -471,10 +490,16 @@ const PointsExtractContent: React.FC<PointsExtractContentProps> = ({ linkLoja = 
                       {transaction.expirationDate && (
                         <div className="text-right">
                           <p className="text-[10px] text-gray-400 uppercase tracking-tighter">Validade</p>
-                          <div className="flex items-center justify-end text-[10px] font-medium text-amber-700">
-                             <Clock className="w-3 h-3 mr-1" />
-                             {new Date(transaction.expirationDate).toLocaleDateString('pt-BR')}
-                          </div>
+                          {(() => {
+                             const days = Math.ceil((new Date(transaction.expirationDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                             const isExpired = days <= 0;
+                             return (
+                               <div className={`flex items-center justify-end text-[10px] font-medium ${isExpired ? 'text-red-500 font-bold' : 'text-gray-500'}`}>
+                                 <Clock className="w-3 h-3 mr-1" />
+                                 {new Date(transaction.expirationDate).toLocaleDateString('pt-BR')}
+                               </div>
+                             );
+                          })()}
                         </div>
                       )}
                     </div>

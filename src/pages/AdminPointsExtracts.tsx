@@ -646,8 +646,10 @@ const AdminPointsExtracts: React.FC = () => {
           <Card>
             <CardContent className="p-4">
               <div className="text-center">
-                <p className="text-2xl font-bold text-purple-600">{stats.activeUsers.toLocaleString()}</p>
-                <p className="text-sm text-gray-600">Usuários Ativos</p>
+                <p className="text-2xl font-bold text-purple-600">
+                  {stats.totalBalance !== undefined ? stats.totalBalance.toLocaleString() : '0'}
+                </p>
+                <p className="text-sm text-gray-600">Saldo Filtrado</p>
               </div>
             </CardContent>
           </Card>

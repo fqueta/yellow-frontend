@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { useClientById } from '@/hooks/clients';
 import { ClientRecord } from '@/types/clients';
 import { phoneApplyMask } from '@/lib/masks/phone-apply-mask';
+import PointsExtractContent from '@/components/loja/PointsExtractContent';
 
 
 
@@ -664,6 +665,14 @@ export default function ClientView() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Extrato de Pontos do Cliente */}
+      <div className="mt-8">
+        <h2 className="text-xl font-bold mb-4">Extrato de Pontos do Cliente (Visão do Cliente)</h2>
+        <div className="bg-gray-50/50 -mx-6 px-6 py-6 border-t border-b border-gray-100 or rounded-xl">
+          <PointsExtractContent adminClientId={client.id} />
+        </div>
+      </div>
     </div>
   );
 }
