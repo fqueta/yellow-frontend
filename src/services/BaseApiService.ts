@@ -86,13 +86,14 @@ export abstract class BaseApiService {
     // Se já está no formato correto, retorna como está
     if (response.data && Array.isArray(response.data) && (response.current_page || response.pagination)) {
        const pagination = response.pagination || {};
-       const normalized = {
+        const normalized: PaginatedResponse<T> = {
           data: response.data,
           current_page: Number(pagination.current_page || response.current_page || 1),
           last_page: Number(pagination.last_page || response.last_page || 1),
           per_page: Number(pagination.per_page || response.per_page || response.data.length),
-          total: Number(pagination.total || response.total || response.data.length)
-       };
+          total: Number(pagination.total || response.total || response.data.length),
+          global_stats: response.global_stats // Preserva estatísticas globais se existirem
+        };
        return normalized;
     }
 
@@ -114,12 +115,13 @@ export abstract class BaseApiService {
     const source = isDoubleNested ? response.data : response;
     const pagination = response?.pagination || {};
     
-    const normalizedFallback = {
+    const normalizedFallback: PaginatedResponse<T> = {
       data: Array.isArray(data) ? data : [],
       current_page: Number(pagination.current_page || source?.current_page || source?.page || 1),
       last_page: Number(pagination.last_page || source?.last_page || source?.total_pages || 1),
       per_page: Number(pagination.per_page || source?.per_page || source?.limit || 10),
-      total: Number(pagination.total || source?.total || source?.count || 0)
+      total: Number(pagination.total || source?.total || source?.count || 0),
+      global_stats: response.global_stats || source?.global_stats // Preserva estatísticas no fallback
     };
     return normalizedFallback;
   }

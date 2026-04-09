@@ -169,11 +169,8 @@ export const REDEMPTION_STATUSES = {
 // Mapeamento de tipos de transação para exibição
 export const POINTS_TRANSACTION_TYPES = {
   credito: { label: 'Crédito', color: 'green' },
-  debito: { label: 'Débito', color: 'blue' },
+  debito:  { label: 'Débito', color: 'blue' },
   expired: { label: 'Expirados', color: 'red' },
-  bonus: { label: 'Bônus', color: 'purple' },
-  refund: { label: 'Reembolso', color: 'orange' },
-  adjustment: { label: 'Ajuste', color: 'gray' },
 } as const;
 
 // Mapeamento de tipos de transação para lista da tabela
