@@ -271,34 +271,52 @@ const AdminPointsExtracts: React.FC = () => {
    */
   const renderDescription = (description: string) => {
     if (!description) return '—';
-    
-    // Normalizar descrição (removendo prefixo padrão se necessário)
+
+    // Normalizar descrição
     const normalizedDesc = description.replace(/Resgate de produto: /, 'Resgate de: ');
-    
-    // Regex para encontrar padrões como #1234 ou Crédito #1234
-    const creditIdRegex = /(?:Crédito\s+)?#(\d+)/i;
-    const match = normalizedDesc.match(creditIdRegex);
-    
-    if (match) {
-      const fullMatch = match[0];
-      const creditId = match[1];
-      const [before, after] = normalizedDesc.split(fullMatch);
-      
-      return (
-        <p className="text-sm">
-          {before}
-          <button 
-            onClick={() => handleOpenCreditDetails(creditId)}
-            className="font-bold text-blue-600 hover:text-blue-800 hover:underline mx-1"
-          >
-            {fullMatch}
-          </button>
-          {after}
-        </p>
-      );
+
+    // Regex global para encontrar TODOS os padrões #1234 ou Crédito #1234
+    const creditIdRegex = /(?:Crédito\s+)?#(\d+)/gi;
+    const matches = [...normalizedDesc.matchAll(creditIdRegex)];
+
+    if (matches.length === 0) {
+      return <p className="text-sm truncate" title={description}>{normalizedDesc}</p>;
     }
-    
-    return <p className="text-sm truncate" title={description}>{normalizedDesc}</p>;
+
+    // Quebrar o texto em partes intercaladas com os links
+    const parts: React.ReactNode[] = [];
+    let lastIndex = 0;
+
+    matches.forEach((match, i) => {
+      const matchStart = match.index!;
+      const matchEnd = matchStart + match[0].length;
+      const creditId = match[1];
+
+      // Texto antes do match
+      if (matchStart > lastIndex) {
+        parts.push(<span key={`text-${i}`}>{normalizedDesc.slice(lastIndex, matchStart)}</span>);
+      }
+
+      // Link clicável
+      parts.push(
+        <button
+          key={`link-${i}`}
+          onClick={() => handleOpenCreditDetails(creditId)}
+          className="font-bold text-blue-600 hover:text-blue-800 hover:underline mx-0.5"
+        >
+          #{creditId}
+        </button>
+      );
+
+      lastIndex = matchEnd;
+    });
+
+    // Texto restante após o último match
+    if (lastIndex < normalizedDesc.length) {
+      parts.push(<span key="text-end">{normalizedDesc.slice(lastIndex)}</span>);
+    }
+
+    return <p className="text-sm">{parts}</p>;
   };
 
   /**
