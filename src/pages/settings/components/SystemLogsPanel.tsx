@@ -240,8 +240,8 @@ export function SystemLogsPanel() {
 
               <div className="space-y-2">
                 <span className="text-sm font-medium text-slate-500">Metadata (JSON):</span>
-                <div className="bg-slate-900 rounded-md p-4 overflow-x-auto">
-                  <pre className="text-xs text-green-400 font-mono">
+                <div className="bg-slate-900 rounded-md p-4 overflow-hidden">
+                  <pre className="text-xs text-green-400 font-mono whitespace-pre-wrap break-all">
                     {selectedLog.metadata ? JSON.stringify(selectedLog.metadata, null, 2) : 'Nenhum metadado disponível.'}
                   </pre>
                 </div>
