@@ -269,6 +269,7 @@ export default function Clients() {
       page: currentPage,
       per_page: pageSize === 'all' ? 999999 : pageSize,
       search: debouncedSearchTerm,
+      status: statusFilter === "all" ? undefined : statusFilter,
       excluido: showTrash ? 's' : undefined,
     },
     {
@@ -608,25 +609,8 @@ export default function Clients() {
 
   // Filter clients based on search term and status - memoized for performance
   const filteredClients = useMemo(() => {
-    if (!clientsQuery.data?.data) return [];
-    // console.log('clientsQuery:', clientsQuery);
-    const searchTermLower = searchTerm.toLowerCase();
-    return clientsQuery.data.data.filter((client) => {
-      const document = client.tipo_pessoa === 'pf' ? client.cpf : client.cnpj;
-      
-      // Filter by search term
-      const matchesSearch = (
-        client.name.toLowerCase().includes(searchTermLower) ||
-        (client.email && client.email.toLowerCase().includes(searchTermLower)) ||
-        (document && document.toLowerCase().includes(searchTermLower))
-      );
-      
-      // Filter by status
-      const matchesStatus = statusFilter === "all" || client.status === statusFilter;
-      
-      return matchesSearch && matchesStatus;
-    });
-  }, [clientsQuery.data, searchTerm, statusFilter]);
+    return clientsQuery.data?.data || [];
+  }, [clientsQuery.data]);
 
   /**
    * handlePrint

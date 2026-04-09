@@ -102,6 +102,7 @@ export interface UpdateClientInput {
 
 export interface ClientsListParams {
   search?: string;
+  status?: string;
   page?: number;
   per_page?: number;
   excluido?: 's' | 'n';
