@@ -43,7 +43,14 @@ export abstract class BaseApiService {
       let errorBody: any = null;
       try {
         errorBody = await response.json();
-        errorMessage = errorBody?.message || errorBody?.error || errorMessage;
+        
+        // Se houver mensagens de erro detalhadas (formato Laravel), concatenar na mensagem principal
+        if (response.status === 422 && errorBody?.errors) {
+          const detailMessages = Object.values(errorBody.errors).flat().join(". ");
+          errorMessage = detailMessages || errorBody.message || errorMessage;
+        } else {
+          errorMessage = errorBody?.message || errorBody?.error || errorMessage;
+        }
       } catch {
         // ignore json parse errors
       }
