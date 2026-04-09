@@ -26,6 +26,18 @@ import {
 import { formatDate } from '@/lib/utils';
 import { PointsTransactionType } from '@/types/redemptions';
 import { useInView } from 'react-intersection-observer';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogDescription 
+} from '@/components/ui/dialog';
+import { pointsExtractsService } from '@/services/pointsExtractsService';
+import { useQuery } from '@tanstack/react-query';
+import { format, parse } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { Info, AlertCircle, MoreHorizontal, Eye } from 'lucide-react';
 
 interface PointsExtractContentProps {
   linkLoja?: string;
@@ -39,6 +51,73 @@ const PointsExtractContent: React.FC<PointsExtractContentProps> = ({ linkLoja = 
   const [type, setType] = React.useState<string | undefined>(undefined);
   const [dateFrom, setDateFrom] = React.useState<string>('');
   const [dateTo, setDateTo] = React.useState<string>('');
+  
+  // Estados para o Modal de Detalhes do Crédito (Transparência)
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [selectedCreditId, setSelectedCreditId] = useState<string | null>(null);
+
+  // Busca detalhes do crédito selecionado
+  const { data: creditDetails, isLoading: isLoadingDetails } = useQuery({
+    queryKey: ['creditDetails', selectedCreditId, adminClientId],
+    queryFn: () => pointsExtractsService.getCreditDetails(selectedCreditId!, adminClientId),
+    enabled: !!selectedCreditId && isDetailsModalOpen,
+  });
+
+  const handleOpenCreditDetails = (creditId: string) => {
+    setSelectedCreditId(creditId);
+    setIsDetailsModalOpen(true);
+  };
+
+  /**
+   * Identifica IDs de créditos em descrições e os transforma em links clicáveis
+   */
+  const renderDescription = (description: string) => {
+    if (!description) return null;
+    
+    // Regex para encontrar # seguido de números
+    const regex = /#(\d+)/g;
+    const matches = [...description.matchAll(regex)];
+    
+    if (matches.length === 0) return <span>{description}</span>;
+    
+    const elements: React.ReactNode[] = [];
+    let lastIndex = 0;
+    
+    matches.forEach((match, index) => {
+      const fullMatch = match[0];
+      const creditId = match[1];
+      const matchStart = match.index!;
+      
+      // Adiciona o texto antes do match
+      if (matchStart > lastIndex) {
+        elements.push(description.slice(lastIndex, matchStart));
+      }
+      
+      // Adiciona o link
+      elements.push(
+        <button
+          key={`${creditId}-${index}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleOpenCreditDetails(creditId);
+          }}
+          className="text-blue-600 hover:text-blue-800 font-bold underline decoration-dotted underline-offset-2 mx-0.5 hover:bg-blue-50 px-0.5 rounded transition-colors"
+          title={`Ver detalhes do crédito #${creditId}`}
+        >
+          {fullMatch}
+        </button>
+      );
+      
+      lastIndex = matchStart + fullMatch.length;
+    });
+    
+    // Adiciona o restante do texto
+    if (lastIndex < description.length) {
+      elements.push(description.slice(lastIndex));
+    }
+    
+    return <span>{elements}</span>;
+  };
 
   // Debounce: só dispara a query após 400ms sem digitar
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -346,7 +425,7 @@ const PointsExtractContent: React.FC<PointsExtractContentProps> = ({ linkLoja = 
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900">
                         <div>
-                          <p className="font-medium">{transaction.description || (transaction.type === 'expired' ? 'Expiração de Pontos' : 'Movimentação de Pontos')}</p>
+                          <p className="font-medium">{renderDescription(transaction.description || (transaction.type === 'expired' ? 'Expiração de Pontos' : 'Movimentação de Pontos'))}</p>
                           {transaction.reference && (
                             <p className="text-xs text-gray-500 mt-0.5">Ref: {transaction.reference}</p>
                           )}
@@ -368,16 +447,20 @@ const PointsExtractContent: React.FC<PointsExtractContentProps> = ({ linkLoja = 
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
                         {isPositive ? (
-                          <div className="flex flex-col items-end">
-                            <span className={`font-bold ${(transaction.saldo_restante ?? 0) > 0 ? 'text-blue-600' : 'text-gray-400'}`}>
+                          <button 
+                            onClick={() => handleOpenCreditDetails(String(transaction.id))}
+                            className="flex flex-col items-end w-full hover:opacity-75 transition-opacity group"
+                            title="Clique para ver detalhes do consumo"
+                          >
+                            <span className={`font-bold underline underline-offset-2 decoration-dotted ${(transaction.saldo_restante ?? 0) > 0 ? 'text-blue-600 decoration-blue-300' : 'text-gray-400 decoration-gray-200'}`}>
                               {(transaction.saldo_restante ?? 0).toLocaleString()}
                             </span>
                             {(transaction.valor_usado ?? 0) > 0 && (
-                              <span className="text-[10px] text-gray-400">
+                              <span className="text-[10px] text-gray-400 group-hover:text-blue-500">
                                 Uso: {(transaction.valor_usado ?? 0).toLocaleString()}
                               </span>
                             )}
-                          </div>
+                          </button>
                         ) : (
                           <span className="text-gray-300">-</span>
                         )}
@@ -533,6 +616,121 @@ const PointsExtractContent: React.FC<PointsExtractContentProps> = ({ linkLoja = 
           </div>
         ) : null}
       </div>
+      
+      {/* Modal de Detalhes do Crédito (Transparência) */}
+      <Dialog open={isDetailsModalOpen} onOpenChange={setIsDetailsModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Info className="w-5 h-5 text-blue-600" />
+              Detalhes do Lançamento
+            </DialogTitle>
+            <DialogDescription>
+              Informações detalhadas sobre o crédito original #{selectedCreditId}
+            </DialogDescription>
+          </DialogHeader>
+
+          {isLoadingDetails ? (
+            <div className="flex flex-col items-center justify-center py-8 gap-4">
+              <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+              <p className="text-sm text-gray-500">Buscando informações...</p>
+            </div>
+          ) : creditDetails ? (
+            <div className="space-y-4 py-4">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-6 text-sm">
+                <div className="space-y-1">
+                  <p className="text-gray-500 font-medium text-xs">Data do Lançamento</p>
+                  <div className="flex items-center gap-1">
+                    <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                    <p className="font-medium">{creditDetails.createdAt ? format(new Date(creditDetails.createdAt), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : '—'}</p>
+                  </div>
+                </div>
+                <div className="space-y-1 text-right">
+                  <p className="text-gray-500 font-medium text-xs">Validade</p>
+                  <div className="flex items-center gap-1 justify-end">
+                    <Clock className="w-3.5 h-3.5 text-gray-400" />
+                    <p className="font-medium">{creditDetails.expirationDate ? format(new Date(creditDetails.expirationDate), 'dd/MM/yyyy', { locale: ptBR }) : '—'}</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-1">
+                  <p className="text-gray-500 font-medium text-xs">Valor Original</p>
+                  <p className="text-green-600 font-bold text-lg">
+                    + {Math.abs(creditDetails.points).toLocaleString()} pts
+                  </p>
+                </div>
+                <div className="space-y-1 text-right">
+                  <p className="text-gray-500 font-medium text-xs">Saldo Atual</p>
+                  <p className="text-blue-700 font-bold text-lg">
+                    {(creditDetails.saldo_restante ?? 0).toLocaleString()} pts
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                <div className="space-y-0.5">
+                  <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold italic">Resgatado por você</p>
+                  <p className="text-gray-700 font-semibold">{creditDetails.valor_resgatado?.toLocaleString() || 0} pts</p>
+                </div>
+                <div className="space-y-0.5 text-right">
+                  <p className="text-[10px] uppercase tracking-wider text-amber-500 font-bold italic">Expirado pelo Sistema</p>
+                  <p className={`font-semibold ${creditDetails.valor_expirado! > 0 ? 'text-amber-600' : 'text-gray-400'}`}>
+                    {creditDetails.valor_expirado?.toLocaleString() || 0} pts
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-2 text-sm pt-2">
+                <div className="flex justify-between items-center text-[10px] font-bold uppercase text-gray-400">
+                  <span>Fluxo de Pontos</span>
+                  <span>{Math.abs(creditDetails.points).toLocaleString()} Total</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2 flex overflow-hidden shadow-inner">
+                  {/* Parte Resgatada (Azul) */}
+                  <div 
+                    className="bg-blue-600 h-full transition-all" 
+                    title={`Resgatado: ${creditDetails.valor_resgatado}`}
+                    style={{ width: `${Math.min(100, ((creditDetails.valor_resgatado ?? 0) / Math.abs(creditDetails.points)) * 100)}%` }}
+                  ></div>
+                  {/* Parte Expirada (Amber) */}
+                  <div 
+                    className="bg-amber-500 h-full transition-all" 
+                    title={`Expirado: ${creditDetails.valor_expirado}`}
+                    style={{ width: `${Math.min(100, ((creditDetails.valor_expirado ?? 0) / Math.abs(creditDetails.points)) * 100)}%` }}
+                  ></div>
+                </div>
+                <div className="flex gap-4 mt-1 text-[10px]">
+                  <div className="flex items-center gap-1 text-gray-600">
+                    <div className="w-1.5 h-1.5 rounded-full bg-blue-600"></div> Resgatado
+                  </div>
+                  <div className="flex items-center gap-1 text-gray-600">
+                    <div className="w-1.5 h-1.5 rounded-full bg-amber-500"></div> Expirado
+                  </div>
+                  <div className="flex items-center gap-1 text-gray-400 italic ml-auto">
+                    Restante: {creditDetails.saldo_restante} pts
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-1 text-sm border-t pt-4">
+                <p className="text-gray-500 font-medium text-[10px] uppercase tracking-widest">Descrição do Lançamento</p>
+                <p className="italic text-gray-700 text-sm">"{creditDetails.description || '—'}"</p>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <AlertCircle className="w-8 h-8 mx-auto mb-2 text-red-400" />
+              <p>Não foi possível carregar os detalhes.</p>
+            </div>
+          )}
+
+          <div className="flex justify-end pt-4 border-t">
+            <Button variant="outline" className="h-8 text-xs" onClick={() => setIsDetailsModalOpen(false)}>
+              Fechar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

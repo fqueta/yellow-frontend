@@ -58,10 +58,19 @@ class PointsExtractsService extends BaseApiService {
   /**
    * Obtém um extrato específico por ID
    * @param id - ID do extrato
+   * @param adminClientId - ID do cliente (para administradores assumirem a visão do cliente)
    */
-  async getPointsExtract(id: string): Promise<PointsExtract> {
-    const response = await this.get<any>(`${this.endpoint}/${id}`);
+  async getPointsExtract(id: string, adminClientId?: string): Promise<PointsExtract> {
+    const params = adminClientId ? { admin_client_id: adminClientId } : {};
+    const response = await this.get<any>(`${this.endpoint}/${id}`, params);
     return this.mapApiResponseToPointsExtract(response);
+  }
+
+  /**
+   * Alias para getPointsExtract para manter compatibilidade com componentes
+   */
+  async getCreditDetails(id: string, adminClientId?: string): Promise<PointsExtract> {
+    return this.getPointsExtract(id, adminClientId);
   }
 
   /**
