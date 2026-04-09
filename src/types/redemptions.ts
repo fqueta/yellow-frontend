@@ -168,18 +168,12 @@ export const REDEMPTION_STATUSES = {
 
 // Mapeamento de tipos de transação para exibição
 export const POINTS_TRANSACTION_TYPES = {
-  // earned: { label: 'Ganhos', color: 'green' },
-  // redeemed: { label: 'Resgatados', color: 'blue' },
-  // expired: { label: 'Expirados', color: 'red' },
-  // bonus: { label: 'Bônus', color: 'purple' },
-  // refund: { label: 'Reembolso', color: 'orange' },
-  // adjustment: { label: 'Ajuste', color: 'gray' },
-  // Tipos da API
   credito: { label: 'Crédito', color: 'green' },
   debito: { label: 'Débito', color: 'blue' },
   expired: { label: 'Expirados', color: 'red' },
-  // ajuste: { label: 'Ajuste', color: 'gray' },
-  // reembolso: { label: 'Reembolso', color: 'orange' },
+  bonus: { label: 'Bônus', color: 'purple' },
+  refund: { label: 'Reembolso', color: 'orange' },
+  adjustment: { label: 'Ajuste', color: 'gray' },
 } as const;
 
 // Mapeamento de tipos de transação para lista da tabela

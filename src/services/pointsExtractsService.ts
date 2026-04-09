@@ -76,7 +76,8 @@ class PointsExtractsService extends BaseApiService {
       'bonus': 'bonus',
       'ajuste': 'adjustment',
       'reembolso': 'refund',
-      'expiracao': 'expired'
+      'expiracao': 'expired',
+      'expired': 'expired'
     };
 
     // Calcular pontos considerando o tipo de transação
@@ -100,8 +101,10 @@ class PointsExtractsService extends BaseApiService {
       points: points,
       description: apiData.description || '',
       reference: apiData.pedido_id || undefined,
-      balanceBefore: 0, // Será calculado ou obtido de outra fonte
-      balanceAfter: 0,  // Será calculado ou obtido de outra fonte
+      balanceBefore: apiData.balanceBefore || 0,
+      balanceAfter: apiData.balanceAfter || 0,
+      valor_usado: parseFloat(apiData.valor_usado || '0'),
+      saldo_restante: parseFloat(apiData.saldo_restante || '0'),
       expirationDate: apiData.data_expiracao || undefined,
       createdAt: apiData.created_at || apiData.data || '',
       createdBy: undefined,

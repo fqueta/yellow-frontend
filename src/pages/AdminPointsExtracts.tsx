@@ -18,7 +18,8 @@ import {
   MoreHorizontal,
   AlertCircle,
   CheckCircle,
-  Loader2
+  Loader2,
+  Info
 } from 'lucide-react';
 import { useInView } from 'react-intersection-observer';
 import { Button } from '@/components/ui/button';
@@ -27,6 +28,13 @@ import { Input } from '@/components/ui/input';
 import { PrintButton } from '@/components/ui/printbutton';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { 
   Table, 
   TableBody, 
@@ -84,6 +92,12 @@ const AdminPointsExtracts: React.FC = () => {
   const [dateFromFilter, setDateFromFilter] = useState('');
   const [dateToFilter, setDateToFilter] = useState('');
   const [perPageChoice, setPerPageChoice] = useState<PerPageValue>(20);
+
+  // Estados para o modal de detalhes do crédito
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [selectedCreditId, setSelectedCreditId] = useState<string | null>(null);
+  const [creditDetails, setCreditDetails] = useState<PointsExtract | null>(null);
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
 
   const { ref: scrollTriggerRef, inView } = useInView();
 
@@ -223,6 +237,68 @@ const AdminPointsExtracts: React.FC = () => {
   // Visualizar detalhes do extrato
   const handleViewDetails = (extractId: string) => {
     navigate(`/admin/points-extracts/${extractId}`);
+  };
+
+  /**
+   * handleOpenCreditDetails
+   * pt-BR: Busca os detalhes de um crédito específico e abre o modal.
+   * en-US: Fetches details of a specific credit and opens the modal.
+   */
+  const handleOpenCreditDetails = async (id: string) => {
+    setSelectedCreditId(id);
+    setIsDetailsModalOpen(true);
+    setIsLoadingDetails(true);
+    try {
+      const data = await pointsExtractsService.getPointsExtract(id);
+      setCreditDetails(data);
+    } catch (error) {
+      console.error('Erro ao buscar detalhes do crédito:', error);
+      toast({
+        title: 'Erro ao carregar detalhes',
+        description: 'Não foi possível carregar as informações do crédito original.',
+        variant: 'destructive'
+      });
+      setIsDetailsModalOpen(false);
+    } finally {
+      setIsLoadingDetails(false);
+    }
+  };
+
+  /**
+   * renderDescription
+   * pt-BR: Renderiza a descrição do extrato, transformando IDs de crédito em links clicáveis.
+   * en-US: Renders extract description, transforming credit IDs into clickable links.
+   */
+  const renderDescription = (description: string) => {
+    if (!description) return '—';
+    
+    // Normalizar descrição (removendo prefixo padrão se necessário)
+    const normalizedDesc = description.replace(/Resgate de produto: /, 'Resgate de: ');
+    
+    // Regex para encontrar padrões como #1234 ou Crédito #1234
+    const creditIdRegex = /(?:Crédito\s+)?#(\d+)/i;
+    const match = normalizedDesc.match(creditIdRegex);
+    
+    if (match) {
+      const fullMatch = match[0];
+      const creditId = match[1];
+      const [before, after] = normalizedDesc.split(fullMatch);
+      
+      return (
+        <p className="text-sm">
+          {before}
+          <button 
+            onClick={() => handleOpenCreditDetails(creditId)}
+            className="font-bold text-blue-600 hover:text-blue-800 hover:underline mx-1"
+          >
+            {fullMatch}
+          </button>
+          {after}
+        </p>
+      );
+    }
+    
+    return <p className="text-sm truncate" title={description}>{normalizedDesc}</p>;
   };
 
   /**
@@ -750,23 +826,35 @@ const AdminPointsExtracts: React.FC = () => {
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col">
-                          <span className={`font-bold ${
-                            (extract.saldo_restante ?? 0) > 0 ? 'text-blue-700' : 'text-gray-400'
-                          }`}>
-                            {(extract.saldo_restante ?? 0).toLocaleString()}
-                          </span>
-                          {(extract.valor_usado ?? 0) > 0 && (
-                            <span className="text-[10px] text-gray-400">
-                              Uso: {(extract.valor_usado ?? 0).toLocaleString()}
-                            </span>
+                          {extract.points > 0 ? (
+                            <button
+                              onClick={() => handleOpenCreditDetails(extract.id)}
+                              className={`flex flex-col text-left hover:opacity-80 transition-opacity group`}
+                              title="Clique para ver detalhes do consumo deste crédito"
+                            >
+                              <span className={`font-bold underline underline-offset-2 decoration-dotted ${
+                                (extract.saldo_restante ?? 0) > 0 ? 'text-blue-700 decoration-blue-400' : 'text-gray-400 decoration-gray-300'
+                              }`}>
+                                {(extract.saldo_restante ?? 0).toLocaleString()}
+                              </span>
+                              {(extract.valor_usado ?? 0) > 0 && (
+                                <span className="text-[10px] text-gray-400 group-hover:text-blue-500">
+                                  Uso: {(extract.valor_usado ?? 0).toLocaleString()}
+                                </span>
+                              )}
+                            </button>
+                          ) : (
+                            <div className="flex flex-col">
+                              <span className="font-bold text-gray-400">
+                                —
+                              </span>
+                            </div>
                           )}
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="max-w-xs">
-                          <p className="text-sm truncate" title={extract.description}>
-                            {extract.description.replace(/Resgate de produto: /, 'Resgate de: ')}
-                          </p>
+                          {renderDescription(extract.description)}
                           {extract.reference && (
                             <p className="text-xs text-gray-500">Ref: {extract.reference}</p>
                           )}
@@ -837,6 +925,12 @@ const AdminPointsExtracts: React.FC = () => {
                               <Eye className="mr-2 h-4 w-4" />
                               Ver detalhes
                             </DropdownMenuItem>
+                            {extract.points > 0 && (
+                              <DropdownMenuItem onClick={() => handleOpenCreditDetails(extract.id)}>
+                                <TrendingUp className="mr-2 h-4 w-4 text-blue-600" />
+                                Detalhes do consumo
+                              </DropdownMenuItem>
+                            )}
                             {(extract.pedido_id || (extract.reference && (extract.reference.startsWith('R') || extract.reference.startsWith('ORDER')))) && (
                               <>
                                 <DropdownMenuSeparator />
@@ -910,6 +1004,90 @@ const AdminPointsExtracts: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+      {/* Modal de Detalhes do Crédito */}
+      <Dialog open={isDetailsModalOpen} onOpenChange={setIsDetailsModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Info className="w-5 h-5 text-blue-600" />
+              Detalhes do Lançamento
+            </DialogTitle>
+            <DialogDescription>
+              Informações detalhadas sobre o crédito original #{selectedCreditId}
+            </DialogDescription>
+          </DialogHeader>
+
+          {isLoadingDetails ? (
+            <div className="flex flex-col items-center justify-center py-8 gap-4">
+              <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+              <p className="text-sm text-gray-500">Buscando informações...</p>
+            </div>
+          ) : creditDetails ? (
+            <div className="space-y-4 py-4">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="space-y-1">
+                  <p className="text-gray-500 font-medium">Data do Lançamento</p>
+                  <div className="flex items-center gap-1">
+                    <Calendar className="w-4 h-4 text-gray-400" />
+                    <p>{creditDetails.createdAt ? format(new Date(creditDetails.createdAt), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : '—'}</p>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-gray-500 font-medium">Data de Expiração</p>
+                  <div className="flex items-center gap-1">
+                    <Clock className="w-4 h-4 text-gray-400" />
+                    <p>{creditDetails.expirationDate ? format(new Date(creditDetails.expirationDate), 'dd/MM/yyyy', { locale: ptBR }) : '—'}</p>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-gray-500 font-medium">Valor Original</p>
+                  <p className="text-green-600 font-bold text-lg">
+                    + {Math.abs(creditDetails.points).toLocaleString()} pts
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-gray-500 font-medium">Saldo Restante</p>
+                  <p className="text-blue-700 font-bold text-lg">
+                    {(creditDetails.saldo_restante ?? 0).toLocaleString()} pts
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-1 text-sm border-t pt-4">
+                <p className="text-gray-500 font-medium">Descrição</p>
+                <p className="italic text-gray-700">"{creditDetails.description}"</p>
+              </div>
+
+              <div className="space-y-1 text-sm bg-gray-50 p-3 rounded-md border">
+                <p className="text-gray-500 font-medium flex items-center gap-1">
+                  <TrendingUp className="w-4 h-4" /> Uso do Saldo
+                </p>
+                <div className="flex justify-between items-center text-xs mt-2">
+                  <span>Pontos Usados: {(creditDetails.valor_usado ?? 0).toLocaleString()}</span>
+                  <span>Pontos Totais: {Math.abs(creditDetails.points).toLocaleString()}</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1.5">
+                  <div 
+                    className="bg-blue-600 h-1.5 rounded-full" 
+                    style={{ width: `${Math.min(100, ((creditDetails.valor_usado ?? 0) / Math.abs(creditDetails.points)) * 100)}%` }}
+                  ></div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <AlertCircle className="w-8 h-8 mx-auto mb-2 text-red-400" />
+              <p>Não foi possível carregar os detalhes.</p>
+            </div>
+          )}
+
+          <div className="flex justify-end pt-4 border-t">
+            <Button variant="outline" onClick={() => setIsDetailsModalOpen(false)}>
+              Fechar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
