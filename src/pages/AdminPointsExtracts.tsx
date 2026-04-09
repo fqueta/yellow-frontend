@@ -1042,7 +1042,7 @@ const AdminPointsExtracts: React.FC = () => {
             </div>
           ) : creditDetails ? (
             <div className="space-y-4 py-4">
-              <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-6 text-sm">
                 <div className="space-y-1">
                   <p className="text-gray-500 font-medium">Data do Lançamento</p>
                   <div className="flex items-center gap-1">
@@ -1057,6 +1057,7 @@ const AdminPointsExtracts: React.FC = () => {
                     <p>{creditDetails.expirationDate ? format(new Date(creditDetails.expirationDate), 'dd/MM/yyyy', { locale: ptBR }) : '—'}</p>
                   </div>
                 </div>
+                
                 <div className="space-y-1">
                   <p className="text-gray-500 font-medium">Valor Original</p>
                   <p className="text-green-600 font-bold text-lg">
@@ -1064,31 +1065,60 @@ const AdminPointsExtracts: React.FC = () => {
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-gray-500 font-medium">Saldo Restante</p>
+                  <p className="text-gray-500 font-medium">Saldo Atual</p>
                   <p className="text-blue-700 font-bold text-lg">
                     {(creditDetails.saldo_restante ?? 0).toLocaleString()} pts
                   </p>
                 </div>
               </div>
 
-              <div className="space-y-1 text-sm border-t pt-4">
-                <p className="text-gray-500 font-medium">Descrição</p>
-                <p className="italic text-gray-700">"{creditDetails.description}"</p>
+              <div className="grid grid-cols-2 gap-4 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                <div className="space-y-0.5">
+                  <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Resgatado pelo Cliente</p>
+                  <p className="text-gray-700 font-semibold">{creditDetails.valor_resgatado?.toLocaleString() || 0} pts</p>
+                </div>
+                <div className="space-y-0.5">
+                  <p className="text-[10px] uppercase tracking-wider text-amber-500 font-bold">Expirado pelo Sistema</p>
+                  <p className={`font-semibold ${creditDetails.valor_expirado! > 0 ? 'text-amber-600' : 'text-gray-400'}`}>
+                    {creditDetails.valor_expirado?.toLocaleString() || 0} pts
+                  </p>
+                </div>
               </div>
 
-              <div className="space-y-1 text-sm bg-gray-50 p-3 rounded-md border">
-                <p className="text-gray-500 font-medium flex items-center gap-1">
-                  <TrendingUp className="w-4 h-4" /> Uso do Saldo
-                </p>
-                <div className="flex justify-between items-center text-xs mt-2">
-                  <span>Pontos Usados: {(creditDetails.valor_usado ?? 0).toLocaleString()}</span>
-                  <span>Pontos Totais: {Math.abs(creditDetails.points).toLocaleString()}</span>
+              <div className="space-y-1 text-sm border-t pt-4">
+                <p className="text-gray-500 font-medium text-xs">Descrição do Lançamento</p>
+                <p className="italic text-gray-700 text-sm">{creditDetails.description || '—'}</p>
+              </div>
+
+              <div className="space-y-2 text-sm pt-2">
+                <div className="flex justify-between items-center text-[10px] font-bold uppercase text-gray-400">
+                  <span>Fluxo de Pontos</span>
+                  <span>{Math.abs(creditDetails.points).toLocaleString()} Total</span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1.5">
+                <div className="w-full bg-gray-200 rounded-full h-2.5 flex overflow-hidden shadow-inner">
+                  {/* Parte Resgatada (Azul) */}
                   <div 
-                    className="bg-blue-600 h-1.5 rounded-full" 
-                    style={{ width: `${Math.min(100, ((creditDetails.valor_usado ?? 0) / Math.abs(creditDetails.points)) * 100)}%` }}
+                    className="bg-blue-600 h-full transition-all" 
+                    title={`Resgatado: ${creditDetails.valor_resgatado}`}
+                    style={{ width: `${Math.min(100, ((creditDetails.valor_resgatado ?? 0) / Math.abs(creditDetails.points)) * 100)}%` }}
                   ></div>
+                  {/* Parte Expirada (Amber) */}
+                  <div 
+                    className="bg-amber-500 h-full transition-all" 
+                    title={`Expirado: ${creditDetails.valor_expirado}`}
+                    style={{ width: `${Math.min(100, ((creditDetails.valor_expirado ?? 0) / Math.abs(creditDetails.points)) * 100)}%` }}
+                  ></div>
+                </div>
+                <div className="flex gap-4 mt-1 text-[10px]">
+                  <div className="flex items-center gap-1.5 text-gray-600">
+                    <div className="w-2 h-2 rounded-full bg-blue-600"></div> Resgatado
+                  </div>
+                  <div className="flex items-center gap-1.5 text-gray-600">
+                    <div className="w-2 h-2 rounded-full bg-amber-500"></div> Expirado
+                  </div>
+                  <div className="flex items-center gap-1.5 text-gray-400 italic ml-auto">
+                    Restante: {creditDetails.saldo_restante} pts
+                  </div>
                 </div>
               </div>
             </div>
