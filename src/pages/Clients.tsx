@@ -873,7 +873,7 @@ export default function Clients() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {clientsQuery.data?.total || 0}
+              {clientsQuery.data?.global_stats?.total || 0}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               Clientes cadastrados no sistema
@@ -886,7 +886,7 @@ export default function Clients() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {clientsQuery.data?.data?.filter(client => client.status === 'actived').length || 0}
+              {clientsQuery.data?.global_stats?.actived || 0}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               Clientes com status ativo
@@ -899,7 +899,7 @@ export default function Clients() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {clientsQuery.data?.data?.filter(client => client.status === 'pre_registred').length || 0}
+              {clientsQuery.data?.global_stats?.pre_registred || 0}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               Clientes pré-registrados
@@ -912,7 +912,7 @@ export default function Clients() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {clientsQuery.data?.data?.filter(client => client.status === 'inactived').length || 0}
+              {clientsQuery.data?.global_stats?.inactived || 0}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               Clientes com status inativo

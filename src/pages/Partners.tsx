@@ -412,7 +412,7 @@ export default function Partners() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {partnersQuery.data?.total || 0}
+              {partnersQuery.data?.global_stats?.total || 0}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               Parceiros cadastrados no sistema
@@ -425,7 +425,7 @@ export default function Partners() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {partnersQuery.data?.data?.filter(partner => partner.ativo === 's').length || 0}
+              {partnersQuery.data?.global_stats?.ativo_s || 0}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               Parceiros com status ativo
@@ -438,7 +438,7 @@ export default function Partners() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {partnersQuery.data?.data?.filter(partner => partner.tipo_pessoa === 'pf').length || 0}
+              {partnersQuery.data?.global_stats?.tipo_pf || 0}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               Parceiros pessoa física
@@ -451,7 +451,7 @@ export default function Partners() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {partnersQuery.data?.data?.filter(partner => partner.tipo_pessoa === 'pj').length || 0}
+              {partnersQuery.data?.global_stats?.tipo_pj || 0}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               Parceiros pessoa jurídica

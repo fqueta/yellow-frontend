@@ -257,6 +257,15 @@ export interface PaginatedResponse<T> {
   last_page: number;
   per_page: number;
   total: number;
+  global_stats?: {
+    total?: number;
+    actived?: number;
+    inactived?: number;
+    pre_registred?: number;
+    ativo_s?: number;
+    tipo_pf?: number;
+    tipo_pj?: number;
+  };
 }
 
 // Form types
