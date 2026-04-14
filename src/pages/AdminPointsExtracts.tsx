@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -87,6 +87,9 @@ import { pointsExtractsService } from '@/services/pointsExtractsService';
  */
 const AdminPointsExtracts: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const batchId = searchParams.get('batch_id');
+
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [dateFromFilter, setDateFromFilter] = useState('');
@@ -108,9 +111,10 @@ const AdminPointsExtracts: React.FC = () => {
     type: typeFilter !== 'all' ? (typeFilter as PointsTransactionType) : undefined,
     dateFrom: dateFromFilter || undefined,
     dateTo: dateToFilter || undefined,
+    batch_id: batchId || undefined,
     sort: 'createdAt',
     order: 'desc' as const
-  }), [perPageChoice, searchTerm, typeFilter, dateFromFilter, dateToFilter]);
+  }), [perPageChoice, searchTerm, typeFilter, dateFromFilter, dateToFilter, batchId]);
 
   // Hook de scroll infinito
   const {
@@ -580,6 +584,26 @@ const AdminPointsExtracts: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Indicador de Lote Ativo */}
+      {batchId && (
+        <div className="bg-blue-50 border border-blue-100 p-3 rounded-lg flex items-center justify-between no-print">
+          <div className="flex items-center gap-2 text-blue-700">
+            <Info className="w-5 h-5" />
+            <span className="text-sm font-medium">
+              Filtrando registros do lote: <strong>{batchId}</strong>
+            </span>
+          </div>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => navigate('/admin/points-extracts')}
+            className="text-blue-600 hover:text-blue-800 hover:bg-blue-100"
+          >
+            Limpar filtro de lote
+          </Button>
+        </div>
+      )}
+
       {/* Cabeçalho */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>

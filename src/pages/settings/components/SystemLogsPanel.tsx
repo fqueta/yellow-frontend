@@ -5,12 +5,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Activity, Eye, RefreshCw, AlertCircle, CheckCircle2, Info, AlertTriangle } from "lucide-react";
+import { Activity, Eye, RefreshCw, AlertCircle, CheckCircle2, Info, AlertTriangle, ExternalLink } from "lucide-react";
 import { systemLogService, SystemLog } from "@/services/systemLogService";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useNavigate } from "react-router-dom";
 
 export function SystemLogsPanel() {
+  const navigate = useNavigate();
   const [logs, setLogs] = useState<SystemLog[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>("all");
@@ -234,8 +236,26 @@ export function SystemLogsPanel() {
               </div>
               
               <div className="space-y-1 bg-slate-50 p-3 rounded-md border border-slate-100">
-                <span className="text-sm font-medium text-slate-500">Descrição:</span>
-                <p className="text-slate-700">{selectedLog.description}</p>
+                <div className="flex justify-between items-start">
+                  <div className="space-y-1">
+                    <span className="text-sm font-medium text-slate-500">Descrição:</span>
+                    <p className="text-slate-700">{selectedLog.description}</p>
+                  </div>
+                  {selectedLog.metadata?.batch_id && (
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="ml-2 bg-white text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 whitespace-nowrap"
+                      onClick={() => {
+                        setIsDialogOpen(false);
+                        navigate(`/admin/points-extracts?batch_id=${selectedLog.metadata.batch_id}`);
+                      }}
+                    >
+                      <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
+                      Ver registros deste lote
+                    </Button>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-2">
