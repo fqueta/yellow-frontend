@@ -71,6 +71,7 @@ export type PointsTransactionType =
   | 'bonus'        // Bônus
   | 'refund'       // Reembolso
   | 'adjustment'   // Ajuste manual
+  | 'migration'    // Ajuste de sistema
   | 'credito'      // Crédito (da API)
   | 'debito'       // Débito (da API)
   | 'ajuste'       // Ajuste (da API)
@@ -177,5 +178,9 @@ export const POINTS_TRANSACTION_TYPES = {
 export const POINTS_TRANSACTION_TYPES_LIST = {
   earned: { label: 'Ganhos', color: 'green' },
   redeemed: { label: 'Resgatados', color: 'blue' },
-  
+  expired: { label: 'Expirados', color: 'red' },
+  bonus: { label: 'Bônus', color: 'purple' },
+  refund: { label: 'Reembolso', color: 'orange' },
+  adjustment: { label: 'Ajuste manual', color: 'gray' },
+  migration: { label: 'Ajuste de Sistema', color: 'slate' },
 } as const;

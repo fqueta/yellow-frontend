@@ -196,6 +196,8 @@ const AdminPointsExtracts: React.FC = () => {
         return <CheckCircle className="w-4 h-4 text-orange-600" />;
       case 'adjustment':
         return <DollarSign className="w-4 h-4 text-gray-600" />;
+      case 'migration':
+        return <RefreshCw className="w-4 h-4 text-slate-600" />;
       default:
         return <DollarSign className="w-4 h-4" />;
     }
@@ -215,6 +217,8 @@ const AdminPointsExtracts: React.FC = () => {
         return 'outline';
       case 'adjustment':
         return 'secondary';
+      case 'migration':
+        return 'outline';
       default:
         return 'secondary';
     }
@@ -233,6 +237,8 @@ const AdminPointsExtracts: React.FC = () => {
         return 'Reembolso';
       case 'adjustment':
         return 'Ajuste manual';
+      case 'migration':
+        return 'Ajuste de Sistema';
       default:
         return type;
     }
