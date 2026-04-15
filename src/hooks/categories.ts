@@ -35,6 +35,19 @@ export const useCategoriesList = (filters?: CategoryFilters) => {
 };
 
 /**
+ * Hook para listar categorias da vitrine da loja
+ * @param filters - Filtros opcionais
+ * @returns Query com lista de categorias da vitrine
+ */
+export const useStoreCategoriesList = (filters?: any) => {
+  return useQuery({
+    queryKey: [QUERY_KEYS.categories, 'store', filters],
+    queryFn: () => categoriesService.listStoreCategories(filters),
+    staleTime: 10 * 60 * 1000, // 10 minutos
+  });
+};
+
+/**
  * Hook para obter uma categoria específica
  * @param id - ID da categoria
  * @returns Query com dados da categoria

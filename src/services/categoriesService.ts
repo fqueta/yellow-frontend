@@ -41,6 +41,15 @@ export class CategoriesService extends BaseApiService {
   }
 
   /**
+   * Lista categorias para a vitrine da loja
+   * @param params - Filtros opcionais
+   * @returns Promise com lista de categorias
+   */
+  async listStoreCategories(params?: any): Promise<CategoriesResponse> {
+    return this.get<CategoriesResponse>('/point-store/categories', params);
+  }
+
+  /**
    * Obtém uma categoria específica por ID
    * @param id - ID da categoria
    * @returns Promise com dados da categoria

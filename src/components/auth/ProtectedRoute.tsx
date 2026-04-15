@@ -63,7 +63,11 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
       void checkMaintenanceStatus();
     };
 
-    setIsCheckingMaintenance(true);
+    // Somente reseta o estado de carregamento se for a primeira vez ou se mudar o status de autenticação
+    if (!user || !isAuthenticated) {
+      setIsCheckingMaintenance(true);
+    }
+    
     void checkMaintenanceStatus();
     window.addEventListener('focus', handleWindowFocus);
 
@@ -71,9 +75,9 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
       cancelled = true;
       window.removeEventListener('focus', handleWindowFocus);
     };
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user?.id]); // Usar user?.id para evitar disparar no objeto inteiro se apenas as props mudarem
 
-  if (isLoading || isCheckingMaintenance) {
+  if (isLoading || (isCheckingMaintenance && !isAuthenticated)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>

@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { toast } from '@/hooks/use-toast';
 import { useStoreProductsList } from '@/hooks/products';
-import { useCategoriesList } from '@/hooks/categories';
+import { useCategoriesList, useStoreCategoriesList } from '@/hooks/categories';
 import { useAuth } from '@/contexts/AuthContext';
 import { Product, PointsStoreProps } from '@/types/products';
 import { Category } from '@/types/categories';
@@ -93,10 +93,9 @@ const PointsStore: React.FC<PointsStoreProps> = ({ linkLoja }) => {
   // Normaliza resposta: aceita array simples ou objeto paginado com 'data'
   const products: Product[] | any = Array.isArray(productsData) ? productsData : (productsData?.data || []);
 
-  // Buscar categorias da API com limite de 5
-  const { data: categoriesData, isLoading: categoriesLoading, error: categoriesError, refetch: refetchCategories } = useCategoriesList({ 
+  // Buscar categorias da vitrine da API com limite de 5
+  const { data: categoriesData, isLoading: categoriesLoading, error: categoriesError, refetch: refetchCategories } = useStoreCategoriesList({ 
     limit: 5,
-    // entidade: 'produtos'
   });
   
   // Sincronizar dados com a API sempre que a loja for aberta
