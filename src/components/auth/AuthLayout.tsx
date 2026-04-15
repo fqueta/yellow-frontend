@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import { SystemMaintenanceBanner } from '@/components/system/SystemMaintenanceBanner';
 
 interface AuthLayoutProps {
   children: ReactNode;
@@ -20,6 +21,8 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
             </p>
           )}
         </div>
+
+        <SystemMaintenanceBanner />
         
         <div className="bg-card p-6 rounded-lg border shadow-sm">
           {children}

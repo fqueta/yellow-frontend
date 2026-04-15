@@ -10,6 +10,7 @@ import { useRedirect } from '@/hooks/useRedirect';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import { SystemMaintenanceBanner } from '@/components/system/SystemMaintenanceBanner';
 import {
   Form,
   FormControl,
@@ -112,6 +113,10 @@ export default function Login() {
             <p className="text-purple-600 text-sm mb-6 text-center">
               Entre em sua conta para continuar
             </p>
+
+            <div className="mb-6">
+              <SystemMaintenanceBanner compact />
+            </div>
 
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
