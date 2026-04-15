@@ -54,6 +54,15 @@ class AuthService {
       const error = new Error(errorMessage) as Error & { status?: number; body?: any };
       error.status = response.status;
       error.body = errorBody;
+
+      if (response.status === 503 && errorBody?.code === 'maintenance_mode_active') {
+        window.dispatchEvent(new CustomEvent('app-maintenance-mode', {
+          detail: {
+            message: errorMessage,
+          },
+        }));
+      }
+
       throw error;
     }
     return response.json();

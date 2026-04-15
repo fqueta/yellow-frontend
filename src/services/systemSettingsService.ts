@@ -6,30 +6,31 @@ import { ApiResponse } from '@/types/index';
  */
 export interface AdvancedSystemSettings {
   // Configurações com Switch
-  enableApiLogging: boolean;
-  enableCaching: boolean;
-  enableCompression: boolean;
-  enableSslRedirect: boolean;
+  enableApiLogging?: boolean;
+  enableCaching?: boolean;
+  enableCompression?: boolean;
+  enableSslRedirect?: boolean;
   
   // Configurações com Select
-  logLevel: string;
-  cacheDriver: string;
-  sessionDriver: string;
-  queueDriver: string;
+  logLevel?: string;
+  cacheDriver?: string;
+  sessionDriver?: string;
+  queueDriver?: string;
   
   // Configurações com Input
-  maxFileSize: string;
-  sessionTimeout: string;
-  apiRateLimit: string;
-  maxConnections: string;
-  backupRetention: string;
-  url_api_aeroclube: string;
-  token_api_aeroclube: string;
+  maxFileSize?: string;
+  sessionTimeout?: string;
+  apiRateLimit?: string;
+  maxConnections?: string;
+  backupRetention?: string;
+  url_api_aeroclube?: string;
+  token_api_aeroclube?: string;
   pontos_dias_expiracao?: string;
   pontos_expiracao_ativa?: string;
   exibir_extrato_cliente?: string;
   habilitar_popup_cliente?: string;
   mensagem_popup_cliente?: string;
+  maintenance_mode_admin_only?: string;
 }
 
 /**

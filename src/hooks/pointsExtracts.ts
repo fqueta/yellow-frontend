@@ -3,7 +3,8 @@ import {
   pointsExtractsService, 
   PointsExtractListParams, 
   CreateAdjustmentRequest,
-  PointsExtractStats
+  PointsExtractStats,
+  CustomerPointsBalanceReportResponse
 } from '@/services/pointsExtractsService';
 import { PointsExtract } from '@/types/redemptions';
 import { PaginatedResponse } from '@/types/index';
@@ -181,6 +182,26 @@ export function useAuthenticatedUserInfinitePointsExtracts(params?: PointsExtrac
       return undefined;
     },
     initialPageParam: 1,
+    ...queryOptions
+  });
+}
+
+/**
+ * Hook para obter o relatório de saldo total por cliente.
+ */
+export function useCustomerPointsBalancesReport(
+  params?: {
+    page?: number;
+    per_page?: number;
+    search?: string;
+    order_by?: 'name' | 'email' | 'created_at' | 'saldo_total';
+    order?: 'asc' | 'desc';
+  },
+  queryOptions?: any
+) {
+  return useQuery<CustomerPointsBalanceReportResponse>({
+    queryKey: ['customer-points-balances-report', params],
+    queryFn: () => pointsExtractsService.getCustomerBalancesReport(params),
     ...queryOptions
   });
 }

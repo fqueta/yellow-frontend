@@ -287,6 +287,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Inicialização - verificar se há sessão salva
   useEffect(() => {
+    const handleMaintenanceMode = (event: Event) => {
+      if (!authService.getStoredToken()) {
+        return;
+      }
+
+      const customEvent = event as CustomEvent<{ message?: string }>;
+      const message = customEvent.detail?.message || 'Sistema em manutenção. Acesso temporariamente restrito ao administrador principal.';
+
+      setUserPointsBalance(null);
+      authService.clearStorage();
+      updateAuthState(null, null, [], []);
+
+      toast({
+        title: "Sistema em manutenção",
+        description: message,
+        variant: "destructive",
+      });
+    };
+
     const initializeAuth = async () => {
       const storedToken = authService.getStoredToken();
       const storedUser = authService.getStoredUser();
@@ -306,8 +325,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
           await syncUserData();
         } catch (error) {
           const status = (error as any)?.status;
+          const body = (error as any)?.body;
           console.warn('Falha ao validar sessão ao iniciar:', error);
-          if (status === 401 || status === 419) {
+          if (status === 401 || status === 419 || (status === 503 && body?.code === 'maintenance_mode_active')) {
             authService.clearStorage();
             updateAuthState(null, null, [], []);
             setUserPointsBalance(null);
@@ -321,7 +341,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     };
 
+    window.addEventListener('app-maintenance-mode', handleMaintenanceMode as EventListener);
     initializeAuth();
+
+    return () => {
+      window.removeEventListener('app-maintenance-mode', handleMaintenanceMode as EventListener);
+    };
   }, []);
 
   const value: AuthContextType = {

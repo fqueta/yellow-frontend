@@ -56,6 +56,7 @@ import ClientArea from "./pages/loja/ClientArea";
 import LandingPage from "./pages/LandingPage";
 import AdminRedemptions from "./pages/AdminRedemptions";
 import AdminPointsExtracts from "./pages/AdminPointsExtracts";
+import AdminPointsBalancesReport from "./pages/AdminPointsBalancesReport";
 import AdminRedemptionDetails from "./pages/AdminRedemptionDetails";
 import AdminPointsExtractDetails from "./pages/AdminPointsExtractDetails";
 
@@ -410,6 +411,19 @@ const App = () => {
                       requireRemote={false}
                     >
                       <AdminPointsExtracts />
+                    </PermissionGuard>
+                  </AppLayout>
+                </AdminProtectedRoute>
+              } />
+              <Route path="/admin/points-reports" element={
+                <AdminProtectedRoute>
+                  <AppLayout>
+                    <PermissionGuard
+                      required="points.extracts.view"
+                      menuPath="/admin/points-extracts"
+                      requireRemote={false}
+                    >
+                      <AdminPointsBalancesReport />
                     </PermissionGuard>
                   </AppLayout>
                 </AdminProtectedRoute>

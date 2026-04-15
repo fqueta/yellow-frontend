@@ -38,6 +38,34 @@ export interface PointsExtractStats {
 }
 
 /**
+ * Interface para linha do relatório de saldo por cliente
+ */
+export interface CustomerPointsBalanceReportItem {
+  id: string;
+  name: string;
+  email: string | null;
+  cpf: string | null;
+  created_at: string | null;
+  saldo_total: number;
+}
+
+/**
+ * Interface para o resumo do relatório de saldo por cliente
+ */
+export interface CustomerPointsBalanceReportSummary {
+  total_clients: number;
+  total_balance: number;
+  clients_with_balance: number;
+}
+
+/**
+ * Interface para a resposta do relatório de saldo por cliente
+ */
+export interface CustomerPointsBalanceReportResponse extends PaginatedResponse<CustomerPointsBalanceReportItem> {
+  summary: CustomerPointsBalanceReportSummary;
+}
+
+/**
  * Serviço para gerenciar extratos de pontos
  */
 class PointsExtractsService extends BaseApiService {
@@ -237,6 +265,37 @@ class PointsExtractsService extends BaseApiService {
   }> {
     const response = await this.get<ApiResponse<any>>(`/admin/users/${userId}/points-balance`);
     return response.data;
+  }
+
+  /**
+   * Obtém o relatório de saldo total de pontos por cliente.
+   */
+  async getCustomerBalancesReport(params?: {
+    page?: number;
+    per_page?: number;
+    search?: string;
+    order_by?: 'name' | 'email' | 'created_at' | 'saldo_total';
+    order?: 'asc' | 'desc';
+  }): Promise<CustomerPointsBalanceReportResponse> {
+    const response = await this.get<any>('/points/reports/customers', params);
+    const normalized = this.normalizePaginatedResponse<CustomerPointsBalanceReportItem>(response);
+
+    return {
+      ...normalized,
+      data: normalized.data.map((item: any) => ({
+        id: String(item.id),
+        name: item.name || '',
+        email: item.email || null,
+        cpf: item.cpf || null,
+        created_at: item.created_at || null,
+        saldo_total: Number(item.saldo_total || 0),
+      })),
+      summary: {
+        total_clients: Number(response?.summary?.total_clients || 0),
+        total_balance: Number(response?.summary?.total_balance || 0),
+        clients_with_balance: Number(response?.summary?.clients_with_balance || 0),
+      }
+    };
   }
 }
 

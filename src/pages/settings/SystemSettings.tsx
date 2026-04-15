@@ -31,9 +31,8 @@ export default function SystemSettings() {
   // Hook para gerenciar opções da API
   const { 
     options: apiOptions, 
-    isLoading: apiLoading, 
-    error: apiError, 
-    updateOption, 
+    isLoading: apiLoading,
+    error: apiError,
     saveMultipleOptions, 
     getApiConfigOptions 
   } = useApiOptions();
@@ -336,9 +335,23 @@ export default function SystemSettings() {
    * Salva configurações gerais
    */
   const handleSaveGeneralSettings = () => {
-    localStorage.setItem('basicSwitchSettings', JSON.stringify(basicSwitchSettings));
-    applySystemSettings(basicSwitchSettings);
-    toast.success('Configurações gerais salvas!');
+    const saveGeneralSettings = async () => {
+      localStorage.setItem('basicSwitchSettings', JSON.stringify(basicSwitchSettings));
+      applySystemSettings(basicSwitchSettings);
+
+      const success = await saveMultipleOptions({
+        maintenance_mode_admin_only: basicSwitchSettings.enableMaintenanceMode ? 's' : 'n',
+      });
+
+      if (!success) {
+        toast.error('Erro ao salvar o modo de manutenção');
+        return;
+      }
+
+      toast.success('Configurações gerais salvas!');
+    };
+
+    void saveGeneralSettings();
   };
 
   /**
@@ -463,6 +476,18 @@ export default function SystemSettings() {
           queueDriver: data.queueDriver,
         }));
       }
+
+      if (data.maintenance_mode_admin_only !== undefined) {
+        const enabled = data.maintenance_mode_admin_only === 's';
+        setBasicSwitchSettings(prev => {
+          const nextSettings = {
+            ...prev,
+            enableMaintenanceMode: enabled,
+          };
+          localStorage.setItem('basicSwitchSettings', JSON.stringify(nextSettings));
+          return nextSettings;
+        });
+      }
       
     } catch (error) {
       console.error('Erro ao carregar configurações:', error);
@@ -478,6 +503,31 @@ export default function SystemSettings() {
   useEffect(() => {
     loadAdvancedSettings();
   }, []);
+
+  /**
+   * Sincroniza o switch de manutenção com a option carregada da API.
+   */
+  useEffect(() => {
+    const maintenanceOption = apiOptions.find(option => option.url === 'maintenance_mode_admin_only');
+    if (!maintenanceOption) {
+      return;
+    }
+
+    const enabled = maintenanceOption.value === 's';
+    setBasicSwitchSettings(prev => {
+      if (prev.enableMaintenanceMode === enabled) {
+        return prev;
+      }
+
+      const nextSettings = {
+        ...prev,
+        enableMaintenanceMode: enabled,
+      };
+
+      localStorage.setItem('basicSwitchSettings', JSON.stringify(nextSettings));
+      return nextSettings;
+    });
+  }, [apiOptions]);
 
   return (
     <div className="container mx-auto p-6 space-y-6">

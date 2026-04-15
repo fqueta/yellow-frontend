@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { ChevronUp, User, Wrench } from "lucide-react";
 import { NavLink, useLocation, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -24,7 +25,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { buildMenuFromDTO, filterMenuByViewAccess, defaultMenu } from "@/lib/menu";
+import { buildMenuFromDTO, filterMenuByViewAccess, defaultMenu, findMenuItemByUrl } from "@/lib/menu";
 import { AppBrand } from "@/components/layout/AppBrand";
 
 /**
@@ -41,10 +42,54 @@ export function AppSidebar() {
   const currentPath = location.pathname;
   const collapsed = state === "collapsed";
 
+  /**
+   * Garante que o menu tenha um atalho para o relatório de pontos.
+   */
+  const menuSource = useMemo(() => {
+    const sourceMenu = apiMenu && apiMenu.length > 0 ? apiMenu : defaultMenu;
+
+    if (findMenuItemByUrl(sourceMenu, "/points-reports")) {
+      return sourceMenu;
+    }
+
+    const clonedMenu = sourceMenu.map((item) => ({
+      ...item,
+      items: item.items ? [...item.items] : undefined,
+    }));
+
+    const pointsParent = clonedMenu.find((item) =>
+      item.items?.some((subItem) => subItem.url === "/points-extracts")
+    );
+
+    if (pointsParent?.items) {
+      const extractsItem = pointsParent.items.find((subItem) => subItem.url === "/points-extracts");
+
+      pointsParent.items.push({
+        id: "points-reports",
+        parent_id: pointsParent.id,
+        title: "Relatório de Pontos",
+        url: "/points-reports",
+        icon: "BarChart3",
+        can_view: extractsItem?.can_view ?? 1,
+      });
+
+      return clonedMenu;
+    }
+
+    return [
+      ...clonedMenu,
+      {
+        id: "points-reports",
+        title: "Relatório de Pontos",
+        url: "/points-reports",
+        icon: "BarChart3",
+        can_view: 1,
+      },
+    ];
+  }, [apiMenu]);
+
   // Build menu from API data or use default menu
-  const baseMenu = apiMenu && apiMenu.length > 0 
-    ? buildMenuFromDTO(apiMenu) 
-    : buildMenuFromDTO(defaultMenu);
+  const baseMenu = buildMenuFromDTO(menuSource);
 
   // Filter by can_view access
   const menuItems = filterMenuByViewAccess(baseMenu);
