@@ -79,8 +79,27 @@ export function useCreateAdjustment(mutationOptions?: any) {
     onSuccess: () => {
       // Invalidar cache de extratos para atualizar dados
       queryClient.invalidateQueries({ queryKey: ['points-extracts'] });
+      queryClient.invalidateQueries({ queryKey: ['infinite-points-extracts'] });
       queryClient.invalidateQueries({ queryKey: ['points-extracts-stats'] });
       // Invalidar também cache de usuários se existir
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+    ...mutationOptions
+  });
+}
+
+/**
+ * Hook para excluir um extrato de pontos
+ */
+export function useDeletePointsExtract(mutationOptions?: any) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => pointsExtractsService.deletePointsExtract(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['points-extracts'] });
+      queryClient.invalidateQueries({ queryKey: ['infinite-points-extracts'] });
+      queryClient.invalidateQueries({ queryKey: ['points-extracts-stats'] });
       queryClient.invalidateQueries({ queryKey: ['users'] });
     },
     ...mutationOptions
@@ -93,7 +112,7 @@ export function useCreateAdjustment(mutationOptions?: any) {
 export function useExportPointsExtracts(mutationOptions?: any) {
   return useMutation({
     mutationFn: (params?: PointsExtractListParams) => 
-      pointsExtractsService.exportPointsExtracts(params),
+      pointsExtractsService.downloadPointsExtractsExcel(params),
     ...mutationOptions
   });
 }

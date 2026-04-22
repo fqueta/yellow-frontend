@@ -133,6 +133,7 @@ export interface PointsExtractFilters {
   dateTo?: string;
   userId?: string;
   search?: string;
+  exclude_legacy?: boolean | string;
 }
 
 // Interface para estatísticas de resgates

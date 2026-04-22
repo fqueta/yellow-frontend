@@ -19,7 +19,9 @@ import {
   AlertCircle,
   CheckCircle,
   Loader2,
-  Info
+  Info,
+  Trash2,
+  Share2
 } from 'lucide-react';
 import { useInView } from 'react-intersection-observer';
 import { Button } from '@/components/ui/button';
@@ -51,7 +53,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import PerPageSelector, { PerPageValue } from '@/components/ui/PerPageSelector';
-import {
+import { 
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -59,6 +61,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import { 
   PointsExtract, 
@@ -66,11 +71,13 @@ import {
   POINTS_TRANSACTION_TYPES 
 } from '@/types/redemptions';
 import { 
-  useInfinitePointsExtracts, 
+  useInfinitePointsExtracts,
   usePointsExtractStats, 
   useCreateAdjustment, 
-  useExportPointsExtracts 
+  useExportPointsExtracts,
+  useDeletePointsExtract
 } from '@/hooks/pointsExtracts';
+import { useUsersPropertys } from '@/hooks/users';
 import { useRefundRedemption } from '@/hooks/redemptions';
 import { format, parse } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -87,15 +94,47 @@ import { pointsExtractsService } from '@/services/pointsExtractsService';
  */
 const AdminPointsExtracts: React.FC = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const batchId = searchParams.get('batch_id');
 
-  const [searchTerm, setSearchTerm] = useState('');
-  const [typeFilter, setTypeFilter] = useState<string>('all');
-  const [dateFromFilter, setDateFromFilter] = useState('');
-  const [dateToFilter, setDateToFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [perPageChoice, setPerPageChoice] = useState<PerPageValue>(20);
+  const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
+  const [typeFilter, setTypeFilter] = useState<string>(searchParams.get('type') || 'all');
+  const [dateFromFilter, setDateFromFilter] = useState(searchParams.get('date_from') || '');
+  const [dateToFilter, setDateToFilter] = useState(searchParams.get('date_to') || '');
+  const [createdByFilter, setCreatedByFilter] = useState(searchParams.get('created_by') || 'all');
+  const [perPageChoice, setPerPageChoice] = useState<PerPageValue>(Number(searchParams.get('per_page')) || 20);
+  
+  // pt-BR: Usuários com permission_id > 1 não podem ver nem desativar este filtro.
+  // en-US: Users with permission_id > 1 cannot see or disable this filter.
+  const isSuperAdmin = Number(user?.permission_id) === 1;
+  const [excludeLegacy, setExcludeLegacy] = useState(
+    isSuperAdmin 
+      ? (searchParams.get('exclude_legacy') === 'true') 
+      : true
+  );
+
+  // Forçar excludeLegacy para true se não for super admin
+  useEffect(() => {
+    if (!isSuperAdmin && !excludeLegacy) {
+      setExcludeLegacy(true);
+    }
+  }, [isSuperAdmin, excludeLegacy]);
+
+  // Sincronizar filtros com a URL automaticamente
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (searchTerm) params.set('search', searchTerm);
+    if (typeFilter !== 'all') params.set('type', typeFilter);
+    if (createdByFilter !== 'all') params.set('created_by', createdByFilter);
+    if (dateFromFilter) params.set('date_from', dateFromFilter);
+    if (dateToFilter) params.set('date_to', dateToFilter);
+    if (excludeLegacy) params.set('exclude_legacy', 'true');
+    if (perPageChoice !== 20) params.set('per_page', String(perPageChoice));
+    if (batchId) params.set('batch_id', batchId);
+
+    setSearchParams(params, { replace: true });
+  }, [searchTerm, typeFilter, createdByFilter, dateFromFilter, dateToFilter, excludeLegacy, perPageChoice, batchId, setSearchParams]);
 
   // Estados para o modal de detalhes do crédito
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
@@ -110,13 +149,14 @@ const AdminPointsExtracts: React.FC = () => {
     per_page: perPageChoice === 'all' ? 100 : (perPageChoice as number),
     search: searchTerm || undefined,
     type: typeFilter !== 'all' ? (typeFilter as PointsTransactionType) : undefined,
-    status: statusFilter !== 'all' ? statusFilter : undefined,
+    created_by: createdByFilter !== 'all' ? createdByFilter : undefined,
     dateFrom: dateFromFilter || undefined,
     dateTo: dateToFilter || undefined,
     batch_id: batchId || undefined,
+    exclude_legacy: excludeLegacy || undefined,
     sort: 'createdAt',
     order: 'desc' as const
-  }), [perPageChoice, searchTerm, typeFilter, statusFilter, dateFromFilter, dateToFilter, batchId]);
+  }), [perPageChoice, searchTerm, typeFilter, createdByFilter, dateFromFilter, dateToFilter, batchId, excludeLegacy]);
 
   // Hook de scroll infinito
   const {
@@ -144,6 +184,37 @@ const AdminPointsExtracts: React.FC = () => {
     () => infiniteData?.pages.flatMap((page) => page.data) || [],
     [infiniteData]
   );
+
+  /**
+   * Gera um link com os filtros atuais e copia para o clipboard
+   */
+  const handleShareFilters = () => {
+    const params = new URLSearchParams();
+    if (searchTerm) params.set('search', searchTerm);
+    if (typeFilter !== 'all') params.set('type', typeFilter);
+    if (statusFilter !== 'all') params.set('status', statusFilter);
+    if (dateFromFilter) params.set('date_from', dateFromFilter);
+    if (dateToFilter) params.set('date_to', dateToFilter);
+    if (excludeLegacy) params.set('exclude_legacy', 'true');
+    if (perPageChoice !== 20) params.set('per_page', String(perPageChoice));
+    if (batchId) params.set('batch_id', batchId);
+
+    const shareUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+    
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      toast({
+        title: "Link copiado!",
+        description: "O link com os filtros atuais foi copiado para sua área de transferência.",
+      });
+    }).catch(err => {
+      console.error('Erro ao copiar link: ', err);
+      toast({
+        title: "Erro ao copiar",
+        description: "Não foi possível copiar o link automaticamente.",
+        variant: "destructive"
+      });
+    });
+  };
   const totalItems = infiniteData?.pages[0]?.total || 0;
   const displayExtracts = extracts;
 
@@ -151,12 +222,34 @@ const AdminPointsExtracts: React.FC = () => {
   const statsParams = {
     search: apiParams.search,
     type: apiParams.type,
+    created_by: apiParams.created_by,
     dateFrom: apiParams.dateFrom,
     dateTo: apiParams.dateTo,
+    exclude_legacy: excludeLegacy || undefined,
   };
   const { data: stats, isLoading: isLoadingStats } = usePointsExtractStats(statsParams);
+  
+  // Buscar lista de administradores e parceiros para o filtro "Criado por"
+  // pt-BR: Usamos useUsersPropertys porque ele já filtra usuários administrativos (1-5) no backend.
+  const { data: adminUsers = [] } = useUsersPropertys();
+
   const createAdjustmentMutation = useCreateAdjustment();
   const exportMutation = useExportPointsExtracts();
+  const deleteMutation = useDeletePointsExtract({
+    onSuccess: () => {
+      toast({
+        title: 'Registro removido',
+        description: 'O registro de migração legada foi removido com sucesso.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Erro ao remover',
+        description: error?.message || 'Ocorreu um erro ao tentar remover o registro.',
+        variant: 'destructive',
+      });
+    },
+  });
   
   /**
    * Mutation para extornar resgate
@@ -390,10 +483,11 @@ const AdminPointsExtracts: React.FC = () => {
       const exportParams = {
         search: apiParams.search,
         type: apiParams.type,
-        status: statusFilter !== 'all' ? statusFilter : undefined,
+        created_by: createdByFilter !== 'all' ? createdByFilter : undefined,
         dateFrom: apiParams.dateFrom,
         dateTo: apiParams.dateTo,
         batch_id: apiParams.batch_id,
+        exclude_legacy: excludeLegacy || undefined,
         sort: apiParams.sort,
         order: apiParams.order,
       };
@@ -442,9 +536,11 @@ const AdminPointsExtracts: React.FC = () => {
       const exportParams = {
         search: apiParams.search,
         type: apiParams.type,
+        created_by: createdByFilter !== 'all' ? createdByFilter : undefined,
         dateFrom: apiParams.dateFrom,
         dateTo: apiParams.dateTo,
         batch_id: apiParams.batch_id,
+        exclude_legacy: excludeLegacy || undefined,
         sort: apiParams.sort,
         order: apiParams.order,
         export: 'true'
@@ -540,6 +636,7 @@ const AdminPointsExtracts: React.FC = () => {
     searchValue: string,
     dateFrom?: string,
     dateTo?: string,
+    excludeLegacy?: boolean,
   ): string => {
     const parts: string[] = [];
 
@@ -547,6 +644,19 @@ const AdminPointsExtracts: React.FC = () => {
     if (typeValue && typeValue !== 'all') {
       const typeLabel = POINTS_TRANSACTION_TYPES[typeValue as keyof typeof POINTS_TRANSACTION_TYPES]?.label || typeValue;
       parts.push(`Tipo: ${typeLabel}`);
+    }
+
+    // pt-BR: Adiciona status da migração na legenda
+    if (excludeLegacy) {
+      parts.push('Ocultando migração legada');
+    }
+
+    // Filtro por autor
+    if (createdByFilter && createdByFilter !== 'all') {
+      const creator = adminUsers.find(u => String(u.id) === String(createdByFilter));
+      if (creator) {
+        parts.push(`Criado por: ${creator.name}`);
+      }
     }
 
     // Período de datas
@@ -576,7 +686,7 @@ const AdminPointsExtracts: React.FC = () => {
     return parts.join(' | ');
   };
 
-  const filterLegend = buildFilterLegend(typeFilter, searchTerm, dateFromFilter, dateToFilter);
+  const filterLegend = buildFilterLegend(typeFilter, searchTerm, dateFromFilter, dateToFilter, excludeLegacy);
 
   return (
     <div className="space-y-6">
@@ -612,6 +722,15 @@ const AdminPointsExtracts: React.FC = () => {
         </div>
         {/* Área de ações à direita (inclui botão de impressão) */}
         <div className="flex gap-2 items-center justify-end w-full sm:w-auto">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleShareFilters}
+            className="flex items-center gap-2 no-print"
+          >
+            <Share2 className="h-4 w-4" />
+            Compartilhar Filtros
+          </Button>
           {/* Ações consolidadas em um único botão com dropdown */}
           <ExportActions
             label="Exportar"
@@ -620,14 +739,6 @@ const AdminPointsExtracts: React.FC = () => {
             onExportPdf={handleExportPdf}
             printLabel="Imprimir extratos"
           />
-          {/* <Button variant="outline" onClick={handleCreateAdjustment}>
-            <Plus className="w-4 h-4 mr-2" />
-            Criar Ajuste
-          </Button> */}
-          {/* <Button onClick={handleRefresh} disabled={isLoading}>
-            <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-            Atualizar
-          </Button> */}
         </div>
       </div>
 
@@ -680,17 +791,18 @@ const AdminPointsExtracts: React.FC = () => {
             </div>
             
             <div className="space-y-2">
-              <label className="text-sm font-medium">Status</label>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <label className="text-sm font-medium">Criado por</label>
+              <Select value={createdByFilter} onValueChange={setCreatedByFilter}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Todos os status" />
+                  <SelectValue placeholder="Todos os usuários" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos os status</SelectItem>
-                  <SelectItem value="ativo">Ativo</SelectItem>
-                  <SelectItem value="expirado">Expirado</SelectItem>
-                  <SelectItem value="usado">Usado</SelectItem>
-                  <SelectItem value="cancelado">Cancelado</SelectItem>
+                  <SelectItem value="all">Todos os usuários</SelectItem>
+                  {adminUsers.map((u) => (
+                    <SelectItem key={u.id} value={String(u.id)}>
+                      {u.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -712,6 +824,18 @@ const AdminPointsExtracts: React.FC = () => {
                 onChange={(e) => setDateToFilter(e.target.value)}
               />
             </div>
+
+            {/* Filtro de migração legada - Apenas para Super Admin (ID 1) */}
+            {isSuperAdmin && (
+              <div className="flex items-center space-x-2 pt-4">
+                <Switch 
+                  id="exclude-legacy" 
+                  checked={excludeLegacy}
+                  onCheckedChange={setExcludeLegacy}
+                />
+                <Label htmlFor="exclude-legacy">Ocultar migração legada</Label>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -1041,6 +1165,27 @@ const AdminPointsExtracts: React.FC = () => {
                                 <User className="mr-2 h-4 w-4" />
                                 Criado por: {extract.createdBy}
                               </DropdownMenuItem>
+                            )}
+                            {extract.origem === 'migracao_legado' && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem 
+                                  onClick={async () => {
+                                    const confirmed = window.confirm(`Deseja realmente excluir este registro de migração legada? Esta ação não pode ser desfeita.`);
+                                    if (!confirmed) return;
+                                    try {
+                                      await deleteMutation.mutateAsync(extract.id);
+                                    } catch (e) {
+                                      console.error(e);
+                                    }
+                                  }}
+                                  disabled={deleteMutation.isPending}
+                                  className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                                >
+                                  <Trash2 className={`mr-2 h-4 w-4 ${deleteMutation.isPending ? 'animate-spin' : ''}`} />
+                                  Excluir Registro
+                                </DropdownMenuItem>
+                              </>
                             )}
                           </DropdownMenuContent>
                         </DropdownMenu>

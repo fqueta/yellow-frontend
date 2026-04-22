@@ -191,6 +191,14 @@ class PointsExtractsService extends BaseApiService {
   }
 
   /**
+   * Remove um extrato de pontos
+   * @param id - ID do extrato
+   */
+  async deletePointsExtract(id: string): Promise<ApiResponse<any>> {
+    return await this.delete<ApiResponse<any>>(`${this.endpoint}/${id}`);
+  }
+
+  /**
    * Exporta extratos de pontos em formato XLSX (Excel) via Backend
    * @param params - Parâmetros de filtro
    * @returns Blob com o arquivo Excel
