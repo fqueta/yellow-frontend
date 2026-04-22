@@ -114,13 +114,12 @@ const AdminPointsExtracts: React.FC = () => {
       : true
   );
 
-  // Forçar excludeLegacy para true e resetar filtro de criador se não for super admin
+  // Forçar excludeLegacy para true se não for super admin
   useEffect(() => {
-    if (!isSuperAdmin) {
-      if (!excludeLegacy) setExcludeLegacy(true);
-      if (createdByFilter !== 'all') setCreatedByFilter('all');
+    if (!isSuperAdmin && !excludeLegacy) {
+      setExcludeLegacy(true);
     }
-  }, [isSuperAdmin, excludeLegacy, createdByFilter]);
+  }, [isSuperAdmin, excludeLegacy]);
 
   // Sincronizar filtros com a URL automaticamente
   useEffect(() => {
@@ -791,24 +790,22 @@ const AdminPointsExtracts: React.FC = () => {
               </Select>
             </div>
             
-            {isSuperAdmin && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Criado por</label>
-                <Select value={createdByFilter} onValueChange={setCreatedByFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Todos os usuários" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os usuários</SelectItem>
-                    {adminUsers.map((u) => (
-                      <SelectItem key={u.id} value={String(u.id)}>
-                        {u.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Criado por</label>
+              <Select value={createdByFilter} onValueChange={setCreatedByFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos os usuários" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os usuários</SelectItem>
+                  {adminUsers.map((u) => (
+                    <SelectItem key={u.id} value={String(u.id)}>
+                      {u.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             
             <div className="space-y-2">
               <label className="text-sm font-medium">Data Inicial</label>
