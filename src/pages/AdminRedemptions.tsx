@@ -340,75 +340,44 @@ const AdminRedemptions: React.FC = () => {
    *        keeping the visible columns: ID, Customer, Email, Phone, Product,
    *        Category, Points, Date and Status.
    */
-  const handleExport = () => {
+  /**
+   * Exporta os resgates (pedidos) para Excel usando o backend de alta performance.
+   */
+  const handleExportXlsx = async () => {
     try {
-      const headers = [
-        'ID',
-        'Cliente',
-        'CPF',
-        'Email',
-        'Telefone',
-        'Produto',
-        'Categoria',
-        'Pontos',
-        'Data',
-        'Status',
-      ];
-
-      const rows = filteredRedemptions.map((r: any) => {
-        const phone = formatDisplayPhone(r.userPhone) || 'Não informado';
-        const dateStr = r.redemptionDate ? format(new Date(r.redemptionDate), 'dd/MM/yyyy', { locale: ptBR }) : '—';
-        const statusLabel = REDEMPTION_STATUSES[r.status]?.label || r.status || '—';
-        return [
-          r.id ?? '—',
-          r.userName || 'Não informado',
-          r.userCpf || '—',
-          r.userEmail || 'Não informado',
-          phone,
-          r.productName || '—',
-          r.productCategory || '—',
-          typeof r.pointsUsed === 'number' ? r.pointsUsed : '—',
-          dateStr,
-          statusLabel,
-        ];
+      const blob = await redemptionsService.downloadRedemptionsExcel({
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+        search: searchTerm || undefined,
+        dateFrom: dateFromFilter || undefined,
+        dateTo: dateToFilter || undefined,
+        category: categoryFilter !== 'all' ? categoryFilter : undefined,
       });
 
-      const aoa = [headers, ...rows];
-      const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.aoa_to_sheet(aoa);
-
-      // Ajuste simples de largura das colunas
-      const maxLen = (vals: any[]) => Math.max(...vals.map(v => (v ? String(v).length : 0)), 0);
-      ws['!cols'] = [
-        { wch: 6 },
-        { wch: Math.max(16, maxLen(rows.map(r => r[1])) + 2) },
-        { wch: 14 },
-        { wch: Math.max(22, maxLen(rows.map(r => r[3])) + 2) },
-        { wch: Math.max(14, maxLen(rows.map(r => r[4])) + 2) },
-        { wch: Math.max(20, maxLen(rows.map(r => r[5])) + 2) },
-        { wch: Math.max(16, maxLen(rows.map(r => r[6])) + 2) },
-        { wch: 10 },
-        { wch: 12 },
-        { wch: 12 },
-      ];
-
-      XLSX.utils.book_append_sheet(wb, ws, 'Resgates');
-      const date = new Date().toISOString().slice(0, 10);
-      XLSX.writeFile(wb, `resgates-${date}.xlsx`);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const dateStr = new Date().toISOString().slice(0, 10);
+      a.download = `pedidos-resgate-${dateStr}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
 
       toast({
         title: 'Exportação concluída',
-        description: 'Arquivo .xlsx gerado com sucesso.',
+        description: 'Arquivo Excel gerado com sucesso via servidor.',
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao exportar resgates:', error);
       toast({
         title: 'Erro na exportação',
-        description: 'Ocorreu um erro ao exportar os dados.',
+        description: error.message || 'Não foi possível gerar o arquivo Excel.',
         variant: 'destructive',
       });
     }
   };
+
+  const handleExport = handleExportXlsx;
 
   /**
    * handleExportPdf
@@ -535,9 +504,9 @@ const AdminRedemptions: React.FC = () => {
       {/* Cabeçalho */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Resgates da Loja de Pontos</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Pedidos de Resgates</h1>
           <p className="text-muted-foreground">
-            Acompanhe e gerencie todos os resgates realizados pelos clientes
+            Acompanhe e gerencie todos os pedidos realizados pelos clientes
           </p>
         </div>
         <div className="flex gap-2">

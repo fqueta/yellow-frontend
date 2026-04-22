@@ -1,7 +1,6 @@
 import { BaseApiService } from './BaseApiService';
 import { PointsExtract, PointsExtractFilters, PointsTransactionType } from '@/types/redemptions';
 import { ApiResponse, PaginatedResponse } from '@/types/index';
-import { link } from 'fs';
 
 /**
  * Parâmetros para listagem de extratos de pontos
@@ -11,6 +10,7 @@ export interface PointsExtractListParams extends PointsExtractFilters {
   per_page?: number;
   sort?: string;
   order?: 'asc' | 'desc';
+  export?: boolean | string;
 }
 
 /**
@@ -191,23 +191,42 @@ class PointsExtractsService extends BaseApiService {
   }
 
   /**
-   * Exporta extratos de pontos em formato Blob (CSV/Excel)
+   * Exporta extratos de pontos em formato XLSX (Excel) via Backend
    * @param params - Parâmetros de filtro
-   * @returns Blob com o arquivo exportado
-   *
-   * Implementação manual de GET para retornar Blob:
-   * - Serializa `params` corretamente na URL
-   * - Usa `response.blob()` no lugar de `handleResponse(json)`
+   * @returns Blob com o arquivo Excel
    */
-  async exportPointsExtracts(params?: PointsExtractListParams): Promise<Blob> {
-    const url = this.buildUrlWithParams(`${this.API_BASE_URL}${this.endpoint}/export`, params);
+  async downloadPointsExtractsExcel(params?: PointsExtractListParams): Promise<Blob> {
+    const url = this.buildUrlWithParams(`${this.API_BASE_URL}${this.endpoint}/export-xlsx`, params);
     const response = await fetch(url, {
       method: 'GET',
       headers: this.getHeaders(),
     });
+    
     if (!response.ok) {
-      throw new Error(`Falha ao exportar extratos: ${response.status}`);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `Falha ao exportar Excel: ${response.status}`);
     }
+    
+    return await response.blob();
+  }
+
+  /**
+   * Exporta relatório de saldo de clientes em formato XLSX via Backend
+   * @param params - Parâmetros de filtro e ordenação
+   * @returns Blob com o arquivo Excel
+   */
+  async downloadCustomerBalancesExcel(params?: any): Promise<Blob> {
+    const url = this.buildUrlWithParams(`${this.API_BASE_URL}/admin/points-balances/export-xlsx`, params);
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: this.getHeaders(),
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `Falha ao exportar Excel de saldos: ${response.status}`);
+    }
+    
     return await response.blob();
   }
 

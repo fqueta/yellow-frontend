@@ -94,6 +94,7 @@ const AdminPointsExtracts: React.FC = () => {
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [dateFromFilter, setDateFromFilter] = useState('');
   const [dateToFilter, setDateToFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [perPageChoice, setPerPageChoice] = useState<PerPageValue>(20);
 
   // Estados para o modal de detalhes do crédito
@@ -109,12 +110,13 @@ const AdminPointsExtracts: React.FC = () => {
     per_page: perPageChoice === 'all' ? 100 : (perPageChoice as number),
     search: searchTerm || undefined,
     type: typeFilter !== 'all' ? (typeFilter as PointsTransactionType) : undefined,
+    status: statusFilter !== 'all' ? statusFilter : undefined,
     dateFrom: dateFromFilter || undefined,
     dateTo: dateToFilter || undefined,
     batch_id: batchId || undefined,
     sort: 'createdAt',
     order: 'desc' as const
-  }), [perPageChoice, searchTerm, typeFilter, dateFromFilter, dateToFilter, batchId]);
+  }), [perPageChoice, searchTerm, typeFilter, statusFilter, dateFromFilter, dateToFilter, batchId]);
 
   // Hook de scroll infinito
   const {
@@ -226,17 +228,17 @@ const AdminPointsExtracts: React.FC = () => {
   const getTransactionLabel = (type: PointsTransactionType) => {
     switch (type) {
       case 'earned':
-        return 'Pontos ganhos';
+        return 'Crédito';
       case 'bonus':
         return 'Bônus';
       case 'redeemed':
-        return 'Pontos resgatados';
+        return 'Resgate';
       case 'expired':
-        return 'Pontos expirados';
+        return 'Expirado';
       case 'refund':
         return 'Reembolso';
       case 'adjustment':
-        return 'Ajuste manual';
+        return 'Ajuste';
       case 'migration':
         return 'Ajuste de Sistema';
       default:
@@ -379,83 +381,45 @@ const AdminPointsExtracts: React.FC = () => {
    */
   const handleExport = async () => {
     try {
-      // pt-BR: Colunas exportadas (sem "Expira").
-      // en-US: Exported columns (without "Expira").
-      const headers = [
-        'ID',
-        'Cliente',
-        'CPF',
-        'Email',
-        'Tipo',
-        'Pontos',
-        'Descrição',
-        'Saldo Anterior',
-        'Saldo Atual',
-        'Data',
-        'Expiração',
-      ];
-
-      const rows = displayExtracts.map((ex: any) => {
-        const typeLabel = getTransactionLabel(ex.type);
-        // pt-BR: Garante que o campo "Pontos" seja numérico mesmo quando vier como string (ex: "1.000", "-98").
-        // en-US: Ensures the "Pontos" field is numeric even when provided as a string (e.g., "1.000", "-98").
-        const rawPoints = ex.points ?? ex.valor ?? ex.valor_referencia;
-        let pointsVal = parseNumberField(rawPoints);
-        // pt-BR: Ajusta o sinal com base no tipo se o valor vier sem sinal explícito.
-        // en-US: Adjusts the sign based on the transaction type if the value has no explicit sign.
-        const txType = (ex.type ?? ex.tipo) as string | undefined;
-        if (txType && /debito|redeemed/i.test(txType) && pointsVal > 0) {
-          pointsVal = -pointsVal;
-        }
-        const createdStr = ex.createdAt ? format(new Date(ex.createdAt), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : '—';
-        const expirationStr = ex.expirationDate ? format(new Date(ex.expirationDate), 'dd/MM/yyyy', { locale: ptBR }) : '—';
-        return [
-          ex.id ?? '—',
-          ex.userName || 'Não informado',
-          ex.userCpf || '—',
-          ex.userEmail || 'Não informado',
-          typeLabel,
-          pointsVal,
-          ex.description ? ex.description.replace(/Resgate de produto: /, 'Resgate de: ') : '',
-          parseNumberField(ex.balanceBefore),
-          parseNumberField(ex.balanceAfter),
-          createdStr,
-          expirationStr,
-        ];
+      toast({
+        title: 'Preparando exportação',
+        description: 'O servidor está gerando o arquivo Excel com todos os registros...',
       });
 
-      const aoa = [headers, ...rows];
-      const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.aoa_to_sheet(aoa);
-
-      const maxLen = (vals: any[]) => Math.max(...vals.map(v => (v ? String(v).length : 0)), 0);
-      ws['!cols'] = [
-        { wch: 6 },
-        { wch: Math.max(16, maxLen(rows.map(r => r[1])) + 2) },
-        { wch: 14 },
-        { wch: Math.max(22, maxLen(rows.map(r => r[3])) + 2) },
-        { wch: Math.max(16, maxLen(rows.map(r => r[4])) + 2) },
-        { wch: 10 },
-        { wch: Math.max(24, maxLen(rows.map(r => r[6])) + 2) },
-        { wch: 14 },
-        { wch: 14 },
-        { wch: 18 },
-        { wch: 14 },
-      ];
-
-      XLSX.utils.book_append_sheet(wb, ws, 'Extratos');
-      const date = new Date().toISOString().slice(0, 10);
-      XLSX.writeFile(wb, `extratos-pontos-${date}.xlsx`);
+      // pt-BR: Parâmetros de filtro para a exportação
+      const exportParams = {
+        search: apiParams.search,
+        type: apiParams.type,
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+        dateFrom: apiParams.dateFrom,
+        dateTo: apiParams.dateTo,
+        batch_id: apiParams.batch_id,
+        sort: apiParams.sort,
+        order: apiParams.order,
+      };
+      
+      const blob = await pointsExtractsService.downloadPointsExtractsExcel(exportParams);
+      
+      // pt-BR: Cria um link temporário para download do blob
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const dateStr = format(new Date(), 'dd-MM-yyyy_HHmm');
+      a.download = `extratos-pontos-${dateStr}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
 
       toast({
         title: 'Exportação concluída',
-        description: 'Arquivo .xlsx gerado com sucesso.',
+        description: 'O arquivo Excel foi gerado e o download iniciado.',
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao exportar extratos:', error);
       toast({
         title: 'Erro na exportação',
-        description: 'Ocorreu um erro ao exportar os dados.',
+        description: error.message || 'Ocorreu um erro ao exportar os dados do servidor.',
         variant: 'destructive'
       });
     }
@@ -468,6 +432,27 @@ const AdminPointsExtracts: React.FC = () => {
    */
   const handleExportPdf = async () => {
     try {
+      toast({
+        title: 'Preparando exportação',
+        description: 'Gerando PDF com todos os registros filtrados...',
+      });
+
+      // pt-BR: Busca todos os dados matching os filtros
+      // en-US: Fetches all data matching the filters
+      const exportParams = {
+        search: apiParams.search,
+        type: apiParams.type,
+        dateFrom: apiParams.dateFrom,
+        dateTo: apiParams.dateTo,
+        batch_id: apiParams.batch_id,
+        sort: apiParams.sort,
+        order: apiParams.order,
+        export: 'true'
+      };
+      
+      const response = await pointsExtractsService.listPointsExtracts(exportParams);
+      const dataToExport = response.data;
+
       // pt-BR: Cabeçalhos do PDF (sem "Expira").
       // en-US: PDF headers (without "Expira").
       const headers = [
@@ -484,7 +469,7 @@ const AdminPointsExtracts: React.FC = () => {
         'Expiração',
       ];
 
-      const rows = displayExtracts.map((ex: any) => {
+      const rows = dataToExport.map((ex: any) => {
         const typeLabel = getTransactionLabel(ex.type);
         const rawPoints = ex.points ?? ex.valor ?? ex.valor_referencia;
         let pointsVal = parseNumberField(rawPoints);
@@ -515,6 +500,11 @@ const AdminPointsExtracts: React.FC = () => {
         rows,
         orientation: 'landscape',
         filtersLegend: filterLegend,
+      });
+
+      toast({
+        title: 'PDF gerado',
+        description: `${dataToExport.length} registros incluídos no relatório.`,
       });
     } catch (error) {
       console.error('Erro ao exportar extratos (PDF):', error);
@@ -614,7 +604,7 @@ const AdminPointsExtracts: React.FC = () => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <div className="flex items-center justify-between gap-3">
-  <h1 className="text-3xl font-bold tracking-tight">Extratos de Pontos</h1>
+  <h1 className="text-3xl font-bold tracking-tight">Extratos de Pontos (Sincronizado)</h1>
 </div>
           <p className="text-muted-foreground">
             Acompanhe todas as movimentações de pontos dos clientes
@@ -650,7 +640,7 @@ const AdminPointsExtracts: React.FC = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="space-y-2">
               <PerPageSelector
                 value={perPageChoice}
@@ -685,6 +675,22 @@ const AdminPointsExtracts: React.FC = () => {
                       {value.label}
                     </SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Status</label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos os status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os status</SelectItem>
+                  <SelectItem value="ativo">Ativo</SelectItem>
+                  <SelectItem value="expirado">Expirado</SelectItem>
+                  <SelectItem value="usado">Usado</SelectItem>
+                  <SelectItem value="cancelado">Cancelado</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -855,10 +861,18 @@ const AdminPointsExtracts: React.FC = () => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={getTypeColor(extract.type)} className="flex items-center gap-1 w-fit">
-                          {getTransactionIcon(extract.type)}
-                          {getTransactionLabel(extract.type)}
-                        </Badge>
+                        <div className="flex flex-col gap-1">
+                          <Badge variant={getTypeColor(extract.type)} className="flex items-center gap-1 w-fit">
+                            {getTransactionIcon(extract.type)}
+                            {getTransactionLabel(extract.type)}
+                          </Badge>
+                          {extract.status === 'expirado' && (
+                            <Badge variant="destructive" className="text-[10px] h-4 py-0 w-fit">Vencido</Badge>
+                          )}
+                          {extract.status === 'usado' && (
+                            <Badge variant="outline" className="text-[10px] h-4 py-0 w-fit">Totalmente Usado</Badge>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <div className={`flex items-center gap-1 font-medium ${

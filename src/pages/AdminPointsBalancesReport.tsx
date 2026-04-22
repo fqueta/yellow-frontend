@@ -99,51 +99,45 @@ const AdminPointsBalancesReport: React.FC = () => {
   /**
    * Busca todos os registros do relatório respeitando os filtros atuais.
    */
-  const fetchAllReportItems = async () => {
-    const perPage = 100;
-    let page = 1;
-    let lastPage = 1;
-    const allItems: typeof reportItems = [];
-
-    do {
-      const response = await pointsExtractsService.getCustomerBalancesReport({
-        page,
-        per_page: perPage,
-        search: searchTerm || undefined,
-        order_by: orderBy,
-        order,
+  /**
+   * Exporta os dados para Excel usando o backend de alta performance.
+   */
+  const handleExportXlsx = async () => {
+    try {
+      setIsExportingAll(true);
+      const blob = await pointsExtractsService.downloadCustomerBalancesExcel({
+        search: reportParams.search,
+        order_by: reportParams.order_by,
+        order: reportParams.order,
       });
 
-      allItems.push(...response.data);
-      lastPage = response.last_page;
-      page += 1;
-    } while (page <= lastPage);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const date = new Date().toISOString().slice(0, 10);
+      a.download = `relatorio-saldo-clientes-${date}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
 
-    return allItems;
+      toast({
+        title: 'Exportação concluída',
+        description: 'Relatório Excel gerado com sucesso via servidor.',
+      });
+    } catch (error: any) {
+      console.error('Erro ao exportar relatório para Excel:', error);
+      toast({
+        title: 'Erro na exportação',
+        description: error.message || 'Não foi possível gerar o arquivo Excel.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsExportingAll(false);
+    }
   };
 
-  /**
-   * Gera um arquivo Excel a partir das linhas fornecidas.
-   */
-  const exportRowsToXlsx = (rows: (string | number)[][], filePrefix: string) => {
-    const headers = ['Cliente', 'E-mail', 'CPF', 'Cadastro', 'Saldo Total'];
-    const aoa = [headers, ...rows];
-    const workbook = XLSX.utils.book_new();
-    const worksheet = XLSX.utils.aoa_to_sheet(aoa);
-    const maxLen = (values: any[]) => Math.max(...values.map((value) => (value ? String(value).length : 0)), 0);
-
-    worksheet['!cols'] = [
-      { wch: Math.max(18, maxLen(rows.map((row) => row[0])) + 2) },
-      { wch: Math.max(24, maxLen(rows.map((row) => row[1])) + 2) },
-      { wch: Math.max(16, maxLen(rows.map((row) => row[2])) + 2) },
-      { wch: Math.max(14, maxLen(rows.map((row) => row[3])) + 2) },
-      { wch: 14 },
-    ];
-
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Saldo por Cliente');
-    const date = new Date().toISOString().slice(0, 10);
-    XLSX.writeFile(workbook, `${filePrefix}-${date}.xlsx`);
-  };
+  const handleExportAllXlsx = handleExportXlsx;
 
   /**
    * Gera a legenda textual com os filtros atuais para usar nas exportações.
@@ -159,28 +153,6 @@ const AdminPointsBalancesReport: React.FC = () => {
 
     return parts.join(' | ');
   }, [searchTerm, orderBy, order]);
-
-  /**
-   * Exporta a listagem atual para Excel.
-   */
-  const handleExportXlsx = () => {
-    try {
-      const rows = buildExportRows(reportItems);
-      exportRowsToXlsx(rows, 'relatorio-saldo-pontos-clientes');
-
-      toast({
-        title: 'Exportação concluída',
-        description: 'Arquivo Excel gerado com sucesso.',
-      });
-    } catch (error) {
-      console.error('Erro ao exportar relatório para Excel:', error);
-      toast({
-        title: 'Erro na exportação',
-        description: 'Não foi possível gerar o arquivo Excel.',
-        variant: 'destructive',
-      });
-    }
-  };
 
   /**
    * Exporta a listagem atual para PDF.
@@ -214,71 +186,9 @@ const AdminPointsBalancesReport: React.FC = () => {
   };
 
   /**
-   * Exporta todos os registros filtrados para Excel.
+   * Alias para PDF (por simplicidade, exportamos os itens da página atual ou carregada)
    */
-  const handleExportAllXlsx = async () => {
-    try {
-      setIsExportingAll(true);
-      const allItems = await fetchAllReportItems();
-      const rows = buildExportRows(allItems);
-
-      exportRowsToXlsx(rows, 'relatorio-saldo-pontos-clientes-todos');
-
-      toast({
-        title: 'Exportação concluída',
-        description: `${allItems.length} cliente(s) exportado(s) para Excel.`,
-      });
-    } catch (error) {
-      console.error('Erro ao exportar todos para Excel:', error);
-      toast({
-        title: 'Erro na exportação',
-        description: 'Não foi possível exportar todos os registros para Excel.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsExportingAll(false);
-    }
-  };
-
-  /**
-   * Exporta todos os registros filtrados para PDF.
-   */
-  const handleExportAllPdf = async () => {
-    try {
-      setIsExportingAll(true);
-      const allItems = await fetchAllReportItems();
-      const headers = ['Cliente', 'E-mail', 'CPF', 'Cadastro', 'Saldo Total'];
-      const rows = buildExportRows(allItems).map((row) => [
-        row[0],
-        row[1],
-        row[2],
-        row[3],
-        `${formatPoints(Number(row[4]))} pts`,
-      ]);
-
-      await exportTablePdf({
-        title: 'Relatório de Saldo de Pontos por Cliente',
-        headers,
-        rows,
-        orientation: 'landscape',
-        filtersLegend: filterLegend,
-      });
-
-      toast({
-        title: 'Exportação concluída',
-        description: `${allItems.length} cliente(s) exportado(s) para PDF.`,
-      });
-    } catch (error) {
-      console.error('Erro ao exportar todos para PDF:', error);
-      toast({
-        title: 'Erro na exportação',
-        description: 'Não foi possível exportar todos os registros para PDF.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsExportingAll(false);
-    }
-  };
+  const handleExportAllPdf = handleExportPdf;
 
   return (
     <div className="space-y-6">
@@ -404,6 +314,7 @@ const AdminPointsBalancesReport: React.FC = () => {
             <PerPageSelector
               value={perPageChoice}
               onChange={(value) => handleFilterChange(() => setPerPageChoice(value))}
+              options={[20, 50, 100, 200, 500, 'all']}
             />
           </div>
         </CardContent>

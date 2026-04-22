@@ -82,6 +82,26 @@ class RedemptionsService extends BaseApiService {
   async deleteRedemption(id: string): Promise<void> {
     await this.delete<void>(`/admin/redemptions/${id}`);
   }
+
+  /**
+   * Exporta resgates (pedidos) em formato XLSX via Backend
+   * @param params - Parâmetros de filtro
+   * @returns Blob com o arquivo Excel
+   */
+  async downloadRedemptionsExcel(params?: RedemptionListParams): Promise<Blob> {
+    const url = this.buildUrlWithParams(`${this.API_BASE_URL}/admin/redemptions/export-xlsx`, params);
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: this.getHeaders(),
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `Falha ao exportar Excel de resgates: ${response.status}`);
+    }
+    
+    return await response.blob();
+  }
 }
 
 export const redemptionsService = new RedemptionsService();
