@@ -61,6 +61,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import { useUpdateRedemptionStatus, useRefundRedemption, useInfiniteAllRedemptions } from '@/hooks/redemptions';
+import { redemptionsService } from '@/services/redemptionsService';
 import { 
   Redemption, 
   RedemptionStatus, 
