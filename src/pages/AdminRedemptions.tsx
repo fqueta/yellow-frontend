@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { 
   Package, 
   Search, 
@@ -83,14 +83,28 @@ import { exportTablePdf } from '@/lib/pdfExport';
  */
 const AdminRedemptions: React.FC = () => {
   const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<RedemptionStatus | 'all'>('all');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
+  const [statusFilter, setStatusFilter] = useState<RedemptionStatus | 'all'>((searchParams.get('status') as any) || 'all');
   // Filtros de período (date range)
-  const [dateFromFilter, setDateFromFilter] = useState<string>('');
-  const [dateToFilter, setDateToFilter] = useState<string>('');
+  const [dateFromFilter, setDateFromFilter] = useState<string>(searchParams.get('date_from') || '');
+  const [dateToFilter, setDateToFilter] = useState<string>(searchParams.get('date_to') || '');
 
-  const [categoryFilter, setCategoryFilter] = useState<string>('all');
-  const [itemsPerPage, setItemsPerPage] = useState<PerPageValue>(20);
+  const [categoryFilter, setCategoryFilter] = useState<string>(searchParams.get('category') || 'all');
+  const [itemsPerPage, setItemsPerPage] = useState<PerPageValue>(Number(searchParams.get('per_page')) || 20);
+
+  // Sincronizar filtros com a URL automaticamente
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (searchTerm) params.set('search', searchTerm);
+    if (statusFilter !== 'all') params.set('status', statusFilter);
+    if (dateFromFilter) params.set('date_from', dateFromFilter);
+    if (dateToFilter) params.set('date_to', dateToFilter);
+    if (categoryFilter !== 'all') params.set('category', categoryFilter);
+    if (itemsPerPage !== 20) params.set('per_page', String(itemsPerPage));
+
+    setSearchParams(params, { replace: true });
+  }, [searchTerm, statusFilter, dateFromFilter, dateToFilter, categoryFilter, itemsPerPage, setSearchParams]);
 
   // Estados para o modal de estorno
   const [isRefundDialogOpen, setIsRefundDialogOpen] = useState(false);

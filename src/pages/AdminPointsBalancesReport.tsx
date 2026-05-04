@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { RefreshCw, Search, Users, Wallet, UserCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -51,12 +52,25 @@ function formatDate(value: string | null): string {
  * Página de relatório com saldo total de pontos por cliente.
  */
 const AdminPointsBalancesReport: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [orderBy, setOrderBy] = useState<'name' | 'email' | 'created_at' | 'saldo_total'>('name');
-  const [order, setOrder] = useState<'asc' | 'desc'>('asc');
-  const [perPageChoice, setPerPageChoice] = useState<PerPageValue>(20);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
+  const [currentPage, setCurrentPage] = useState(Number(searchParams.get('page')) || 1);
+  const [orderBy, setOrderBy] = useState<'name' | 'email' | 'created_at' | 'saldo_total'>((searchParams.get('order_by') as any) || 'name');
+  const [order, setOrder] = useState<'asc' | 'desc'>((searchParams.get('order') as any) || 'asc');
+  const [perPageChoice, setPerPageChoice] = useState<PerPageValue>(Number(searchParams.get('per_page')) || 20);
   const [isExportingAll, setIsExportingAll] = useState(false);
+
+  // Sincronizar filtros com a URL automaticamente
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (searchTerm) params.set('search', searchTerm);
+    if (currentPage > 1) params.set('page', String(currentPage));
+    if (orderBy !== 'name') params.set('order_by', orderBy);
+    if (order !== 'asc') params.set('order', order);
+    if (perPageChoice !== 20) params.set('per_page', String(perPageChoice));
+
+    setSearchParams(params, { replace: true });
+  }, [searchTerm, currentPage, orderBy, order, perPageChoice, setSearchParams]);
 
   const reportParams = useMemo(() => ({
     page: currentPage,
