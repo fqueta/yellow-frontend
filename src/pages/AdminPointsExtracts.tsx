@@ -85,6 +85,7 @@ import '@/styles/print.css';
 import * as XLSX from 'xlsx';
 import { exportTablePdf } from '@/lib/pdfExport';
 import { pointsExtractsService } from '@/services/pointsExtractsService';
+import { useDebounce } from '@/hooks/useDebounce';
 
 // Removido dados mockados - agora usando dados da API
 
@@ -99,6 +100,7 @@ const AdminPointsExtracts: React.FC = () => {
   const batchId = searchParams.get('batch_id');
 
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
   const [typeFilter, setTypeFilter] = useState<string>(searchParams.get('type') || 'all');
   const [dateFromFilter, setDateFromFilter] = useState(searchParams.get('date_from') || '');
   const [dateToFilter, setDateToFilter] = useState(searchParams.get('date_to') || '');
@@ -124,7 +126,7 @@ const AdminPointsExtracts: React.FC = () => {
   // Sincronizar filtros com a URL automaticamente
   useEffect(() => {
     const params = new URLSearchParams();
-    if (searchTerm) params.set('search', searchTerm);
+    if (debouncedSearchTerm) params.set('search', debouncedSearchTerm);
     if (typeFilter !== 'all') params.set('type', typeFilter);
     if (createdByFilter !== 'all') params.set('created_by', createdByFilter);
     if (dateFromFilter) params.set('date_from', dateFromFilter);
@@ -134,7 +136,7 @@ const AdminPointsExtracts: React.FC = () => {
     if (batchId) params.set('batch_id', batchId);
 
     setSearchParams(params, { replace: true });
-  }, [searchTerm, typeFilter, createdByFilter, dateFromFilter, dateToFilter, excludeLegacy, perPageChoice, batchId, setSearchParams]);
+  }, [debouncedSearchTerm, typeFilter, createdByFilter, dateFromFilter, dateToFilter, excludeLegacy, perPageChoice, batchId, setSearchParams]);
 
   // Estados para o modal de detalhes do crédito
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
@@ -147,7 +149,7 @@ const AdminPointsExtracts: React.FC = () => {
   // Parâmetros para a API (sem page, gerenciado pelo hook infinito)
   const apiParams = useMemo(() => ({
     per_page: perPageChoice === 'all' ? 100 : (perPageChoice as number),
-    search: searchTerm || undefined,
+    search: debouncedSearchTerm || undefined,
     type: typeFilter !== 'all' ? (typeFilter as PointsTransactionType) : undefined,
     created_by: createdByFilter !== 'all' ? createdByFilter : undefined,
     dateFrom: dateFromFilter || undefined,
@@ -156,7 +158,7 @@ const AdminPointsExtracts: React.FC = () => {
     exclude_legacy: excludeLegacy || undefined,
     sort: 'createdAt',
     order: 'desc' as const
-  }), [perPageChoice, searchTerm, typeFilter, createdByFilter, dateFromFilter, dateToFilter, batchId, excludeLegacy]);
+  }), [perPageChoice, debouncedSearchTerm, typeFilter, createdByFilter, dateFromFilter, dateToFilter, batchId, excludeLegacy]);
 
   // Hook de scroll infinito
   const {
@@ -174,10 +176,10 @@ const AdminPointsExtracts: React.FC = () => {
 
   // Carregar próxima página quando o trigger entrar na visualização
   useEffect(() => {
-    if (inView && hasNextPage && !isFetchingNextPage) {
+    if (inView && hasNextPage && !isFetchingNextPage && !isLoading) {
       fetchNextPage();
     }
-  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
+  }, [inView, hasNextPage, isFetchingNextPage, isLoading, fetchNextPage]);
 
   // Achatar as páginas em um único array
   const extracts = useMemo(
@@ -190,7 +192,7 @@ const AdminPointsExtracts: React.FC = () => {
    */
   const handleShareFilters = () => {
     const params = new URLSearchParams();
-    if (searchTerm) params.set('search', searchTerm);
+    if (debouncedSearchTerm) params.set('search', debouncedSearchTerm);
     if (typeFilter !== 'all') params.set('type', typeFilter);
     if (statusFilter !== 'all') params.set('status', statusFilter);
     if (dateFromFilter) params.set('date_from', dateFromFilter);
@@ -686,7 +688,7 @@ const AdminPointsExtracts: React.FC = () => {
     return parts.join(' | ');
   };
 
-  const filterLegend = buildFilterLegend(typeFilter, searchTerm, dateFromFilter, dateToFilter, excludeLegacy);
+  const filterLegend = buildFilterLegend(typeFilter, debouncedSearchTerm, dateFromFilter, dateToFilter, excludeLegacy);
 
   return (
     <div className="space-y-6">
@@ -1198,17 +1200,23 @@ const AdminPointsExtracts: React.FC = () => {
           </div>
           
           {/* Trigger de scroll infinito */}
-          <div ref={scrollTriggerRef} className="py-4 flex items-center justify-center">
-            {isFetchingNextPage && (
-              <div className="flex items-center gap-2 text-sm text-gray-500">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Carregando mais...
-              </div>
-            )}
-            {!hasNextPage && displayExtracts.length > 0 && (
-              <p className="text-sm text-gray-400">Fim da lista</p>
-            )}
-          </div>
+          {hasNextPage && (
+            <div ref={scrollTriggerRef} className="py-4 flex items-center justify-center">
+              {isFetchingNextPage ? (
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Carregando mais...
+                </div>
+              ) : (
+                <p className="text-sm text-gray-400">Role para carregar mais</p>
+              )}
+            </div>
+          )}
+          {!hasNextPage && displayExtracts.length > 0 && (
+            <div className="py-4 flex items-center justify-center">
+              <p className="text-sm text-gray-400">Fim da lista • {displayExtracts.length} registros carregados</p>
+            </div>
+          )}
         </CardContent>
       </Card>
       {/* Modal de Detalhes do Crédito */}

@@ -160,10 +160,10 @@ const PointsExtractContent: React.FC<PointsExtractContentProps> = ({ linkLoja = 
 
   // Carregar próxima página quando o elemento final entrar em visualização
   useEffect(() => {
-    if (inView && hasNextPage && !isFetchingNextPage) {
+    if (inView && hasNextPage && !isFetchingNextPage && !isLoadingExtract) {
       fetchNextPage();
     }
-  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
+  }, [inView, hasNextPage, isFetchingNextPage, isLoadingExtract, fetchNextPage]);
 
   const clearFilters = () => {
     setSearch('');
@@ -600,22 +600,28 @@ const PointsExtractContent: React.FC<PointsExtractContentProps> = ({ linkLoja = 
       </div>
 
       {/* Elemento de trigger para scroll infinito */}
-      <div ref={ref} className="py-8 flex justify-center">
-        {isFetchingNextPage ? (
-          <div className="flex items-center gap-2 text-sm text-gray-500 bg-white px-4 py-2 rounded-full shadow-sm border border-gray-100">
-            <Loader2 className="w-4 h-4 animate-spin text-green-600" />
-            Carregando mais registros...
-          </div>
-        ) : hasNextPage ? (
-          <div className="text-xs text-gray-400 bg-gray-50/50 px-3 py-1 rounded-full border border-dashed border-gray-200">
-            Continue rolando para carregar mais
-          </div>
-        ) : transactions.length > 0 ? (
+      {transactions.length > 0 && (hasNextPage || isFetchingNextPage) && (
+        <div ref={ref} className="py-8 flex justify-center">
+          {isFetchingNextPage ? (
+            <div className="flex items-center gap-2 text-sm text-gray-500 bg-white px-4 py-2 rounded-full shadow-sm border border-gray-100">
+              <Loader2 className="w-4 h-4 animate-spin text-green-600" />
+              Carregando mais registros...
+            </div>
+          ) : (
+            <div className="text-xs text-gray-400 bg-gray-50/50 px-3 py-1 rounded-full border border-dashed border-gray-200">
+              Continue rolando para carregar mais
+            </div>
+          )}
+        </div>
+      )}
+
+      {transactions.length > 0 && !hasNextPage && !isFetchingNextPage && (
+        <div className="py-8 flex justify-center">
           <div className="text-xs text-gray-400">
             Fim do extrato • {transactions.length} registros carregados
           </div>
-        ) : null}
-      </div>
+        </div>
+      )}
       
       {/* Modal de Detalhes do Crédito (Transparência) */}
       <Dialog open={isDetailsModalOpen} onOpenChange={setIsDetailsModalOpen}>

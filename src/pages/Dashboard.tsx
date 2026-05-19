@@ -23,7 +23,7 @@ import { useClientsList } from "@/hooks/clients";
 import { usePartnersList } from "@/hooks/partners";
 import { useProductsList } from "@/hooks/products";
 import { useUsersList } from "@/hooks/users";
-import { useRecentActivities, useRegistrationData, usePendingPreRegistrations } from "@/hooks/useDashboard";
+import { useDashboardData } from "@/hooks/useDashboard";
 import { ClientRegistrationChart } from "@/components/ClientRegistrationChart";
 import { VisitorTrendChart } from "@/components/VisitorTrendChart";
 import { useAuth } from "@/contexts/AuthContext";
@@ -92,24 +92,24 @@ export default function Dashboard() {
     setEndDate(value);
   }, []);
 
-  // Envia startDate/endDate para atividades recentes, mas só busca ao acionar botão
-  const { data: recentActivities, isLoading: activitiesLoading, error: activitiesError, refetch: refetchActivities } = useRecentActivities(
-    4,
+  // Envia startDate/endDate para o dashboard, mas só busca ao acionar botão
+  const { data: dashboardData, isLoading: dashboardLoading, error: dashboardError, refetch: refetchDashboard } = useDashboardData(
     startDate,
     endDate,
     { enabled: !!startDate && !!endDate, refetchOnWindowFocus: false }
   );
-  const { data: registrationData, isLoading: registrationLoading, error: registrationError, refetch: refetchRegistration } = useRegistrationData(
-    startDate,
-    endDate,
-    { enabled: !!startDate && !!endDate, refetchOnWindowFocus: false }
-  );
-  const { data: pendingPreRegistrations, isLoading: pendingLoading, error: pendingError, refetch: refetchPending } = usePendingPreRegistrations(
-    3,
-    startDate,
-    endDate,
-    { enabled: !!startDate && !!endDate, refetchOnWindowFocus: false }
-  );
+
+  const recentActivities = dashboardData?.recentActivities;
+  const registrationData = dashboardData?.registrationData;
+  const pendingPreRegistrations = dashboardData?.pendingPreRegistrations;
+
+  const activitiesLoading = dashboardLoading;
+  const registrationLoading = dashboardLoading;
+  const pendingLoading = dashboardLoading;
+
+  const activitiesError = dashboardError;
+  const registrationError = dashboardError;
+  const pendingError = dashboardError;
 
   /**
    * handleApplyFilters
@@ -117,10 +117,8 @@ export default function Dashboard() {
    * en-US: Triggers dashboard requests using the current date filters.
    */
   const handleApplyFilters = useCallback(() => {
-    refetchRegistration();
-    refetchActivities();
-    refetchPending();
-  }, [refetchRegistration, refetchActivities, refetchPending]);
+    refetchDashboard();
+  }, [refetchDashboard]);
 
   // Consultas agora são habilitadas automaticamente com o intervalo inicial.
 

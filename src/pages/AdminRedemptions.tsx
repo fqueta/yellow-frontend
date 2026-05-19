@@ -61,6 +61,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import { useUpdateRedemptionStatus, useRefundRedemption, useInfiniteAllRedemptions } from '@/hooks/redemptions';
+import { useDebounce } from '@/hooks/useDebounce';
 import { redemptionsService } from '@/services/redemptionsService';
 import { 
   Redemption, 
@@ -85,6 +86,7 @@ const AdminRedemptions: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
   const [statusFilter, setStatusFilter] = useState<RedemptionStatus | 'all'>((searchParams.get('status') as any) || 'all');
   // Filtros de período (date range)
   const [dateFromFilter, setDateFromFilter] = useState<string>(searchParams.get('date_from') || '');
@@ -96,7 +98,7 @@ const AdminRedemptions: React.FC = () => {
   // Sincronizar filtros com a URL automaticamente
   useEffect(() => {
     const params = new URLSearchParams();
-    if (searchTerm) params.set('search', searchTerm);
+    if (debouncedSearchTerm) params.set('search', debouncedSearchTerm);
     if (statusFilter !== 'all') params.set('status', statusFilter);
     if (dateFromFilter) params.set('date_from', dateFromFilter);
     if (dateToFilter) params.set('date_to', dateToFilter);
@@ -104,7 +106,7 @@ const AdminRedemptions: React.FC = () => {
     if (itemsPerPage !== 20) params.set('per_page', String(itemsPerPage));
 
     setSearchParams(params, { replace: true });
-  }, [searchTerm, statusFilter, dateFromFilter, dateToFilter, categoryFilter, itemsPerPage, setSearchParams]);
+  }, [debouncedSearchTerm, statusFilter, dateFromFilter, dateToFilter, categoryFilter, itemsPerPage, setSearchParams]);
 
   // Estados para o modal de estorno
   const [isRefundDialogOpen, setIsRefundDialogOpen] = useState(false);
@@ -126,7 +128,7 @@ const AdminRedemptions: React.FC = () => {
     dateFrom: dateFromFilter || undefined,
     dateTo: dateToFilter || undefined,
     category: categoryFilter !== 'all' ? categoryFilter : undefined,
-    search: searchTerm || undefined,
+    search: debouncedSearchTerm || undefined,
     per_page: itemsPerPage === 'all' ? 999999 : (itemsPerPage as number)
   }, {
     refetchOnMount: 'always',
@@ -135,10 +137,10 @@ const AdminRedemptions: React.FC = () => {
 
   // Carregar próxima página quando o elemento entrar na visualização
   useEffect(() => {
-    if (inView && hasNextPage && !isFetchingNextPage) {
+    if (inView && hasNextPage && !isFetchingNextPage && !isLoading) {
       fetchNextPage();
     }
-  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
+  }, [inView, hasNextPage, isFetchingNextPage, isLoading, fetchNextPage]);
 
   // Achatar os dados das páginas em um único array
   const redemptions = useMemo(() => {
@@ -207,7 +209,7 @@ const AdminRedemptions: React.FC = () => {
    * Normaliza campos para string para evitar erros (ex.: id numérico).
    */
   const filteredRedemptions = useMemo(() => {
-    const term = (searchTerm || '').toLowerCase();
+    const term = (debouncedSearchTerm || '').toLowerCase();
 
     return redemptions.filter((redemption: any) => {
       const idStr = String(redemption?.id ?? '').toLowerCase();
@@ -227,7 +229,7 @@ const AdminRedemptions: React.FC = () => {
 
       return matchesSearch && matchesStatus && matchesCategory;
     });
-  }, [redemptions, searchTerm, statusFilter, categoryFilter]);
+  }, [redemptions, debouncedSearchTerm, statusFilter, categoryFilter]);
 
   // Calcular estatísticas
   const stats = useMemo(() => {
@@ -501,7 +503,7 @@ const AdminRedemptions: React.FC = () => {
   const filterLegend = buildFilterLegend(
     statusFilter,
     categoryFilter,
-    searchTerm,
+    debouncedSearchTerm,
     dateFromFilter,
     dateToFilter,
   );
@@ -512,7 +514,7 @@ const AdminRedemptions: React.FC = () => {
    */
   useEffect(() => {
     refetch();
-  }, [searchTerm, statusFilter, categoryFilter, dateFromFilter, dateToFilter, itemsPerPage, refetch]);
+  }, [debouncedSearchTerm, statusFilter, categoryFilter, dateFromFilter, dateToFilter, itemsPerPage, refetch]);
 
   return (
     <div className="space-y-6">
@@ -861,32 +863,35 @@ const AdminRedemptions: React.FC = () => {
           </div>
 
           {/* Trigger para Scroll Infinito */}
-          <div 
-            ref={ref} 
-            className="flex flex-col items-center justify-center p-8 gap-4 border-t bg-gray-50/50"
-          >
-            {isFetchingNextPage ? (
-              <div className="flex items-center gap-2 text-muted-foreground animate-pulse">
-                <Loader2 className="w-5 h-5 animate-spin" />
-                <span>Carregando mais registros...</span>
-              </div>
-            ) : hasNextPage ? (
-              <div className="text-sm text-muted-foreground italic">
-                Role para carregar mais
-              </div>
-            ) : totalItems > 0 ? (
+          {totalItems > 0 && (hasNextPage || isFetchingNextPage) && (
+            <div 
+              ref={ref} 
+              className="flex flex-col items-center justify-center p-8 gap-4 border-t bg-gray-50/50"
+            >
+              {isFetchingNextPage ? (
+                <div className="flex items-center gap-2 text-muted-foreground animate-pulse">
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>Carregando mais registros...</span>
+                </div>
+              ) : (
+                <div className="text-sm text-muted-foreground italic">
+                  Role para carregar mais
+                </div>
+              )}
+            </div>
+          )}
+
+          {totalItems > 0 && !hasNextPage && !isFetchingNextPage && (
+            <div className="flex flex-col items-center justify-center p-8 gap-4 border-t bg-gray-50/50">
               <div className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-green-500" />
                 <span>Fim da lista • {redemptions.length} registros carregados</span>
               </div>
-            ) : null}
-            
-            {totalItems > 0 && (
               <div className="text-xs text-muted-foreground">
                 Mostrando {redemptions.length} de {totalItems} resgates
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </CardContent>
       </Card>
       {/* Modal de Confirmação de Estorno */}

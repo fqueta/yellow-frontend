@@ -26,6 +26,7 @@ import { exportTablePdf } from '@/lib/pdfExport';
 import { toast } from '@/hooks/use-toast';
 import { pointsExtractsService } from '@/services/pointsExtractsService';
 import * as XLSX from 'xlsx';
+import { useDebounce } from '@/hooks/useDebounce';
 
 /**
  * Formata a quantidade de pontos para exibição.
@@ -54,6 +55,7 @@ function formatDate(value: string | null): string {
 const AdminPointsBalancesReport: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
   const [currentPage, setCurrentPage] = useState(Number(searchParams.get('page')) || 1);
   const [orderBy, setOrderBy] = useState<'name' | 'email' | 'created_at' | 'saldo_total'>((searchParams.get('order_by') as any) || 'name');
   const [order, setOrder] = useState<'asc' | 'desc'>((searchParams.get('order') as any) || 'asc');
@@ -63,22 +65,22 @@ const AdminPointsBalancesReport: React.FC = () => {
   // Sincronizar filtros com a URL automaticamente
   useEffect(() => {
     const params = new URLSearchParams();
-    if (searchTerm) params.set('search', searchTerm);
+    if (debouncedSearchTerm) params.set('search', debouncedSearchTerm);
     if (currentPage > 1) params.set('page', String(currentPage));
     if (orderBy !== 'name') params.set('order_by', orderBy);
     if (order !== 'asc') params.set('order', order);
     if (perPageChoice !== 20) params.set('per_page', String(perPageChoice));
 
     setSearchParams(params, { replace: true });
-  }, [searchTerm, currentPage, orderBy, order, perPageChoice, setSearchParams]);
+  }, [debouncedSearchTerm, currentPage, orderBy, order, perPageChoice, setSearchParams]);
 
   const reportParams = useMemo(() => ({
     page: currentPage,
     per_page: perPageChoice === 'all' ? 100 : Number(perPageChoice),
-    search: searchTerm || undefined,
+    search: debouncedSearchTerm || undefined,
     order_by: orderBy,
     order,
-  }), [currentPage, perPageChoice, searchTerm, orderBy, order]);
+  }), [currentPage, perPageChoice, debouncedSearchTerm, orderBy, order]);
 
   const reportQuery = useCustomerPointsBalancesReport(reportParams, {
     keepPreviousData: true,
@@ -159,14 +161,14 @@ const AdminPointsBalancesReport: React.FC = () => {
   const filterLegend = useMemo(() => {
     const parts: string[] = [];
 
-    if (searchTerm.trim()) {
-      parts.push(`Busca: "${searchTerm.trim()}"`);
+    if (debouncedSearchTerm.trim()) {
+      parts.push(`Busca: "${debouncedSearchTerm.trim()}"`);
     }
 
     parts.push(`Ordenação: ${orderBy} (${order})`);
 
     return parts.join(' | ');
-  }, [searchTerm, orderBy, order]);
+  }, [debouncedSearchTerm, orderBy, order]);
 
   /**
    * Exporta a listagem atual para PDF.
